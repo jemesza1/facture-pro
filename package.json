@@ -1,8 +1,8 @@
 {
   "name": "facture-pro",
-  "version": "2.1.1",
+  "version": "2.3.0",
   "private": true,
   "scripts": {
-    "build": "mkdir -p public && cp -f index.html styles.css i18n.js public/ && if [ -f app.js ] && [ $(wc -c < app.js) -gt 1000 ]; then cp -f app.js public/; else curl -fsSL https://facture-pro-iota.vercel.app/app.js -o public/app.js; fi"
+    "build": "mkdir -p public && cp -f index.html styles.css i18n.js app.js a.js b1.js b2.js c1.js c2.js public/ 2>/dev/null || true"
   }
 }
