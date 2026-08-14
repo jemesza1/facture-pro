@@ -1,11 +1,268 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <title>FacturePro</title>
-  <meta http-equiv="refresh" content="0; url=/" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FacturePro Algérie | فاتورة برو</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --font-inter: 'Inter', system-ui, sans-serif; --font-cairo: 'Cairo', Tahoma, sans-serif; }
+  body { font-family: var(--font-inter); }
+  .font-ar { font-family: var(--font-cairo); }
+  .form-input { width:100%; border-radius:0.75rem; border:1px solid #e2e8f0; background:#fff; padding:0.6rem 0.75rem; font-size:0.875rem; outline:none; }
+  .form-input:focus { border-color:#0ea5e9; box-shadow:0 0 0 3px rgba(14,165,233,0.15); }
+  @media print {
+    header, footer, #form-panel, #mobile-tabs { display:none !important; }
+    #preview-panel { display:block !important; padding:0 !important; background:#fff !important; }
+    #paper { box-shadow:none !important; }
+  }
+</style>
 </head>
-<body>
-  <p>Loading FacturePro…</p>
+<body class="min-h-screen bg-slate-100 flex flex-col">
+<header class="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+  <div class="flex items-center gap-3">
+    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-sm font-bold text-white">FP</div>
+    <div>
+      <h1 id="app-name" class="text-base font-bold">FacturePro</h1>
+      <p id="app-tag" class="text-[11px] text-slate-500">Algérie • Conforme</p>
+    </div>
+  </div>
+  <button id="lang-btn" type="button" class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium shadow-sm">🇩🇿 العربية</button>
+</header>
+
+<div id="mobile-tabs" class="flex border-b border-slate-200 bg-white lg:hidden">
+  <button type="button" data-tab="form" class="tab-btn flex-1 py-3 text-center text-sm font-medium border-b-2 border-sky-600 text-sky-600">Formulaire</button>
+  <button type="button" data-tab="preview" class="tab-btn flex-1 py-3 text-center text-sm font-medium text-slate-500">Aperçu</button>
+</div>
+
+<main class="flex flex-1 overflow-hidden">
+  <aside id="form-panel" class="w-full overflow-y-auto border-slate-200 bg-white p-4 sm:p-6 lg:w-[400px] lg:shrink-0 lg:border-e">
+    <div class="space-y-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500" id="lbl-logo">Logo</label>
+        <input type="file" id="logo-input" accept="image/*" class="text-sm"/>
+      </div>
+      <input id="co-name" class="form-input" placeholder="Raison sociale" value="Mon Entreprise SARL"/>
+      <textarea id="co-addr" class="form-input" rows="2" placeholder="Adresse">12 Rue Didouche Mourad
+16000 Alger</textarea>
+      <div class="grid grid-cols-2 gap-2">
+        <input id="co-nif" class="form-input" placeholder="NIF" value="000000000000000"/>
+        <input id="co-rc" class="form-input" placeholder="RC" value="16/00-0000000B00"/>
+      </div>
+      <input id="cl-name" class="form-input" placeholder="Client" value="SARL Atlas Services"/>
+      <input id="cl-addr" class="form-input" placeholder="Adresse client" value="45 Bd Mohamed V, Alger"/>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="mb-1 block text-xs text-slate-500" id="lbl-date">Date</label><input type="date" id="inv-date" class="form-input"/></div>
+        <div><label class="mb-1 block text-xs text-slate-500" id="lbl-due">Échéance</label><input type="date" id="inv-due" class="form-input"/></div>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-semibold text-slate-400" id="lbl-lines">Lignes</span>
+        <button type="button" id="add-line" class="text-sm text-sky-600 font-medium">+ Ajouter</button>
+      </div>
+      <div id="lines" class="space-y-2"></div>
+      <textarea id="notes" class="form-input" rows="2">Paiement par virement bancaire.</textarea>
+      <div class="rounded-xl bg-slate-900 p-4 text-white">
+        <div class="flex justify-between text-sm opacity-80"><span id="lbl-ht">Sous-total</span><span id="sum-ht">0 DA</span></div>
+        <div class="mt-1 flex justify-between text-sm opacity-80"><span id="lbl-tva">TVA</span><span id="sum-tva">0 DA</span></div>
+        <div class="mt-2 flex justify-between border-t border-white/20 pt-2 text-lg font-bold"><span id="lbl-ttc">Total TTC</span><span id="sum-ttc">0 DA</span></div>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" id="btn-pdf" class="flex-1 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">PDF</button>
+        <button type="button" id="btn-print" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium hover:bg-slate-50">Imprimer</button>
+      </div>
+    </div>
+  </aside>
+
+  <section id="preview-panel" class="hidden flex-1 overflow-y-auto bg-slate-200/80 p-4 sm:p-8 lg:block">
+    <div id="paper" class="mx-auto max-w-[210mm] bg-white p-8 shadow-xl sm:p-10" style="min-height:297mm">
+      <div class="mb-6 h-1.5 bg-gradient-to-r from-sky-500 to-sky-700"></div>
+      <div class="flex flex-wrap justify-between gap-4">
+        <div class="flex gap-3">
+          <img id="pv-logo" class="hidden h-14 object-contain" alt=""/>
+          <div>
+            <h2 id="pv-co-name" class="text-lg font-bold">Mon Entreprise SARL</h2>
+            <p id="pv-co-addr" class="whitespace-pre-line text-xs text-slate-500"></p>
+            <p id="pv-co-legal" class="mt-1 text-[10px] text-slate-400"></p>
+          </div>
+        </div>
+        <div id="pv-right" class="text-end">
+          <p id="pv-title" class="text-2xl font-extrabold">FACTURE</p>
+          <p id="pv-num" class="text-sm text-slate-500">FP-2026-001</p>
+          <p class="mt-2 text-xs"><span id="pv-date-lbl">Date</span>: <strong id="pv-date"></strong></p>
+          <p class="text-xs"><span id="pv-due-lbl">Échéance</span>: <strong id="pv-due"></strong></p>
+        </div>
+      </div>
+      <div class="mt-6 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
+        <p id="pv-billed" class="text-[10px] uppercase text-slate-400">Facturé à</p>
+        <p id="pv-cl-name" class="font-semibold"></p>
+        <p id="pv-cl-addr" class="text-xs text-slate-500"></p>
+      </div>
+      <table class="mt-6 w-full text-xs">
+        <thead><tr class="bg-slate-100 text-slate-600">
+          <th id="th-desc" class="px-3 py-2 text-start">Désignation</th>
+          <th id="th-qty" class="px-2 py-2 text-center">Qté</th>
+          <th id="th-price" class="px-2 py-2 text-end">P.U. HT</th>
+          <th id="th-vat" class="px-2 py-2 text-center">TVA</th>
+          <th class="px-2 py-2 text-end">Total</th>
+        </tr></thead>
+        <tbody id="pv-rows"></tbody>
+      </table>
+      <div id="pv-totals-wrap" class="mt-4 flex justify-end">
+        <div class="w-48 space-y-1 text-xs">
+          <div class="flex justify-between text-slate-500"><span id="pv-ht-lbl">Sous-total</span><span id="pv-ht"></span></div>
+          <div class="flex justify-between text-slate-500"><span id="pv-tva-lbl">TVA</span><span id="pv-tva"></span></div>
+          <div class="flex justify-between border-t-2 border-slate-900 pt-2 text-sm font-bold"><span id="pv-ttc-lbl">Total TTC</span><span id="pv-ttc"></span></div>
+        </div>
+      </div>
+      <p id="pv-notes" class="mt-4 text-[11px] text-slate-500"></p>
+      <p id="pv-rib" class="mt-2 text-[10px] text-slate-400"></p>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-slate-200 bg-white px-4 py-3 text-center text-[11px] text-slate-500" id="privacy">
+  Your data is processed locally in your browser and is never stored on our servers.
+</footer>
+
+<script>
+const I18N = {
+  fr: {
+    name:'FacturePro', tag:'Algérie • Conforme', langBtn:'🇩🇿 العربية', form:'Formulaire', preview:'Aperçu',
+    logo:'Logo', company:'Raison sociale', client:'Client', date:'Date', due:'Échéance', lines:'Lignes', add:'+ Ajouter',
+    ht:'Sous-total', tva:'TVA', ttc:'Total TTC', title:'FACTURE', billed:'Facturé à', desc:'Désignation', qty:'Qté', price:'P.U. HT',
+    privacy:'Vos données sont traitées localement dans votre navigateur et ne sont jamais stockées sur nos serveurs.',
+    currency:' DA'
+  },
+  ar: {
+    name:'فاتورة برو', tag:'الجزائر • مطابق للقانون', langBtn:'🇫🇷 Français', form:'النموذج', preview:'المعاينة',
+    logo:'الشعار', company:'اسم الشركة', client:'العميل', date:'التاريخ', due:'الاستحقاق', lines:'الأسطر', add:'+ إضافة',
+    ht:'المجموع الفرعي', tva:'الضريبة', ttc:'المجموع شامل الضريبة', title:'فاتورة', billed:'فاتورة إلى', desc:'البيان', qty:'الكمية', price:'سعر الوحدة',
+    privacy:'بياناتك تُعالَج محليًا في متصفحك ولا تُخزَّن أبدًا على خوادمنا.',
+    currency:' د.ج'
+  }
+};
+let locale = localStorage.getItem('fp_lang') || 'fr';
+let logoData = '';
+let lines = [{ id:1, description:'Prestation de service', qty:1, unitPrice:50000, tva:19 }];
+
+function t(){ return I18N[locale]; }
+function fmt(n){
+  return new Intl.NumberFormat(locale==='ar'?'ar-DZ':'fr-DZ',{maximumFractionDigits:0}).format(n||0) + t().currency;
+}
+function applyLang(){
+  const d = t();
+  document.documentElement.lang = locale;
+  document.documentElement.dir = locale==='ar' ? 'rtl' : 'ltr';
+  document.body.classList.toggle('font-ar', locale==='ar');
+  document.getElementById('app-name').textContent = d.name;
+  document.getElementById('app-tag').textContent = d.tag;
+  document.getElementById('lang-btn').textContent = d.langBtn;
+  document.getElementById('lbl-logo').textContent = d.logo;
+  document.getElementById('lbl-date').textContent = d.date;
+  document.getElementById('lbl-due').textContent = d.due;
+  document.getElementById('lbl-lines').textContent = d.lines;
+  document.getElementById('add-line').textContent = d.add;
+  document.getElementById('lbl-ht').textContent = d.ht;
+  document.getElementById('lbl-tva').textContent = d.tva;
+  document.getElementById('lbl-ttc').textContent = d.ttc;
+  document.getElementById('pv-title').textContent = d.title;
+  document.getElementById('pv-billed').textContent = d.billed;
+  document.getElementById('pv-date-lbl').textContent = d.date;
+  document.getElementById('pv-due-lbl').textContent = d.due;
+  document.getElementById('th-desc').textContent = d.desc;
+  document.getElementById('th-qty').textContent = d.qty;
+  document.getElementById('th-price').textContent = d.price;
+  document.getElementById('th-vat').textContent = d.tva;
+  document.getElementById('pv-ht-lbl').textContent = d.ht;
+  document.getElementById('pv-tva-lbl').textContent = d.tva;
+  document.getElementById('pv-ttc-lbl').textContent = d.ttc;
+  document.getElementById('privacy').textContent = d.privacy;
+  document.getElementById('pv-right').className = locale==='ar' ? 'text-start' : 'text-end';
+  document.getElementById('pv-totals-wrap').className = 'mt-4 flex ' + (locale==='ar'?'justify-start':'justify-end');
+  document.querySelectorAll('.tab-btn').forEach((btn,i)=>{ btn.textContent = i===0 ? d.form : d.preview; });
+  renderLines(); refresh();
+}
+
+function renderLines(){
+  const box = document.getElementById('lines');
+  box.innerHTML = '';
+  lines.forEach((line, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'grid grid-cols-12 gap-1 rounded-xl border border-slate-100 bg-slate-50 p-2';
+    div.innerHTML = `<input class="form-input col-span-12 sm:col-span-5 text-sm" placeholder="${t().desc}" value="${line.description.replace(/"/g,'&quot;')}" data-i="${idx}" data-f="description"/>
+      <input type="number" class="form-input col-span-3 sm:col-span-2 text-sm" value="${line.qty}" data-i="${idx}" data-f="qty"/>
+      <input type="number" class="form-input col-span-4 sm:col-span-2 text-sm" value="${line.unitPrice}" data-i="${idx}" data-f="unitPrice"/>
+      <select class="form-input col-span-3 sm:col-span-2 text-sm" data-i="${idx}" data-f="tva">
+        <option value="19" ${line.tva===19?'selected':''}>19%</option>
+        <option value="9" ${line.tva===9?'selected':''}>9%</option>
+        <option value="0" ${line.tva===0?'selected':''}>0%</option>
+      </select>
+      <button type="button" class="col-span-2 sm:col-span-1 text-red-500" data-del="${idx}">×</button>`;
+    box.appendChild(div);
+  });
+  box.querySelectorAll('[data-f]').forEach(el=>{
+    el.addEventListener('input', ()=>{ const i = +el.dataset.i, f = el.dataset.f; lines[i][f] = f==='description' ? el.value : parseFloat(el.value)||0; refresh(); });
+  });
+  box.querySelectorAll('[data-del]').forEach(el=>{
+    el.addEventListener('click', ()=>{ if(lines.length<=1) return; lines.splice(+el.dataset.del,1); renderLines(); refresh(); });
+  });
+}
+
+function refresh(){
+  const coName = document.getElementById('co-name').value;
+  const coAddr = document.getElementById('co-addr').value;
+  const nif = document.getElementById('co-nif').value;
+  const rc = document.getElementById('co-rc').value;
+  const clName = document.getElementById('cl-name').value;
+  const clAddr = document.getElementById('cl-addr').value;
+  const date = document.getElementById('inv-date').value;
+  const due = document.getElementById('inv-due').value;
+  const notes = document.getElementById('notes').value;
+  document.getElementById('pv-co-name').textContent = coName;
+  document.getElementById('pv-co-addr').textContent = coAddr;
+  document.getElementById('pv-co-legal').textContent = `NIF: ${nif} | RC: ${rc}`;
+  document.getElementById('pv-cl-name').textContent = clName;
+  document.getElementById('pv-cl-addr').textContent = clAddr;
+  document.getElementById('pv-date').textContent = date || '—';
+  document.getElementById('pv-due').textContent = due || '—';
+  document.getElementById('pv-notes').textContent = notes;
+  document.getElementById('pv-rib').textContent = 'RIB: 007 99999 0000000000 00 | BNA';
+  document.getElementById('pv-num').textContent = 'FP-' + new Date().getFullYear() + '-001';
+  const logo = document.getElementById('pv-logo');
+  if(logoData){ logo.src = logoData; logo.classList.remove('hidden'); } else logo.classList.add('hidden');
+  let ht=0, tvaAmt=0;
+  const tbody = document.getElementById('pv-rows');
+  tbody.innerHTML = '';
+  lines.filter(l=>l.description).forEach(l=>{
+    const line = l.qty * l.unitPrice;
+    ht += line; tvaAmt += line * (l.tva/100);
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-100';
+    tr.innerHTML = `<td class="px-3 py-2">${l.description}</td><td class="px-2 py-2 text-center">${l.qty}</td><td class="px-2 py-2 text-end">${fmt(l.unitPrice)}</td><td class="px-2 py-2 text-center">${l.tva}%</td><td class="px-2 py-2 text-end font-medium">${fmt(line)}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('sum-ht').textContent = fmt(ht);
+  document.getElementById('sum-tva').textContent = fmt(tvaAmt);
+  document.getElementById('sum-ttc').textContent = fmt(ht+tvaAmt);
+  document.getElementById('pv-ht').textContent = fmt(ht);
+  document.getElementById('pv-tva').textContent = fmt(tvaAmt);
+  document.getElementById('pv-ttc').textContent = fmt(ht+tvaAmt);
+  localStorage.setItem('fp_company', JSON.stringify({ name:coName, address:coAddr, nif, rc, logo:logoData }));
+}
+
+document.getElementById('lang-btn').onclick = ()=>{ locale = locale==='fr' ? 'ar' : 'fr'; localStorage.setItem('fp_lang', locale); applyLang(); };
+document.getElementById('add-line').onclick = ()=>{ lines.push({ id:Date.now(), description:'', qty:1, unitPrice:0, tva:19 }); renderLines(); refresh(); };
+['co-name','co-addr','co-nif','co-rc','cl-name','cl-addr','inv-date','inv-due','notes'].forEach(id=>{ document.getElementById(id).addEventListener('input', refresh); });
+document.getElementById('logo-input').onchange = e=>{ const f = e.target.files?.[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ logoData = r.result; refresh(); }; r.readAsDataURL(f); };
+document.getElementById('btn-pdf').onclick = async ()=>{ const el = document.getElementById('paper'); const canvas = await html2canvas(el, { scale:2, useCORS:true, backgroundColor:'#fff' }); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p','mm','a4'); const w = pdf.internal.pageSize.getWidth(); const h = (canvas.height * w) / canvas.width; pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, Math.min(h, pdf.internal.pageSize.getHeight())); pdf.save('FP-'+new Date().getFullYear()+'-001.pdf'); };
+document.getElementById('btn-print').onclick = ()=> window.print();
+document.querySelectorAll('.tab-btn').forEach(btn=>{ btn.onclick = ()=>{ document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.remove('border-b-2','border-sky-600','text-sky-600'); b.classList.add('text-slate-500'); }); btn.classList.add('border-b-2','border-sky-600','text-sky-600'); btn.classList.remove('text-slate-500'); const tab = btn.dataset.tab; document.getElementById('form-panel').classList.toggle('hidden', tab!=='form'); document.getElementById('preview-panel').classList.toggle('hidden', tab!=='preview'); document.getElementById('preview-panel').classList.toggle('lg:block', true); }; });
+try { const s = JSON.parse(localStorage.getItem('fp_company')||'{}'); if(s.name) document.getElementById('co-name').value = s.name; if(s.address) document.getElementById('co-addr').value = s.address; if(s.nif) document.getElementById('co-nif').value = s.nif; if(s.rc) document.getElementById('co-rc').value = s.rc; if(s.logo) logoData = s.logo; } catch{}
+document.getElementById('inv-date').value = new Date().toISOString().slice(0,10);
+applyLang();
+</script>
 </body>
 </html>
