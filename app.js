@@ -1,2 +1,2 @@
-// Legacy static app removed. FacturePro is now a Next.js application.
-// See src/app/page.tsx
+/* PLACEHOLDER - content too large, using push_files */
+console.log('loading');
