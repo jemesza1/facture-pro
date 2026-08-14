@@ -1,3 +1,9 @@
-const STORAGE_KEY='facturepro_dz_v24';
-const defaultCompany={name:'Mon Entreprise SARL',address:'12 Rue Didouche Mourad\n16000 Alger',nif:'000000000000000',nis:'000000000000000',rc:'16/00-0000000B00',ai:'0000',email:'contact@monentreprise.dz',phone:'+213 21 00 00 00',rib:'007 99999 0000000000 00',banque:'BNA',logo:''};
-console.error('FULL_APP_PLACEHOLDER - use curl restore');
+(function(){
+function load(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src)};document.head.appendChild(s);});}
+Promise.resolve()
+.then(function(){return load('a.js');})
+.then(function(){return load('b.js');})
+.then(function(){return load('c.js');})
+.then(function(){try{if(typeof applyLocale==='function')applyLocale();}catch(e){}try{lucide.createIcons();}catch(e){}})
+.catch(function(e){console.error('Load fail',e);var m=document.getElementById('main-content');if(m)m.innerHTML='<p class="p-4 text-red-600">Erreur chargement. Rechargez.</p>';});
+})();
