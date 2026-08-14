@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "فاتورة برو",
+    "tagline": "الجزائر • مطابق للقانون",
+    "dashboard": "لوحة التحكم",
+    "invoices": "الفواتير",
+    "clients": "العملاء",
+    "templates": "القوالب",
+    "settings": "الإعدادات",
+    "help": "المساعدة",
+    "terms": "الشروط"
+  },
+  "actions": {
+    "newInvoice": "فاتورة جديدة",
+    "newClient": "عميل جديد",
+    "save": "حفظ",
+    "cancel": "رجوع",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "preview": "معاينة",
+    "downloadPdf": "PDF",
+    "print": "طباعة",
+    "export": "تصدير",
+    "import": "استيراد",
+    "addLine": "إضافة سطر",
+    "create": "إنشاء",
+    "update": "تحديث"
+  },
+  "invoice": {
+    "title": "فاتورة",
+    "number": "رقم",
+    "date": "التاريخ",
+    "dueDate": "الاستحقاق",
+    "client": "العميل",
+    "billedTo": "فاتورة إلى",
+    "description": "البيان",
+    "qty": "الكمية",
+    "unitPrice": "سعر الوحدة",
+    "vat": "الضريبة",
+    "totalHt": "المجموع بدون ضريبة",
+    "totalVat": "الضريبة",
+    "totalTtc": "المجموع شامل الضريبة",
+    "subtotal": "المجموع الفرعي",
+    "discount": "الخصم",
+    "amountInWords": "حررت هذه الفاتورة بمبلغ",
+    "notes": "شروط الدفع",
+    "status": {
+      "brouillon": "مسودة",
+      "envoyee": "مرسلة",
+      "payee": "مدفوعة",
+      "enretard": "متأخرة",
+      "annulee": "ملغاة"
+    }
+  },
+  "company": {
+    "name": "اسم الشركة",
+    "address": "العنوان",
+    "nif": "الرقم الجبائي",
+    "nis": "الرقم الإحصائي",
+    "rc": "السجل التجاري",
+    "ai": "المادة الضريبية",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "rib": "رقم الحساب البنكي",
+    "bank": "البنك",
+    "logo": "الشعار"
+  },
+  "stats": {
+    "paid": "رقم الأعمال المدفوع",
+    "pending": "قيد الانتظار",
+    "overdue": "متأخرة",
+    "thisMonth": "هذا الشهر"
+  },
+  "empty": {
+    "invoices": "لا توجد فواتير",
+    "clients": "لا يوجد عملاء",
+    "createFirst": "إنشاء أول فاتورة"
+  },
+  "currency": "د.ج"
+}

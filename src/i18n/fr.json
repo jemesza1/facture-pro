@@ -1,0 +1,80 @@
+{
+  "app": {
+    "name": "FacturePro",
+    "tagline": "Algérie • Conforme",
+    "dashboard": "Tableau de bord",
+    "invoices": "Factures",
+    "clients": "Clients",
+    "templates": "Modèles",
+    "settings": "Paramètres",
+    "help": "Aide",
+    "terms": "Conditions"
+  },
+  "actions": {
+    "newInvoice": "Nouvelle facture",
+    "newClient": "Nouveau client",
+    "save": "Enregistrer",
+    "cancel": "Retour",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "preview": "Aperçu",
+    "downloadPdf": "PDF",
+    "print": "Imprimer",
+    "export": "Exporter",
+    "import": "Importer",
+    "addLine": "Ajouter une ligne",
+    "create": "Créer",
+    "update": "Mettre à jour"
+  },
+  "invoice": {
+    "title": "FACTURE",
+    "number": "N°",
+    "date": "Date",
+    "dueDate": "Échéance",
+    "client": "Client",
+    "billedTo": "Facturé à",
+    "description": "Désignation",
+    "qty": "Qté",
+    "unitPrice": "P.U. HT",
+    "vat": "TVA",
+    "totalHt": "Total HT",
+    "totalVat": "TVA",
+    "totalTtc": "Total TTC",
+    "subtotal": "Sous-total",
+    "discount": "Remise",
+    "amountInWords": "Arrêté la présente facture à la somme de",
+    "notes": "Conditions de paiement",
+    "status": {
+      "brouillon": "Brouillon",
+      "envoyee": "Envoyée",
+      "payee": "Payée",
+      "enretard": "En retard",
+      "annulee": "Annulée"
+    }
+  },
+  "company": {
+    "name": "Raison sociale",
+    "address": "Adresse",
+    "nif": "NIF",
+    "nis": "NIS",
+    "rc": "RC",
+    "ai": "AI",
+    "email": "Email",
+    "phone": "Téléphone",
+    "rib": "RIB",
+    "bank": "Banque",
+    "logo": "Logo"
+  },
+  "stats": {
+    "paid": "CA payé",
+    "pending": "En attente",
+    "overdue": "En retard",
+    "thisMonth": "Ce mois"
+  },
+  "empty": {
+    "invoices": "Aucune facture",
+    "clients": "Aucun client",
+    "createFirst": "Créer ma première facture"
+  },
+  "currency": "DA"
+}
