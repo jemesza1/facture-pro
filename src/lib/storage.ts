@@ -4,7 +4,7 @@
  * Nothing is sent to any server.
  */
 
-import type { AppState, Company } from './types'
+import type { AppState, Company, Client } from './types'
 
 const KEY = 'facturepro_saas_v1'
 
@@ -22,9 +22,15 @@ export const defaultCompany: Company = {
   logo: undefined,
 }
 
+const demoClients: Client[] = [
+  { id: 'c1', name: 'SARL Atlas Services', email: 'contact@atlas.dz', address: '45 Bd Mohamed V\n16000 Alger', nif: '099999999999999', phone: '021 00 00 01' },
+  { id: 'c2', name: 'EURL Sahara Tech', email: 'info@sahara.dz', address: '8 Rue de la Liberté\n31000 Oran', nif: '088888888888888', phone: '041 00 00 02' },
+  { id: 'c3', name: 'SPA Numidia Trading', email: 'admin@numidia.dz', address: '22 Av de l\'Indépendance\n25000 Constantine', nif: '077777777777777', phone: '031 00 00 03' },
+]
+
 export function loadState(): AppState {
   if (typeof window === 'undefined') {
-    return { company: defaultCompany, clients: [], invoices: [], nextInvoiceNumber: 1 }
+    return { company: defaultCompany, clients: demoClients, invoices: [], nextInvoiceNumber: 1 }
   }
   try {
     const raw = localStorage.getItem(KEY)
@@ -32,7 +38,7 @@ export function loadState(): AppState {
       const data = JSON.parse(raw) as Partial<AppState>
       return {
         company: { ...defaultCompany, ...data.company },
-        clients: data.clients ?? [],
+        clients: data.clients?.length ? data.clients : demoClients,
         invoices: data.invoices ?? [],
         nextInvoiceNumber: data.nextInvoiceNumber ?? 1,
       }
@@ -40,7 +46,7 @@ export function loadState(): AppState {
   } catch {
     /* ignore */
   }
-  return { company: defaultCompany, clients: [], invoices: [], nextInvoiceNumber: 1 }
+  return { company: defaultCompany, clients: demoClients, invoices: [], nextInvoiceNumber: 1 }
 }
 
 export function saveState(state: AppState) {
