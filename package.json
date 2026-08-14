@@ -1,8 +1,8 @@
 {
   "name": "facture-pro",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "private": true,
   "scripts": {
-    "build": "mkdir -p public && cp -f index.html styles.css i18n.js app.js a.js b1.js b2a.js b2b.js c1.js c2.js public/ 2>/dev/null || true"
+    "build": "mkdir -p public && cp -f index.html styles.css i18n.js app.js a.js dash-fix.js b1.js b2a.js b2b.js c1.js c2.js public/ 2>/dev/null || true"
   }
 }
