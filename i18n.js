@@ -1,7 +1,7 @@
 /* FacturePro i18n FR/AR */
 const I18N={
 fr:{
-nav:{dashboard:'Tableau de bord',invoices:'Factures',devis:'Devis',products:'Produits',payments:'Paiements',clients:'Clients',templates:'Modèles de facture',settings:'Paramètres',help:'Aide',terms:'Conditions'},
+nav:{dashboard:'Tableau de bord',invoices:'Factures',devis:'Devis',products:'Produits',payments:'Paiements',debts:'Créances',clients:'Clients',templates:'Modèles de facture',settings:'Paramètres',help:'Aide',terms:'Conditions'},
 actions:{newInvoice:'Nouvelle facture',newClient:'Nouveau client',save:'Enregistrer',back:'Retour',delete:'Supprimer',edit:'Modifier',preview:'Aperçu',pdf:'PDF',print:'Imprimer',addLine:'Ajouter une ligne',add:'+ Ajouter',seeAll:'Voir tout →',duplicate:'Dupliquer',export:'Exporter',import:'Importer',reset:'Réinitialiser',changeStatus:'Changer le statut',filterByStatus:'Filtrer par statut',createInvoice:'Créer une facture',addLogo:'Ajouter un logo'},
 stats:{paid:'CA payé',pending:'En attente',overdue:'En retard',month:'Ce mois'},
 inv:{title:'FACTURE',recent:'Dernières factures',empty:'Aucune facture pour le moment',emptyHint:"Créez votre première facture conforme — il vous faut moins d'une minute.",number:'N°',client:'Client',amount:'Montant',status:'Statut',date:'Date',due:'Échéance',billedTo:'Facturé à',desc:'Désignation',qty:'Qté',unit:'P.U. HT',vat:'TVA',subtotal:'Sous-total',totalTtc:'Total TTC',notes:'Notes',lines:'Lignes',template:'Modèle',actions:'Actions',choose:'— Choisir —',clientReq:'Client *',words:'Arrêté la présente facture à la somme de'},
@@ -19,7 +19,7 @@ langBtn:'العربية',
 currency:' DA'
 },
 ar:{
-nav:{dashboard:'لوحة التحكم',invoices:'الفواتير',devis:'عروض الأسعار',products:'المنتجات',payments:'المدفوعات',clients:'العملاء',templates:'قوالب الفواتير',settings:'الإعدادات',help:'المساعدة',terms:'الشروط'},
+nav:{dashboard:'لوحة التحكم',invoices:'الفواتير',devis:'عروض الأسعار',products:'المنتجات',payments:'المدفوعات',debts:'الديون',clients:'العملاء',templates:'قوالب الفواتير',settings:'الإعدادات',help:'المساعدة',terms:'الشروط'},
 actions:{newInvoice:'فاتورة جديدة',newClient:'عميل جديد',save:'حفظ',back:'رجوع',delete:'حذف',edit:'تعديل',preview:'معاينة',pdf:'PDF',print:'طباعة',addLine:'إضافة سطر',add:'+ إضافة',seeAll:'عرض الكل ←',duplicate:'نسخ',export:'تصدير',import:'استيراد',reset:'إعادة تعيين',changeStatus:'تغيير الحالة',filterByStatus:'تصفية حسب الحالة',createInvoice:'إنشاء فاتورة',addLogo:'إضافة شعار'},
 stats:{paid:'المبالغ المحصّلة',pending:'قيد الانتظار',overdue:'متأخرة',month:'هذا الشهر'},
 inv:{title:'فاتورة',recent:'آخر الفواتير',empty:'لا توجد فواتير حاليًا',emptyHint:'أنشئ أول فاتورة مطابقة للقانون — لن يستغرق الأمر دقيقة واحدة.',number:'الرقم',client:'العميل',amount:'المبلغ',status:'الحالة',date:'التاريخ',due:'تاريخ الاستحقاق',billedTo:'فاتورة إلى',desc:'البيان',qty:'الكمية',unit:'سعر الوحدة خارج الرسم',vat:'الرسم على القيمة المضافة',subtotal:'المجموع الفرعي',totalTtc:'المجموع شامل الرسم',notes:'ملاحظات',lines:'السطور',template:'القالب',actions:'إجراءات',choose:'— اختر —',clientReq:'العميل *',words:'حررت هذه الفاتورة بمبلغ'},
