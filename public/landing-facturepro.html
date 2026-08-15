@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>FacturePro — Logiciel de facturation conforme à la fiscalité algérienne</title>
+<meta name="description" content="Créez, envoyez et suivez vos factures conformes au Décret 05-468. TVA 19 %, NIF, RC et montant en lettres. Essai gratuit, sans carte bancaire."/>
+<meta name="theme-color" content="#1e3a5f"/>
+<link rel="canonical" href="https://facture-pro-iota.vercel.app/"/>
+
+<!-- Open Graph -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="FacturePro"/>
+<meta property="og:locale" content="fr_DZ"/>
+<meta property="og:title" content="FacturePro — Facturation conforme pour les PME algériennes"/>
+<meta property="og:description" content="Créez et envoyez vos factures en quelques clics. Conforme au Décret 05-468, TVA 19 %, NIF/RC, montant en lettres."/>
+<meta property="og:url" content="https://facture-pro-iota.vercel.app/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="FacturePro — Facturation conforme pour les PME algériennes"/>
+<meta name="twitter:description" content="Créez et envoyez vos factures en quelques clics. Conforme à la fiscalité algérienne."/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"FacturePro",
+  "applicationCategory":"BusinessApplication",
+  "operatingSystem":"Web",
+  "description":"Logiciel de facturation en ligne conforme à la fiscalité algérienne (Décret 05-468) pour PME et indépendants.",
+  "url":"https://facture-pro-iota.vercel.app/",
+  "inLanguage":["fr","ar"],
+  "offers":[
+    {"@type":"Offer","name":"Gratuit","price":"0","priceCurrency":"DZD"},
+    {"@type":"Offer","name":"Pro","price":"1500","priceCurrency":"DZD","billingIncrement":"P1M"},
+    {"@type":"Offer","name":"Entreprise","price":"0","priceCurrency":"DZD","description":"Sur devis"}
+  ],
+  "aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"127"}
+}
+</script>
+
+<style>
+:root{
+  --navy:#1e3a5f; --violet:#4c1d95; --blue:#3b82f6; --blue-600:#2563eb;
+  --paid:#059669;                 /* validated status green */
+  --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+  --page:#ffffff; --soft:#f8fafc; --bd:#e2e8f0;
+  --r:14px; --r-lg:20px; --r-full:999px;
+  --shadow:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 8px 24px rgba(15,23,42,.09);
+  --shadow-lg:0 24px 60px rgba(15,23,42,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
+  background:var(--page);-webkit-font-smoothing:antialiased;line-height:1.6}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:8px}
+.wrap{width:min(1180px,100% - 40px);margin-inline:auto}
+.grad-text{background:linear-gradient(100deg,#60a5fa,#a78bfa 60%,#f0abfc);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;inset:0 0 auto;z-index:60;height:68px;display:flex;align-items:center;
+  transition:background .25s,box-shadow .25s,backdrop-filter .25s}
+.nav.solid{background:rgba(255,255,255,.86);backdrop-filter:blur(14px);
+  box-shadow:0 1px 0 rgba(15,23,42,.08)}
+.nav .wrap{display:flex;align-items:center;gap:14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16.5px;
+  letter-spacing:-.02em;color:#fff;transition:color .25s}
+.nav.solid .logo{color:var(--ink)}
+.logo-mark{width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--blue),var(--violet));box-shadow:0 4px 14px rgba(76,29,149,.35)}
+.nav-links{display:flex;gap:6px;margin-left:20px}
+.nav-links a{padding:8px 12px;border-radius:9px;font-size:14px;font-weight:500;
+  color:rgba(255,255,255,.82);transition:.18s}
+.nav-links a:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav.solid .nav-links a{color:var(--ink-2)}
+.nav.solid .nav-links a:hover{background:var(--soft);color:var(--ink)}
+.nav-cta{margin-left:auto;display:flex;align-items:center;gap:10px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  border-radius:var(--r-full);font-weight:600;white-space:nowrap;
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1),box-shadow .18s,background .18s,color .18s}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn svg{width:18px;height:18px}
+.btn-lg{padding:16px 32px;font-size:16px}
+.btn-sm{padding:9px 18px;font-size:14px}
+.btn-white{background:#fff;color:#1e3a8a;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.btn-white:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.26)}
+.btn-outline{border:2px solid rgba(255,255,255,.75);color:#fff}
+.btn-outline:hover{background:rgba(255,255,255,.14);border-color:#fff;transform:translateY(-2px)}
+.btn-blue{background:var(--blue-600);color:#fff;box-shadow:0 6px 18px rgba(37,99,235,.32)}
+.btn-blue:hover{background:#1d4ed8;transform:translateY(-2px);box-shadow:0 14px 30px rgba(37,99,235,.4)}
+.btn-ghost-d{color:#fff}
+.btn-ghost-d:hover{background:rgba(255,255,255,.12)}
+.nav.solid .btn-ghost-d{color:var(--ink-2)}
+.nav.solid .btn-ghost-d:hover{background:var(--soft)}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;min-height:100svh;position:relative;display:flex;align-items:center;
+  padding:120px 0 80px;overflow:hidden;
+  background:linear-gradient(45deg,var(--navy) 0%,#2a3f7a 45%,var(--violet) 100%)}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(760px 420px at 82% 28%,rgba(139,92,246,.4),transparent 62%),
+    radial-gradient(620px 400px at 8% 78%,rgba(59,130,246,.34),transparent 60%)}
+.hero::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;
+  background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(circle at 50% 42%,#000,transparent 72%);
+  mask-image:radial-gradient(circle at 50% 42%,#000,transparent 72%)}
+.hero .wrap{position:relative;z-index:2;display:grid;grid-template-columns:1.02fr .98fr;
+  gap:56px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:9px;padding:7px 15px 7px 9px;
+  border-radius:var(--r-full);background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(8px);
+  color:#e0e7ff;font-size:13px;font-weight:500;margin-bottom:26px}
+.pill b{background:#34d399;color:#052e1a;font-size:11px;font-weight:700;
+  padding:2px 9px;border-radius:var(--r-full)}
+h1{font-size:clamp(34px,4.6vw,58px);line-height:1.06;letter-spacing:-.032em;
+  font-weight:800;color:#fff;margin-bottom:22px}
+.sub{font-size:clamp(16px,1.5vw,19.5px);color:#cbd5e1;max-width:42rem;margin-bottom:34px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:30px}
+.reassure{display:flex;gap:20px;flex-wrap:wrap;color:#94a3b8;font-size:13.5px}
+.reassure span{display:inline-flex;align-items:center;gap:7px}
+.reassure svg{width:15px;height:15px;color:#34d399;flex:none}
+
+/* ---------- isometric illustration ---------- */
+.iso{width:100%;max-width:540px;margin-inline:auto;filter:drop-shadow(0 30px 60px rgba(2,6,23,.5))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-19px)}}
+.f1{animation:float 6s ease-in-out infinite}
+.f2{animation:float2 7.5s ease-in-out infinite .8s}
+.f3{animation:float 8.5s ease-in-out infinite .4s}
+
+/* ---------- sections ---------- */
+section{padding:96px 0}
+.eyebrow{display:block;text-align:center;font-size:12.5px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--blue-600);margin-bottom:14px}
+h2{font-size:clamp(27px,3.4vw,42px);line-height:1.15;letter-spacing:-.028em;font-weight:800;
+  text-align:center;margin-bottom:16px}
+.lede{text-align:center;color:var(--ink-2);font-size:17px;max-width:44rem;
+  margin:0 auto 56px}
+
+/* trust strip */
+.trust{padding:34px 0;background:var(--soft);border-block:1px solid var(--bd)}
+.trust-in{display:flex;align-items:center;justify-content:center;gap:14px 44px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:13.5px;font-weight:600}
+.trust-item svg{width:19px;height:19px;color:var(--paid);flex:none}
+
+/* features */
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.feat{background:var(--page);border:1px solid var(--bd);border-radius:var(--r-lg);padding:30px;
+  box-shadow:var(--shadow);transition:transform .22s,box-shadow .22s,border-color .22s}
+.feat:hover{transform:scale(1.02) translateY(-3px);box-shadow:var(--shadow-lg);border-color:#c7d2fe}
+.feat-ico{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;margin-bottom:20px}
+.feat-ico svg{width:24px;height:24px;color:#fff}
+.feat h3{font-size:18.5px;font-weight:700;letter-spacing:-.015em;margin-bottom:9px}
+.feat p{color:var(--ink-2);font-size:14.5px}
+.feat ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.feat li{display:flex;gap:9px;font-size:13.5px;color:var(--ink-2)}
+.feat li svg{width:16px;height:16px;color:var(--paid);flex:none;margin-top:2px}
+
+/* testimonials */
+.tst-sec{background:var(--soft)}
+.carousel{position:relative;max-width:800px;margin-inline:auto}
+.slides{overflow:hidden;border-radius:var(--r-lg)}
+.track{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.slide{min-width:100%;padding:40px;background:var(--page);border:1px solid var(--bd);
+  border-radius:var(--r-lg)}
+.stars{display:flex;gap:3px;margin-bottom:18px}
+.stars svg{width:17px;height:17px;color:#f59e0b}
+.quote{font-size:19px;line-height:1.6;letter-spacing:-.012em;margin-bottom:24px}
+.who{display:flex;align-items:center;gap:13px}
+.who .av{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;
+  color:#fff;font-weight:700;font-size:14px}
+.who b{display:block;font-size:14.5px}
+.who span{font-size:13px;color:var(--ink-3)}
+.dots{display:flex;gap:8px;justify-content:center;margin-top:22px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--bd);transition:.2s}
+.dot[aria-selected="true"]{background:var(--blue-600);width:26px;border-radius:var(--r-full)}
+.c-arrow{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;
+  border-radius:50%;background:var(--page);border:1px solid var(--bd);display:grid;
+  place-items:center;box-shadow:var(--shadow-md);color:var(--ink-2);z-index:2}
+.c-arrow:hover{color:var(--ink);border-color:var(--ink-3)}
+.c-arrow svg{width:18px;height:18px}
+.c-prev{left:-21px} .c-next{right:-21px}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:start}
+.plan{background:var(--page);border:1px solid var(--bd);border-radius:var(--r-lg);padding:30px;
+  box-shadow:var(--shadow);transition:transform .22s,box-shadow .22s;position:relative}
+.plan:hover{transform:scale(1.02);box-shadow:var(--shadow-lg)}
+.plan.hot{border:2px solid var(--blue-600);box-shadow:0 18px 44px rgba(37,99,235,.16)}
+.tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--blue-600),var(--violet));color:#fff;
+  font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  padding:5px 15px;border-radius:var(--r-full);white-space:nowrap}
+.plan h3{font-size:17px;font-weight:700;margin-bottom:5px}
+.plan .desc{font-size:13.5px;color:var(--ink-3);margin-bottom:20px;min-height:40px}
+.price{display:flex;align-items:baseline;gap:6px;margin-bottom:22px}
+.price .v{font-size:40px;font-weight:800;letter-spacing:-.035em}
+.price .u{font-size:14px;color:var(--ink-3);font-weight:500}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:26px}
+.plan li{display:flex;gap:10px;font-size:14px;color:var(--ink-2)}
+.plan li svg{width:17px;height:17px;color:var(--paid);flex:none;margin-top:3px}
+.plan .btn{width:100%}
+.btn-soft{background:var(--soft);color:var(--ink);border:1px solid var(--bd)}
+.btn-soft:hover{background:#eef2f7;transform:translateY(-2px)}
+
+/* FAQ */
+.faq{max-width:780px;margin-inline:auto;display:flex;flex-direction:column;gap:10px}
+.qa{background:var(--page);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;
+  transition:border-color .2s,box-shadow .2s}
+.qa[open]{border-color:#c7d2fe;box-shadow:var(--shadow-md)}
+.qa summary{padding:19px 22px;font-weight:600;font-size:15.5px;cursor:pointer;
+  display:flex;align-items:center;gap:14px;list-style:none}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:"";margin-left:auto;width:9px;height:9px;flex:none;
+  border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);
+  transform:rotate(45deg) translateY(-2px);transition:transform .22s}
+.qa[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.qa .a{padding:0 22px 20px;color:var(--ink-2);font-size:14.5px}
+
+/* CTA band */
+.band{background:linear-gradient(45deg,var(--navy),var(--violet));color:#fff;text-align:center;
+  border-radius:24px;padding:64px 32px;position:relative;overflow:hidden}
+.band::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(600px 300px at 50% 0%,rgba(139,92,246,.4),transparent 65%)}
+.band > *{position:relative}
+.band h2{color:#fff;margin-bottom:12px}
+.band p{color:#cbd5e1;max-width:36rem;margin:0 auto 30px}
+
+/* footer */
+footer{background:#0b1220;color:#94a3b8;padding:64px 0 30px;font-size:14px}
+.f-grid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:40px;margin-bottom:44px}
+footer h4{color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:16px}
+.f-links{display:flex;flex-direction:column;gap:10px}
+.f-links a:hover{color:#fff}
+.f-brand p{margin:14px 0 20px;max-width:30rem;font-size:14px}
+.news{display:flex;gap:8px;max-width:380px}
+.news input{flex:1;min-width:0;height:44px;padding:0 14px;border-radius:11px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:14px}
+.news input::placeholder{color:#64748b}
+.news input:focus{border-color:var(--blue);background:rgba(255,255,255,.1);outline:none}
+.news button{height:44px;padding:0 20px;border-radius:11px;background:var(--blue-600);color:#fff;
+  font-weight:600;font-size:14px;white-space:nowrap;transition:.18s}
+.news button:hover{background:#1d4ed8}
+.news-ok{color:#34d399;font-size:13px;margin-top:10px;display:none;align-items:center;gap:7px}
+.news-ok svg{width:15px;height:15px}
+.f-bot{border-top:1px solid rgba(255,255,255,.09);padding-top:24px;display:flex;
+  justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px}
+
+/* scroll reveal */
+.rv{opacity:0;transform:translateY(26px);
+  transition:opacity .6s cubic-bezier(.2,.6,.3,1),transform .6s cubic-bezier(.2,.6,.3,1)}
+.rv.in{opacity:1;transform:none}
+
+/* responsive */
+@media(max-width:980px){
+  .hero .wrap{grid-template-columns:1fr;gap:44px;text-align:center}
+  .sub{margin-inline:auto} .hero-cta,.reassure{justify-content:center}
+  .nav-links{display:none}
+  .feats,.plans{grid-template-columns:1fr}
+  .f-grid{grid-template-columns:1fr 1fr;gap:30px}
+  .c-prev{left:6px} .c-next{right:6px}
+}
+@media(max-width:620px){
+  section{padding:68px 0}
+  .hero{padding:104px 0 64px}
+  .slide{padding:28px}
+  .quote{font-size:17px}
+  .f-grid{grid-template-columns:1fr}
+  .btn-lg{padding:14px 24px;font-size:15px}
+  .hero-cta .btn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  .rv{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <a href="#" class="logo">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>
+        </svg>
+      </span>
+      FacturePro
+    </a>
+    <div class="nav-links">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#temoignages">Témoignages</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-sm btn-ghost-d">Se connecter</a>
+      <a href="#tarifs" class="btn btn-sm btn-blue">Essayer gratuitement</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="pill"><b>NOUVEAU</b> Facturation bilingue FR / العربية</span>
+      <h1>Gérez vos factures<br/><span class="grad-text">en toute simplicité</span></h1>
+      <p class="sub">Logiciel de facturation conforme à la fiscalité algérienne. Créez et envoyez vos factures en quelques clics — NIF, RC, TVA 19 % et montant en lettres inclus automatiquement.</p>
+      <div class="hero-cta">
+        <a href="#tarifs" class="btn btn-lg btn-white">
+          Essayer gratuitement
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#features" class="btn btn-lg btn-outline">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z" fill="currentColor" stroke="none"/></svg>
+          Voir la démo
+        </a>
+      </div>
+      <div class="reassure">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sans carte bancaire</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Décret 05-468</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Données locales</span>
+      </div>
+    </div>
+
+    <!-- isometric scene: laptop + phone + invoice + DA coin -->
+    <div>
+      <svg class="iso" viewBox="0 0 520 470" role="img" aria-label="Illustration isométrique : ordinateur portable affichant un tableau de bord, téléphone mobile et facture avec le symbole DA">
+        <defs>
+          <linearGradient id="scr" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1e293b"/><stop offset="1" stop-color="#0f172a"/>
+          </linearGradient>
+          <linearGradient id="lidTop" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#94a3b8"/>
+          </linearGradient>
+          <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#cbd5e1"/><stop offset="1" stop-color="#64748b"/>
+          </linearGradient>
+          <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eef2f7"/>
+          </linearGradient>
+          <linearGradient id="coin" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#fcd34d"/><stop offset="1" stop-color="#d97706"/>
+          </linearGradient>
+          <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ground glow -->
+        <ellipse cx="262" cy="410" rx="180" ry="34" fill="#000" opacity=".28"/>
+
+        <!-- ===== laptop (isometric) ===== -->
+        <g class="f1">
+          <!-- screen back -->
+          <path d="M150 250 L272 320 L272 196 L150 126 Z" fill="url(#lidTop)"/>
+          <!-- screen face -->
+          <path d="M158 246 L264 307 L264 200 L158 139 Z" fill="url(#scr)"/>
+          <!-- screen UI: title bar -->
+          <path d="M166 214 L200 233 L200 227 L166 208 Z" fill="#475569"/>
+          <!-- KPI blocks -->
+          <path d="M166 232 L192 247 L192 233 L166 218 Z" fill="#34d399" opacity=".9"/>
+          <path d="M196 249 L222 264 L222 250 L196 235 Z" fill="#fbbf24" opacity=".9"/>
+          <path d="M226 266 L252 281 L252 267 L226 252 Z" fill="#f43f5e" opacity=".9"/>
+          <!-- chart bars -->
+          <path d="M170 262 L178 267 L178 251 L170 246 Z" fill="url(#acc)"/>
+          <path d="M182 269 L190 274 L190 252 L182 247 Z" fill="url(#acc)"/>
+          <path d="M194 276 L202 281 L202 250 L194 245 Z" fill="url(#acc)"/>
+          <path d="M206 283 L214 288 L214 256 L206 251 Z" fill="url(#acc)"/>
+          <path d="M218 290 L226 295 L226 252 L218 247 Z" fill="url(#acc)"/>
+          <!-- keyboard base -->
+          <path d="M150 250 L272 320 L390 252 L268 182 Z" fill="url(#base)"/>
+          <path d="M164 252 L268 312 L360 259 L256 199 Z" fill="#94a3b8" opacity=".55"/>
+          <!-- trackpad -->
+          <path d="M246 300 L268 313 L292 299 L270 286 Z" fill="#cbd5e1" opacity=".8"/>
+        </g>
+
+        <!-- ===== phone ===== -->
+        <g class="f2">
+          <path d="M356 300 L404 328 L404 244 L356 216 Z" fill="#334155"/>
+          <path d="M361 298 L399 320 L399 246 L361 224 Z" fill="#0f172a"/>
+          <!-- phone donut -->
+          <circle cx="380" cy="268" r="15" fill="none" stroke="#1e293b" stroke-width="6"/>
+          <path d="M380 253 a15 15 0 0 1 13 22.5" fill="none" stroke="#34d399" stroke-width="6" stroke-linecap="round"/>
+          <path d="M393 275.5 a15 15 0 0 1 -20 6.6" fill="none" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"/>
+          <!-- rows -->
+          <rect x="366" y="292" width="26" height="3.4" rx="1.7" fill="#475569"/>
+          <rect x="366" y="299" width="18" height="3.4" rx="1.7" fill="#475569"/>
+        </g>
+
+        <!-- ===== floating invoice ===== -->
+        <g class="f3">
+          <path d="M92 196 L188 251 L188 141 L92 86 Z" fill="url(#paper)" stroke="#e2e8f0"/>
+          <!-- header band -->
+          <path d="M92 118 L188 173 L188 141 L92 86 Z" fill="url(#acc)" opacity=".9"/>
+          <!-- lines -->
+          <g fill="#94a3b8">
+            <path d="M104 148 L150 175 L150 170 L104 143 Z"/>
+            <path d="M104 162 L166 198 L166 193 L104 157 Z"/>
+            <path d="M104 176 L158 207 L158 202 L104 171 Z"/>
+            <path d="M104 190 L170 228 L170 223 L104 185 Z"/>
+          </g>
+          <!-- total line -->
+          <path d="M132 214 L176 240 L176 233 L132 207 Z" fill="#059669"/>
+        </g>
+
+        <!-- ===== DA coin ===== -->
+        <g class="f2">
+          <ellipse cx="432" cy="150" rx="34" ry="34" fill="url(#coin)"/>
+          <ellipse cx="432" cy="150" rx="26" ry="26" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>
+          <text x="432" y="159" text-anchor="middle" font-family="Inter,sans-serif"
+                font-size="20" font-weight="800" fill="#78350f">DA</text>
+        </g>
+
+        <!-- sparkles -->
+        <g fill="#fff" opacity=".85">
+          <circle cx="86" cy="60" r="3"/><circle cx="470" cy="240" r="2.4"/>
+          <circle cx="60" cy="300" r="2.2"/><circle cx="330" cy="120" r="2.6"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<!-- ============ TRUST ============ -->
+<div class="trust">
+  <div class="wrap trust-in">
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> Conforme Décret 05-468</div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Chiffrement SSL</div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.7 8.9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1 1 0 0 1 1.5 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Données hébergées localement</div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> TVA 19 % / 9 % / exonéré</div>
+  </div>
+</div>
+
+<!-- ============ FEATURES ============ -->
+<section id="features">
+  <div class="wrap">
+    <span class="eyebrow rv">Fonctionnalités</span>
+    <h2 class="rv">Tout ce qu'il faut pour facturer<br/>sans y passer la journée</h2>
+    <p class="lede rv">Pensé pour les PME et indépendants algériens : les mentions légales sont pré-remplies, les calculs sont automatiques.</p>
+
+    <div class="feats">
+      <article class="feat rv">
+        <div class="feat-ico" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>
+        </div>
+        <h3>Facturation rapide</h3>
+        <p>Créez une facture conforme en moins d'une minute, à partir de 28 modèles professionnels.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Numérotation automatique</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Montant en lettres généré</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Export PDF en un clic</li>
+        </ul>
+      </article>
+
+      <article class="feat rv">
+        <div class="feat-ico" style="background:linear-gradient(135deg,#059669,#047857)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        </div>
+        <h3>Suivi des paiements</h3>
+        <p>Sachez en un coup d'œil qui a payé, qui doit encore régler et ce qui est en retard.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Statuts automatiques</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Relances d'échéance</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tableau de bord temps réel</li>
+        </ul>
+      </article>
+
+      <article class="feat rv">
+        <div class="feat-ico" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg>
+        </div>
+        <h3>Multi-devise</h3>
+        <p>Facturez en dinar, en euro ou en dollar — pratique pour vos clients à l'export.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> DZD / EUR / USD</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Interface FR / العربية + RTL</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Devis convertibles en facture</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS ============ -->
+<section class="tst-sec" id="temoignages">
+  <div class="wrap">
+    <span class="eyebrow rv">Témoignages</span>
+    <h2 class="rv">Ils facturent déjà avec FacturePro</h2>
+    <p class="lede rv">Plus de 1 200 entreprises algériennes utilisent FacturePro au quotidien.</p>
+
+    <div class="carousel rv">
+      <button class="c-arrow c-prev" onclick="move(-1)" aria-label="Témoignage précédent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="slides"><div class="track" id="track"></div></div>
+      <button class="c-arrow c-next" onclick="move(1)" aria-label="Témoignage suivant">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <div class="dots" id="dots" role="tablist" aria-label="Choisir un témoignage"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section id="tarifs">
+  <div class="wrap">
+    <span class="eyebrow rv">Tarifs</span>
+    <h2 class="rv">Des prix clairs, en dinars</h2>
+    <p class="lede rv">Commencez gratuitement. Changez d'offre quand vous voulez, sans engagement.</p>
+
+    <div class="plans">
+      <article class="plan rv">
+        <h3>Gratuit</h3>
+        <p class="desc">Pour tester et pour les tout petits volumes.</p>
+        <div class="price"><span class="v num">0</span><span class="u">DA / mois</span></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Jusqu'à 5 factures / mois</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 3 modèles de facture</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Export PDF</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 1 utilisateur</li>
+        </ul>
+        <a href="#" class="btn btn-sm btn-soft">Commencer gratuitement</a>
+      </article>
+
+      <article class="plan hot rv">
+        <span class="tag">Le plus populaire</span>
+        <h3>Pro</h3>
+        <p class="desc">Pour les PME et indépendants qui facturent régulièrement.</p>
+        <div class="price"><span class="v num">1 500</span><span class="u">DA / mois</span></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Factures illimitées</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> 28 modèles + logo</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Devis et relances auto</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Multi-devise DZD/EUR/USD</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Support prioritaire</li>
+        </ul>
+        <a href="#" class="btn btn-sm btn-blue">Essayer 14 jours</a>
+      </article>
+
+      <article class="plan rv">
+        <h3>Entreprise</h3>
+        <p class="desc">Pour les structures multi-sites et multi-utilisateurs.</p>
+        <div class="price"><span class="v">Sur devis</span></div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tout le plan Pro</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Utilisateurs illimités + rôles</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Accès API</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Accompagnement dédié</li>
+        </ul>
+        <a href="#" class="btn btn-sm btn-soft">Nous contacter</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" style="background:var(--soft)">
+  <div class="wrap">
+    <span class="eyebrow rv">FAQ</span>
+    <h2 class="rv">Questions fréquentes</h2>
+    <p class="lede rv">Une autre question ? Écrivez-nous, on répond sous 24 h.</p>
+
+    <div class="faq">
+      <details class="qa rv" open>
+        <summary>Mes factures sont-elles conformes à la réglementation algérienne ?</summary>
+        <div class="a">Oui. Chaque facture générée inclut les mentions obligatoires du Décret exécutif 05-468 : NIF, NIS, RC, article d'imposition, taux de TVA appliqué et montant total en toutes lettres.</div>
+      </details>
+      <details class="qa rv">
+        <summary>Puis-je facturer en devises étrangères ?</summary>
+        <div class="a">Oui, le plan Pro permet d'émettre des factures en DZD, EUR et USD — utile pour les prestations à l'export. Le montant en lettres s'adapte à la devise choisie.</div>
+      </details>
+      <details class="qa rv">
+        <summary>Où sont stockées mes données ?</summary>
+        <div class="a">Vos données restent dans votre navigateur et sur nos serveurs hébergés localement. Vous pouvez exporter l'intégralité de vos factures et clients en JSON à tout moment.</div>
+      </details>
+      <details class="qa rv">
+        <summary>L'interface est-elle disponible en arabe ?</summary>
+        <div class="a">Oui. FacturePro est entièrement bilingue français / العربية, avec prise en charge complète de la mise en page RTL et de la typographie arabe.</div>
+      </details>
+      <details class="qa rv">
+        <summary>Puis-je changer ou annuler mon abonnement ?</summary>
+        <div class="a">À tout moment, sans frais. Vous gardez l'accès jusqu'à la fin de la période déjà réglée, et vos données restent exportables même après résiliation.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA BAND ============ -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="band rv">
+      <h2>Prêt à émettre votre première facture ?</h2>
+      <p>Créez votre compte en 30 secondes. Aucune carte bancaire, aucun engagement.</p>
+      <a href="#" class="btn btn-lg btn-white">
+        Essayer gratuitement
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div class="f-brand">
+        <a href="#" class="logo" style="color:#fff">
+          <span class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/>
+            </svg>
+          </span>
+          FacturePro
+        </a>
+        <p>Le logiciel de facturation pensé pour les PME et indépendants algériens. Conforme, bilingue, et simple à prendre en main.</p>
+        <h4>Newsletter</h4>
+        <form class="news" onsubmit="return subscribe(event)">
+          <input type="email" required placeholder="votre@email.dz" aria-label="Votre adresse email"/>
+          <button type="submit">S'inscrire</button>
+        </form>
+        <div class="news-ok" id="newsOk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Merci ! Vous êtes inscrit.
+        </div>
+      </div>
+
+      <div>
+        <h4>Produit</h4>
+        <div class="f-links">
+          <a href="#features">Fonctionnalités</a><a href="#tarifs">Tarifs</a>
+          <a href="#">Modèles de facture</a><a href="#">Nouveautés</a>
+        </div>
+      </div>
+      <div>
+        <h4>Ressources</h4>
+        <div class="f-links">
+          <a href="#faq">FAQ</a><a href="#">Guide de la facturation</a>
+          <a href="#">Décret 05-468</a><a href="#">Support</a>
+        </div>
+      </div>
+      <div>
+        <h4>Entreprise</h4>
+        <div class="f-links">
+          <a href="#">À propos</a><a href="#">Contact</a>
+          <a href="#">Conditions d'utilisation</a><a href="#">Confidentialité</a>
+        </div>
+      </div>
+    </div>
+    <div class="f-bot">
+      <span>© 2026 FacturePro — Created by CheMs SoUu</span>
+      <span>Alger, Algérie · contact@facturepro.dz</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------- sticky nav ---------- */
+const nav = document.getElementById('nav');
+const onScroll = () => nav.classList.toggle('solid', scrollY > 40);
+onScroll(); addEventListener('scroll', onScroll, {passive:true});
+
+/* ---------- scroll reveal (staggered) ---------- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach((e,i)=>{
+    if(!e.isIntersecting) return;
+    const sibs = [...e.target.parentElement.children].filter(n=>n.classList.contains('rv'));
+    e.target.style.transitionDelay = Math.min(sibs.indexOf(e.target),5)*80 + 'ms';
+    e.target.classList.add('in');
+    io.unobserve(e.target);
+  });
+},{threshold:.12, rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* ---------- testimonials ---------- */
+const T = [
+  {q:"Avant, je passais une demi-journée par mois sur mes factures. Maintenant c'est vingt minutes, et je ne me trompe plus sur le montant en lettres.",
+   n:"Karim Benali", r:"Gérant, SARL Atlas Services — Alger", c:"#3b82f6", i:"KB"},
+  {q:"Le fait que le NIF, le RC et l'article d'imposition soient déjà en place change tout. Mon comptable n'a plus rien à corriger.",
+   n:"Amina Haddad", r:"Directrice, EURL Sahara Tech — Oran", c:"#8b5cf6", i:"AH"},
+  {q:"On facture des clients en Europe et en Algérie. Pouvoir basculer entre le dinar et l'euro sans refaire la mise en page nous fait gagner un temps fou.",
+   n:"Yacine Meziane", r:"Cofondateur, SPA Numidia Trading — Constantine", c:"#059669", i:"YM"},
+  {q:"L'interface en arabe est vraiment soignée, pas une traduction bâclée. Toute mon équipe l'utilise sans formation.",
+   n:"Nadia Cherif", r:"Responsable admin., SARL Hoggar Import — Blida", c:"#d97706", i:"NC"},
+];
+const star = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21.1 7 14.2l-5-4.9 6.9-1z"/></svg>';
+const track = document.getElementById('track'), dots = document.getElementById('dots');
+track.innerHTML = T.map(t=>`
+  <article class="slide">
+    <div class="stars" aria-label="5 étoiles sur 5">${star.repeat(5)}</div>
+    <p class="quote">« ${t.q} »</p>
+    <div class="who">
+      <span class="av" style="background:${t.c}">${t.i}</span>
+      <span><b>${t.n}</b><span>${t.r}</span></span>
+    </div>
+  </article>`).join('');
+dots.innerHTML = T.map((_,i)=>
+  `<button class="dot" role="tab" aria-selected="${i===0}" aria-label="Témoignage ${i+1}" onclick="go(${i})"></button>`).join('');
+
+let cur = 0;
+function go(i){
+  cur = (i + T.length) % T.length;
+  track.style.transform = `translateX(-${cur*100}%)`;
+  [...dots.children].forEach((d,j)=>d.setAttribute('aria-selected', j===cur));
+}
+function move(d){ go(cur+d); clearInterval(timer); timer = setInterval(()=>go(cur+1), 7000); }
+let timer = setInterval(()=>go(cur+1), 7000);
+
+/* ---------- newsletter (demo only — no network, no storage) ---------- */
+function subscribe(e){
+  e.preventDefault();
+  e.target.reset();
+  document.getElementById('newsOk').style.display = 'flex';
+  return false;
+}
+</script>
+</body>
+</html>
