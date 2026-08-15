@@ -56,7 +56,6 @@ function renderInvoiceClassic(inv,tpl){
     </div>
     <div style="margin-top:12px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
     ${company.rib?`<div style="margin-top:16px;font-size:10px;color:#64748b">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
-    <div style="margin-top:8px;font-size:9px;color:#94a3b8">Created by CheMs SoUu · FacturePro Algérie</div>
   </div>`;
 }
 function legalLines(e,inline){
@@ -138,7 +137,6 @@ function renderInvoiceDZ(inv,tpl){
         <div style="font-size:10px;color:#94a3b8;line-height:1.7">
           ${company.rib?`<div>RIB : ${company.rib} — ${company.banque||''}</div>`:''}
           ${company.email||company.phone?`<div>${company.email||''}${company.email&&company.phone?' · ':''}${company.phone||''}</div>`:''}
-          <div style="margin-top:5px;color:#cbd5e1">Created by CheMs SoUu · FacturePro Algérie</div>
         </div>
         <div style="text-align:center;min-width:150px">
           <div style="height:34px;border-bottom:1px solid #cbd5e1;margin-bottom:5px"></div>
@@ -206,7 +204,6 @@ function renderInvoiceStudio(inv,tpl){
     <div style="margin-top:16px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
     ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${inv.notes}</div>`:''}
     ${company.rib?`<div style="margin-top:8px;font-size:10px;color:#94a3b8">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
-    <div style="margin-top:8px;font-size:9px;color:#cbd5e1">Created by CheMs SoUu · FacturePro Algérie</div>
   </div>`;
 }
 function previewInvoice(id){
@@ -235,38 +232,50 @@ function closePreview(){
 async function downloadPDF(){
   const paper=document.getElementById('invoice-paper');
   if(!paper)return toast('Ouvrez un aperçu d\'abord','err');
+  const btnTxt='Génération du PDF…';
+  toast(btnTxt);
   try{
-    // Render at a fixed A4-ish width so phones produce the same page as desktop,
-    // and force LTR so the invoice never mirrors on an Arabic device.
     const PAGE_W=794;
+    // Big canvases blow up memory on phones. Scale down for tall invoices.
+    const approxH=paper.scrollHeight||1200;
+    const scale=(approxH>2200||innerWidth<640)?1.5:2;
     const canvas=await html2canvas(paper,{
-      scale:2,useCORS:true,backgroundColor:'#ffffff',
-      windowWidth:PAGE_W+80,
+      scale:scale,useCORS:true,backgroundColor:'#ffffff',
+      windowWidth:PAGE_W+80,logging:false,
       onclone:function(doc){
         doc.documentElement.setAttribute('dir','ltr');
         const el=doc.getElementById('invoice-paper');
         if(el){
-          el.style.direction='ltr';
-          el.style.textAlign='left';
-          el.style.width=PAGE_W+'px';
-          el.style.maxWidth=PAGE_W+'px';
-          el.style.minHeight='0';
-          el.style.boxShadow='none';
-          el.style.margin='0';
+          el.style.direction='ltr';el.style.textAlign='left';
+          el.style.width=PAGE_W+'px';el.style.maxWidth=PAGE_W+'px';
+          el.style.minHeight='0';el.style.boxShadow='none';el.style.margin='0';
         }
       }
     });
-    const img=canvas.toDataURL('image/png');
+    if(!canvas||!canvas.width||!canvas.height)throw new Error('canvas vide');
+    // JPEG is far smaller than PNG — the usual cause of failed saves on mobile.
+    const img=canvas.toDataURL('image/jpeg',0.92);
+    if(!img||img.length<1000)throw new Error('image vide');
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF('p','mm','a4');
-    const PW=210, PH=297;
-    let w=PW, h=canvas.height*PW/canvas.width, x=0, y=0;
-    if(h>PH){ h=PH; w=canvas.width*PH/canvas.height; x=(PW-w)/2; }   // fit, never squash
-    pdf.addImage(img,'PNG',x,y,w,h);
+    const PW=210,PH=297;
+    const imgH=canvas.height*PW/canvas.width;
+    if(imgH<=PH){
+      pdf.addImage(img,'JPEG',0,0,PW,imgH);
+    }else{
+      // long invoice -> real pages, instead of shrinking it to unreadable
+      let pos=0,left=imgH;
+      pdf.addImage(img,'JPEG',0,0,PW,imgH);
+      left-=PH;
+      while(left>0){pos-=PH;pdf.addPage();pdf.addImage(img,'JPEG',0,pos,PW,imgH);left-=PH;}
+    }
     const name=(window._previewInvId&&state.invoices.find(i=>i.id===window._previewInvId)||{}).number||'facture';
     pdf.save(name+'.pdf');
     toast('PDF téléchargé');
-  }catch(e){console.error(e);toast('Erreur PDF','err');}
+  }catch(e){
+    console.error('PDF',e);
+    toast('Erreur PDF : '+(e&&e.message?e.message:'inconnue'),'err');
+  }
 }
 function downloadPdf(){downloadPDF();}
 function initApp(){
