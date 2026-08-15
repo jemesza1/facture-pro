@@ -284,3 +284,9 @@ body.sidebar-open { overflow:hidden; }
   #sidebar.translate-x-0{transform:translateX(0)!important}
   [dir="rtl"] #sidebar{box-shadow:0 0 40px rgba(0,0,0,.2)}
 }
+
+/* ===== Invoices are always LTR =====
+   Template text is French, so the paper must not inherit the app's RTL
+   direction — otherwise columns and labels mirror on Arabic devices. */
+.invoice-paper,.invoice-paper *{direction:ltr!important;unicode-bidi:isolate}
+.invoice-paper{text-align:left}

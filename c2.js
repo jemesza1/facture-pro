@@ -236,12 +236,33 @@ async function downloadPDF(){
   const paper=document.getElementById('invoice-paper');
   if(!paper)return toast('Ouvrez un aperçu d\'abord','err');
   try{
-    const canvas=await html2canvas(paper,{scale:2,useCORS:true,backgroundColor:'#ffffff'});
+    // Render at a fixed A4-ish width so phones produce the same page as desktop,
+    // and force LTR so the invoice never mirrors on an Arabic device.
+    const PAGE_W=794;
+    const canvas=await html2canvas(paper,{
+      scale:2,useCORS:true,backgroundColor:'#ffffff',
+      windowWidth:PAGE_W+80,
+      onclone:function(doc){
+        doc.documentElement.setAttribute('dir','ltr');
+        const el=doc.getElementById('invoice-paper');
+        if(el){
+          el.style.direction='ltr';
+          el.style.textAlign='left';
+          el.style.width=PAGE_W+'px';
+          el.style.maxWidth=PAGE_W+'px';
+          el.style.minHeight='0';
+          el.style.boxShadow='none';
+          el.style.margin='0';
+        }
+      }
+    });
     const img=canvas.toDataURL('image/png');
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF('p','mm','a4');
-    const w=210, h=canvas.height*w/canvas.width;
-    pdf.addImage(img,'PNG',0,0,w,Math.min(h,297));
+    const PW=210, PH=297;
+    let w=PW, h=canvas.height*PW/canvas.width, x=0, y=0;
+    if(h>PH){ h=PH; w=canvas.width*PH/canvas.height; x=(PW-w)/2; }   // fit, never squash
+    pdf.addImage(img,'PNG',x,y,w,h);
     const name=(window._previewInvId&&state.invoices.find(i=>i.id===window._previewInvId)||{}).number||'facture';
     pdf.save(name+'.pdf');
     toast('PDF téléchargé');
