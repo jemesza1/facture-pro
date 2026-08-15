@@ -274,3 +274,13 @@ body.sidebar-open { overflow:hidden; }
   .sk{animation:none}
   .btn-primary:active,.btn-secondary:active,.btn-danger:active,.btn-ghost:active{transform:none}
 }
+
+/* ===== RTL mobile sidebar fix =====
+   Tailwind's -translate-x-full always moves LEFT. In RTL the drawer is
+   anchored right (start-0), so it must move RIGHT to leave the screen. */
+@media (max-width:767px){
+  #sidebar.-translate-x-full{transform:translateX(-100%)!important}
+  [dir="rtl"] #sidebar.-translate-x-full{transform:translateX(100%)!important}
+  #sidebar.translate-x-0{transform:translateX(0)!important}
+  [dir="rtl"] #sidebar{box-shadow:0 0 40px rgba(0,0,0,.2)}
+}

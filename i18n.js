@@ -39,7 +39,7 @@ currency:' د.ج'
 };
 let locale=localStorage.getItem('fp_locale')||'fr';
 function t(path){const parts=path.split('.');let cur=I18N[locale]||I18N.fr;for(const p of parts){if(cur==null)return path;cur=cur[p];}return typeof cur==='string'?cur:path;}
-function toggleLocale(){locale=locale==='fr'?'ar':'fr';localStorage.setItem('fp_locale',locale);applyLocale();if(typeof renderPage==='function')renderPage();}
+function toggleLocale(){locale=locale==='fr'?'ar':'fr';localStorage.setItem('fp_locale',locale);try{var sb=document.getElementById('sidebar');if(sb){sb.classList.add('-translate-x-full');sb.classList.remove('translate-x-0');}var ov=document.getElementById('sidebar-overlay');if(ov)ov.classList.add('hidden');if(typeof state!=='undefined')state.sidebarOpen=false;}catch(e){}applyLocale();if(typeof renderPage==='function')renderPage();}
 function applyLocale(){
   document.documentElement.lang=locale;
   document.documentElement.dir=locale==='ar'?'rtl':'ltr';
