@@ -96,11 +96,23 @@
         </div>
       </div>
 
-      <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 pb-6"></main>
+      <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 pb-6"><div id="boot-skeleton">
+        <div class="sk-kpis">
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+        </div>
+        <div class="sk-card">
+          <div class="sk sk-line" style="width:30%;height:16px;margin-bottom:18px"></div>
+          <div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
+        </div>
+      </div></main>
     </div>
   </div>
 
   <div id="modal-root"></div>
+  <canvas id="confetti" hidden></canvas>
 
   <div id="preview-root" class="hidden fixed inset-0 z-50 bg-slate-100 dark:bg-slate-950 flex flex-col safe-area">
     <div class="h-14 bg-white dark:bg-slate-900 border-b flex items-center justify-between px-3 sm:px-4 gap-2 shrink-0">
