@@ -399,3 +399,12 @@ body.sidebar-open { overflow:hidden; }
 .dark #app {
   background: radial-gradient(1200px 600px at 10% -10%, rgba(0,98,51,.12), transparent 50%), #0b1220;
 }
+
+
+/* ---- Codes that must never be reordered by the bidi algorithm ----
+   In Arabic, "05-468" rendered as "468-05" and the RIB's digit groups
+   came out in reverse order. These are legal and banking identifiers:
+   they are always read left-to-right, in both languages. ---- */
+.ltr-code{direction:ltr;unicode-bidi:isolate;}
+[dir="rtl"] input.ltr-code,
+[dir="rtl"] textarea.ltr-code{direction:ltr;text-align:right;}
