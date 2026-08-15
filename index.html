@@ -70,6 +70,32 @@
           <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold">DZ</div>
         </div>
       </header>
+
+      <!-- ===== Avertissement stockage local / تنبيه التخزين المحلي ===== -->
+      <div id="local-warn" class="hidden shrink-0 px-3 sm:px-6 pt-3">
+        <div class="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:p-3.5
+                    dark:border-amber-500/30 dark:bg-amber-500/10">
+          <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"></i>
+          <div class="min-w-0 flex-1">
+            <p id="lw-title" class="text-sm font-semibold text-amber-900 dark:text-amber-200"></p>
+            <p id="lw-body" class="text-xs sm:text-[13px] leading-relaxed text-amber-800 dark:text-amber-200/80 mt-0.5"></p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button type="button" onclick="exportData()"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i><span id="lw-cta"></span>
+              </button>
+              <button type="button" onclick="dismissWarn()"
+                class="rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100
+                       dark:text-amber-200 dark:hover:bg-amber-500/10"><span id="lw-hide"></span></button>
+            </div>
+          </div>
+          <button type="button" onclick="dismissWarn()" aria-label="Fermer"
+            class="shrink-0 rounded-lg p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/10">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
       <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 pb-6"></main>
     </div>
   </div>
@@ -89,6 +115,47 @@
 
   <script src="i18n.js"></script>
   <script src="app.js"></script>
+  <script>
+    /* ---- Avertissement stockage local (bilingue) ---- */
+    var LW = {
+      fr:{t:"Vos données sont enregistrées dans ce navigateur uniquement.",
+          b:"Si vous videz le cache de votre navigateur ou utilisez un autre appareil, vos factures seront perdues. Sauvegardez régulièrement avec Exporter (fichier .json) — c'est le seul format réimportable. Un PDF est une copie de facture, pas une sauvegarde.",
+          c:"Exporter maintenant", h:"Plus tard"},
+      ar:{t:"بياناتك محفوظة في هذا المتصفح فقط.",
+          b:"إذا مسحت ذاكرة التخزين أو استخدمت جهازًا آخر، ستفقد فواتيرك. احفظ نسخة احتياطية بانتظام عبر «تصدير» (ملف .json) — وهو الصيغة الوحيدة القابلة للاستيراد. ملف PDF نسخة من الفاتورة وليس نسخة احتياطية.",
+          c:"تصدير الآن", h:"لاحقًا"}
+    };
+    function paintWarn(){
+      var l = (typeof locale !== 'undefined' && LW[locale]) ? locale : 'fr', d = LW[l];
+      var q = function(id){ return document.getElementById(id); };
+      if(q('lw-title')) q('lw-title').textContent = d.t;
+      if(q('lw-body'))  q('lw-body').textContent  = d.b;
+      if(q('lw-cta'))   q('lw-cta').textContent   = d.c;
+      if(q('lw-hide'))  q('lw-hide').textContent  = d.h;
+    }
+    function dismissWarn(){
+      var el = document.getElementById('local-warn');
+      if(el) el.classList.add('hidden');
+      try{ localStorage.setItem('fp_warn_seen','1'); }catch(e){}
+    }
+    (function(){
+      var seen = false;
+      try{ seen = localStorage.getItem('fp_warn_seen') === '1'; }catch(e){}
+      if(!seen){
+        var el = document.getElementById('local-warn');
+        if(el) el.classList.remove('hidden');
+      }
+      paintWarn();
+      var orig = window.toggleLocale;
+      window.addEventListener('load', function(){
+        var t = window.toggleLocale;
+        if(typeof t === 'function' && !t.__wrapped){
+          window.toggleLocale = function(){ t.apply(null, arguments); paintWarn(); };
+          window.toggleLocale.__wrapped = true;
+        }
+      });
+    })();
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       try { if (typeof applyLocale === 'function') applyLocale(); } catch (e) {}
