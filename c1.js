@@ -32,7 +32,7 @@ function openNewInvoice(editId){
         <div id="items-container" class="space-y-2">${items.map(item=>itemRowHtml(item)).join('')}</div>
       </div>
       <div><label class="form-label">${t('inv.notes')}</label>
-        <textarea id="inv-notes" class="form-input" rows="2">${inv&&inv.notes||'Paiement par virement bancaire.'}</textarea></div>
+        <textarea id="inv-notes" class="form-input" rows="2">${esc(inv&&inv.notes||'Paiement par virement bancaire.')}</textarea></div>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal()" class="btn-secondary">${t('actions.back')}</button>

@@ -156,7 +156,7 @@
         '<div><div class="flex justify-between mb-2"><label class="form-label mb-0">'+(ar?'\u0627\u0644\u0628\u0646\u0648\u062f':'Lignes')+'</label>'+
           '<button type="button" onclick="addDevisItem()" class="text-sm text-sky-600 font-medium">+ '+(ar?'\u0625\u0636\u0627\u0641\u0629':'Ajouter')+'</button></div>'+
           '<div id="dev-items" class="space-y-2">'+items.map(function(it){return devisItemRow(it);}).join('')+'</div></div>'+
-        '<div><label class="form-label">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0627\u062a':'Notes')+'</label><textarea id="dev-notes" class="form-input" rows="2">'+(d&&d.notes||'')+'</textarea></div>'+
+        '<div><label class="form-label">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0627\u062a':'Notes')+'</label><textarea id="dev-notes" class="form-input" rows="2">'+esc(d&&d.notes||'')+'</textarea></div>'+
       '</div>'+
       '<div class="modal-footer flex justify-end gap-2">'+
         '<button onclick="closeModal()" class="btn-secondary">'+(ar?'\u0625\u0644\u063a\u0627\u0621':'Annuler')+'</button>'+
@@ -297,6 +297,44 @@
     try{lucide.createIcons();}catch(e){}
   };
 
+  /* One place decides whether an invoice is settled. Before this existed,
+     savePayment set the status and nothing ever unset it: deleting a payment,
+     or editing the invoice upwards, left it marked "payée" with a zero debt. */
+  function paidFor(invoiceId){
+    return (state.payments||[]).filter(function(p){return p.invoiceId===invoiceId;})
+      .reduce(function(s,p){return s+(Number(p.amount)||0);},0);
+  }
+  window.syncInvoiceStatus=function(invoiceId){
+    var inv=(state.invoices||[]).find(function(i){return i.id===invoiceId;});
+    if(!inv||inv.status==='annulee')return;
+    var tot=calcInvoiceTotals(inv).net, paid=paidFor(invoiceId);
+    if(paid>=tot-0.5){inv.status='payee';return;}
+    if(inv.status==='payee'){
+      var today=new Date().toISOString().slice(0,10);
+      inv.status=(inv.dueDate&&inv.dueDate<today)?'enretard':'envoyee';
+    }else if(paid>0&&inv.status==='brouillon'){inv.status='envoyee';}
+  };
+  /* A deleted invoice must not leave its payments in the takings. */
+  var _delInvoice=window.deleteInvoice;
+  if(typeof _delInvoice==='function'){
+    window.deleteInvoice=function(id){
+      var before=(state.invoices||[]).length;
+      _delInvoice.apply(this,arguments);
+      if((state.invoices||[]).length<before){
+        state.payments=(state.payments||[]).filter(function(p){return p.invoiceId!==id;});
+        saveData(); renderPage();
+      }
+    };
+  }
+  /* Raising the total on a settled invoice must reopen it. */
+  var _saveInvoice=window.saveInvoice;
+  if(typeof _saveInvoice==='function'){
+    window.saveInvoice=function(editId){
+      _saveInvoice.apply(this,arguments);
+      if(editId){syncInvoiceStatus(editId);saveData();}
+    };
+  }
+
   window.savePayment=function(){
     var invoiceId=document.getElementById('pay-inv').value;
     var amount=parseFloat(document.getElementById('pay-amount').value)||0;
@@ -313,18 +351,15 @@
       method:document.getElementById('pay-method').value,
       note:(document.getElementById('pay-note').value||'').trim()
     });
-    if(inv){
-      var tot=calcInvoiceTotals(inv).net;
-      var paid=state.payments.filter(function(p){return p.invoiceId===invoiceId;}).reduce(function(s,p){return s+(Number(p.amount)||0);},0);
-      if(paid>=tot-0.5) inv.status='payee';
-      else if(inv.status==='brouillon') inv.status='envoyee';
-    }
+    syncInvoiceStatus(invoiceId);
     saveData(); closeModal(); toast(t('toast.saved')); renderPage();
   };
 
   window.deletePayment=function(id){
     if(!confirm(locale==='ar'?'\u062d\u0630\u0641 \u0627\u0644\u062f\u0641\u0639\u0629\u061f':'Supprimer ce paiement ?')) return;
+    var gone=(state.payments||[]).find(function(x){return x.id===id;});
     state.payments=state.payments.filter(function(x){return x.id!==id;});
+    if(gone) syncInvoiceStatus(gone.invoiceId);
     saveData(); toast(t('toast.saved')); renderPage();
   };
 

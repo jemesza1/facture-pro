@@ -186,9 +186,12 @@
           productId:row.getAttribute('data-product-id')||''
         });
       });
-      var wasNew=!editId;
+      var wasNew=!editId, before=(state.invoices||[]).length;
       _saveInv.apply(this,arguments);
-      if(wasNew){ deductStockFromItems(items); saveData(); }
+      /* saveInvoice returns early when no client is chosen. Deducting before
+         checking that meant a validation mistake ate the stock — twice, since
+         the user then fixed it and saved again. */
+      if(wasNew && (state.invoices||[]).length>before){ deductStockFromItems(items); saveData(); }
     };
   }
 
