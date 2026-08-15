@@ -290,3 +290,31 @@ body.sidebar-open { overflow:hidden; }
    direction — otherwise columns and labels mirror on Arabic devices. */
 .invoice-paper,.invoice-paper *{direction:ltr!important;unicode-bidi:isolate}
 .invoice-paper{text-align:left}
+
+/* ---- Status filter chips (works on mobile: horizontal scroll, 40px touch targets) ---- */
+.filter-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:4px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filter-chips::-webkit-scrollbar{display:none}
+.filter-chips .chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;
+  min-height:40px;padding:0 14px;border-radius:9999px;font-size:13px;font-weight:600;
+  white-space:nowrap;cursor:pointer;background:var(--surface);color:var(--text);
+  border:1px solid var(--border);transition:background .15s,border-color .15s,color .15s}
+.filter-chips .chip:hover{border-color:#006233}
+.filter-chips .chip-on{background:#006233;color:#fff;border-color:#006233}
+.filter-chips .chip-n{display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:20px;padding:0 6px;border-radius:9999px;font-size:11px;font-weight:700;
+  background:rgba(0,0,0,.07);color:inherit}
+.filter-chips .chip-on .chip-n{background:rgba(255,255,255,.24)}
+.dark .filter-chips .chip{background:#0f172a;border-color:#1e293b;color:#e2e8f0}
+.dark .filter-chips .chip-n{background:rgba(255,255,255,.10)}
+.dark .filter-chips .chip-on{background:#006233;color:#fff;border-color:#006233}
+
+/* ---- Tappable status on mobile invoice cards ---- */
+.inv-card .badge-wrap{margin-left:auto;margin-inline-start:auto;margin-inline-end:0}
+.card-status{appearance:none;-webkit-appearance:none;border-radius:9999px;
+  min-height:36px;padding:0 30px 0 14px;font-size:12px;font-weight:600;cursor:pointer;
+  max-width:150px;text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:11px}
+[dir="rtl"] .card-status{padding:0 14px 0 30px;background-position:left 10px center}
+.card-status:focus-visible{outline:2px solid #006233;outline-offset:2px}
