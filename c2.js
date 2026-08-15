@@ -22,7 +22,7 @@ function renderInvoiceClassic(inv,tpl){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
       <div>${logo}<div style="font-size:17px;font-weight:700;color:${color}">${company.name||''}</div>
         <div style="font-size:11px;color:#64748b;white-space:pre-line">${company.address||''}</div>
-        <div style="font-size:10px;margin-top:4px">NIF: ${company.nif||'—'} | RC: ${company.rc||'—'}</div>
+        <div style="font-size:9.5px;margin-top:4px;line-height:1.6;color:#64748b">${legalLines(company,false)||'—'}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:22px;font-weight:800;color:${color}">FACTURE</div>
@@ -35,7 +35,7 @@ function renderInvoiceClassic(inv,tpl){
       <div style="font-size:10px;color:#64748b;margin-bottom:4px">Facturé à</div>
       <div style="font-weight:600">${client.name}</div>
       <div style="font-size:11px;white-space:pre-line;color:#475569">${client.address||''}</div>
-      ${client.nif?`<div style="font-size:10px;margin-top:4px">NIF: ${client.nif}</div>`:''}
+      ${legalLines(client,false)?`<div style="font-size:9.5px;margin-top:4px;line-height:1.6;color:#64748b">${legalLines(client,false)}</div>`:''}
     </div>
     <table style="width:100%;border-collapse:collapse;margin:16px 0">
       <thead><tr style="background:${color};color:#fff">
@@ -168,7 +168,7 @@ function renderInvoiceStudio(inv,tpl){
         <div>
           <div style="font-size:18px;font-weight:700">${company.name||''}</div>
           <div style="font-size:11px;color:#64748b;white-space:pre-line">${company.address||''}</div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:4px">NIF: ${company.nif||'—'} | RC: ${company.rc||'—'}</div>
+          <div style="font-size:9.5px;color:#94a3b8;margin-top:4px;line-height:1.6">${legalLines(company,false)||'—'}</div>
         </div>
       </div>
       <div style="text-align:right">
@@ -182,7 +182,7 @@ function renderInvoiceStudio(inv,tpl){
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8">Facturé à</div>
       <div style="font-weight:600;margin-top:2px">${client.name}</div>
       <div style="font-size:11px;color:#64748b;white-space:pre-line">${client.address||''}</div>
-      ${client.nif?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">NIF: ${client.nif}</div>`:''}
+      ${legalLines(client,false)?`<div style="font-size:9.5px;color:#94a3b8;margin-top:3px;line-height:1.6">${legalLines(client,false)}</div>`:''}
     </div>
     <table style="width:100%;border-collapse:collapse;margin-top:24px">
       <thead><tr style="background:#f1f5f9;color:#475569">
