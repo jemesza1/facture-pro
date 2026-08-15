@@ -42,3 +42,5 @@ in `.ltr-code`, or `ltrCodes()` for text. Money and dates use `.num` / `moneyUI(
 
 Invoices (`c2.js` renderers) stay French and LTR on purpose, even when the UI is
 in Arabic — they are legal documents.
+
+Auto-deploy verified after reconnecting the Vercel Git integration.
