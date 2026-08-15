@@ -13,7 +13,7 @@
     var invs=(state.invoices||[]).filter(function(i){
       return i.clientId===clientId && i.status!=='annulee' && i.status!=='payee';
     });
-    var due=invs.reduce(function(s,i){return s+calcInvoiceTotals(i).ttc;},0);
+    var due=invs.reduce(function(s,i){return s+calcInvoiceTotals(i).net;},0);
     var unpaidIds={};
     invs.forEach(function(i){ unpaidIds[i.id]=1; });
     var paidOnUnpaid=(state.payments||[]).filter(function(p){return unpaidIds[p.invoiceId];})
@@ -218,7 +218,7 @@
     } else if(kind==='debts'){
       downloadCSV('creances-'+day+'.csv', [[ar()?'\u0627\u0644\u0639\u0645\u064a\u0644':'Client',ar()?'\u0627\u0644\u0645\u0633\u062a\u062d\u0642':'D\u00fb']].concat((state.clients||[]).map(function(c){return [c.name,getClientDebt(c.id)];}).filter(function(r){return r[1]>0;})));
     } else {
-      downloadCSV('factures-'+day+'.csv', [[ar()?'\u0631\u0642\u0645':'N\u00b0',ar()?'\u062a\u0627\u0631\u064a\u062e':'Date',ar()?'\u0639\u0645\u064a\u0644':'Client',ar()?'\u062d\u0627\u0644\u0629':'Statut','TTC']].concat((state.invoices||[]).map(function(inv){var cl=getClient(inv.clientId)||{};return [inv.number,inv.date,cl.name||'',inv.status,calcInvoiceTotals(inv).ttc];})));
+      downloadCSV('factures-'+day+'.csv', [[ar()?'\u0631\u0642\u0645':'N\u00b0',ar()?'\u062a\u0627\u0631\u064a\u062e':'Date',ar()?'\u0639\u0645\u064a\u0644':'Client',ar()?'\u062d\u0627\u0644\u0629':'Statut','Net']].concat((state.invoices||[]).map(function(inv){var cl=getClient(inv.clientId)||{};return [inv.number,inv.date,cl.name||'',inv.status,calcInvoiceTotals(inv).net];})));
     }
     toast(ar()?'\u062a\u0645 \u062a\u0635\u062f\u064a\u0631 Excel':'Export Excel OK');
   };

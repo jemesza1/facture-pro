@@ -314,7 +314,7 @@
       note:(document.getElementById('pay-note').value||'').trim()
     });
     if(inv){
-      var tot=calcInvoiceTotals(inv).ttc;
+      var tot=calcInvoiceTotals(inv).net;
       var paid=state.payments.filter(function(p){return p.invoiceId===invoiceId;}).reduce(function(s,p){return s+(Number(p.amount)||0);},0);
       if(paid>=tot-0.5) inv.status='payee';
       else if(inv.status==='brouillon') inv.status='envoyee';

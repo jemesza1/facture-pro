@@ -6,7 +6,7 @@ function renderInvoiceHTML(inv){
 }
 function renderInvoiceClassic(inv,tpl){
   const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
-  const color=tpl.color||'#0f172a', words=amountInWords(totals.ttc);
+  const color=tpl.color||'#0f172a', words=amountInWords(totals.net);
   const logo=company.logo?`<img src="${company.logo}" style="max-height:52px;max-width:110px;object-fit:contain;margin-bottom:8px"/>`:'';
   const rows=(inv.items||[]).map(it=>{
     const line=(it.qty||0)*(it.unitPrice||0);
@@ -52,15 +52,24 @@ function renderInvoiceClassic(inv,tpl){
         <div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">TVA</span><span>${formatMoney(totals.tva)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:3px;border-top:2px solid ${color};font-size:14px;font-weight:700"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
+        ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid ${color};font-size:14px;font-weight:700"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
       </div>
     </div>
+<div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
     <div style="margin-top:12px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
     ${company.rib?`<div style="margin-top:16px;font-size:10px;color:#64748b">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
   </div>`;
 }
+/* Invoices stay in French: they are legal documents. */
+function payLabel(inv){
+  var m=(inv&&inv.paymentMode)||'virement';
+  return {virement:'Virement bancaire',especes:'Espèces',cheque:'Chèque',carte:'Carte / TPE'}[m]||'Virement bancaire';
+}
 function legalLines(e,inline){
   const L=[];
   if(e.nif)L.push('NIF : '+esc(e.nif));
+  if(e.nin)L.push('NIN : '+esc(e.nin));
   if(e.nis)L.push('NIS : '+esc(e.nis));
   if(e.rc)L.push('RC : '+esc(e.rc));
   if(e.ai)L.push('AI : '+esc(e.ai));
@@ -69,7 +78,7 @@ function legalLines(e,inline){
 }
 function renderInvoiceDZ(inv,tpl){
   const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
-  const g=tpl.color||'#006233', g2=tpl.color2||'#059669', words=amountInWords(totals.ttc);
+  const g=tpl.color||'#006233', g2=tpl.color2||'#059669', words=amountInWords(totals.net);
   const logo=company.logo
     ?`<img src="${company.logo}" style="max-height:46px;max-width:100px;object-fit:contain"/>`
     :`<div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:${g};font-weight:800;font-size:17px">${(company.name||'FP').slice(0,2).toUpperCase()}</div>`;
@@ -127,8 +136,11 @@ function renderInvoiceDZ(inv,tpl){
           <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f1f5f9;color:#475569"><span>Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
           <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f8fafc;color:#475569"><span>TVA</span><span>${formatMoney(totals.tva)}</span></div>
           <div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:14.5px;font-weight:800;background:${g};color:#fff"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
+          ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f8fafc;color:#475569"><span>Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:14.5px;font-weight:800;background:${g2};color:#fff"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
         </div>
       </div>
+<div style="margin-top:12px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
       <div style="margin-top:18px;padding:11px 14px;background:#f0fdf4;border-left:3px solid ${g2};border-radius:4px;font-size:11px;font-style:italic">
         Arrêté la présente facture à la somme de : <strong>${words}</strong>
       </div>
@@ -148,7 +160,7 @@ function renderInvoiceDZ(inv,tpl){
 }
 function renderInvoiceStudio(inv,tpl){
   const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
-  const c1=tpl.color||'#0ea5e9', c2=tpl.color2||tpl.color||'#0369a1', words=amountInWords(totals.ttc);
+  const c1=tpl.color||'#0ea5e9', c2=tpl.color2||tpl.color||'#0369a1', words=amountInWords(totals.net);
   const logo=company.logo?`<img src="${company.logo}" style="max-height:56px;max-width:120px;object-fit:contain"/>`:'';
   const rows=(inv.items||[]).map(it=>{
     const line=(it.qty||0)*(it.unitPrice||0);
@@ -199,8 +211,11 @@ function renderInvoiceStudio(inv,tpl){
         <div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>TVA</span><span>${formatMoney(totals.tva)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:4px;border-top:2px solid #0f172a;font-size:14px;font-weight:700"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
+        ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #0f172a;font-size:14px;font-weight:700"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
       </div>
     </div>
+<div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
     <div style="margin-top:16px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
     ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
     ${company.rib?`<div style="margin-top:8px;font-size:10px;color:#94a3b8">RIB: ${company.rib} — ${company.banque||''}</div>`:''}

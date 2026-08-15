@@ -64,8 +64,8 @@
       return (i+1)+'. '+(it.description||'')+' \u00d7 '+(it.qty||1)+' = '+(Number(it.unitPrice)||0);
     }).join('\n');
     var msg=(ar()
-      ? '\u0641\u0627\u062a\u0648\u0631\u0629 '+(inv.number||'')+'\n\u0627\u0644\u0639\u0645\u064a\u0644: '+(cl.name||'')+'\n\u0627\u0644\u062a\u0627\u0631\u064a\u062e: '+(inv.date||'')+'\n\n'+lines+'\n\n\u0627\u0644\u0645\u062c\u0645\u0648\u0639 TTC: '+moneyUI(tot.ttc)+'\n'+(state.company&&state.company.name?state.company.name:'')
-      : 'Facture '+(inv.number||'')+'\nClient: '+(cl.name||'')+'\nDate: '+(inv.date||'')+'\n\n'+lines+'\n\nTotal TTC: '+moneyUI(tot.ttc)+'\n'+(state.company&&state.company.name?state.company.name:''));
+      ? '\u0641\u0627\u062a\u0648\u0631\u0629 '+(inv.number||'')+'\n\u0627\u0644\u0639\u0645\u064a\u0644: '+(cl.name||'')+'\n\u0627\u0644\u062a\u0627\u0631\u064a\u062e: '+(inv.date||'')+'\n\n'+lines+'\n\n\u0627\u0644\u0635\u0627\u0641\u064a \u0644\u0644\u062f\u0641\u0639: '+moneyUI(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:'')
+      : 'Facture '+(inv.number||'')+'\nClient: '+(cl.name||'')+'\nDate: '+(inv.date||'')+'\n\n'+lines+'\n\nNet a payer: '+moneyUI(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:''));
     window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
   };
 

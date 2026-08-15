@@ -15,13 +15,17 @@ function openNewInvoice(editId){
           ${TEMPLATES.map(t=>`<option value="${t.id}" ${inv&&inv.template===t.id?'selected':''}>${t.name}</option>`).join('')}
           </select></div>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div><label class="form-label">${t('inv.date')}</label><input type="date" id="inv-date" class="form-input" value="${inv&&inv.date||new Date().toISOString().slice(0,10)}"/></div>
         <div><label class="form-label">${t('inv.due')}</label><input type="date" id="inv-due" class="form-input" value="${inv&&inv.dueDate||''}"/></div>
         <div><label class="form-label">${t('inv.status')}</label><select id="inv-status" class="form-select">
           ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${inv&&inv.status===k?'selected':''}>${v.label}</option>`).join('')}
         </select></div>
+        <div><label class="form-label">${t('inv.payMode')}</label><select id="inv-paymode" class="form-select" onchange="renderTimbreHint()">
+          ${['virement','especes','cheque','carte'].map(m=>`<option value="${m}" ${((inv&&inv.paymentMode)||'virement')===m?'selected':''}>${t('inv.pay.'+m)}</option>`).join('')}
+        </select></div>
       </div>
+      <p id="timbre-hint" class="text-xs opacity-70"></p>
       <div>
         <div class="flex justify-between mb-2"><label class="form-label mb-0">${t('inv.lines')}</label>
           <button type="button" onclick="addInvoiceItem()" class="text-sm text-sky-600 font-medium">${t('actions.add')}</button></div>
@@ -36,6 +40,7 @@ function openNewInvoice(editId){
     </div>
   </div>`);
   try{lucide.createIcons();}catch(e){}
+  try{renderTimbreHint();}catch(e){}
 }
 function itemRowHtml(item){
   item=item||{};
@@ -74,7 +79,7 @@ function saveInvoice(editId){
     items.push({description:desc,qty:parseFloat(row.querySelector('.item-qty').value)||0,unitPrice:parseFloat(row.querySelector('.item-price').value)||0,tva:parseFloat(row.querySelector('.item-tva').value)||0});
   });
   if(!items.length)return toast(t('toast.addLine'),'err');
-  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,items,notes:document.getElementById('inv-notes').value.trim()};
+  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',items,notes:document.getElementById('inv-notes').value.trim()};
   if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);
     if(idx<0)return toast(t('toast.invoiceNotFound'),'err');
     state.invoices[idx]={...state.invoices[idx],...data};toast(t('toast.updated'));}
@@ -83,3 +88,10 @@ function saveInvoice(editId){
 }
 function editInvoice(id){openNewInvoice(id);}
 function getTpl(id){return TEMPLATES.find(t=>t.id===id)||TEMPLATES[0];}
+
+/* Explains, inside the editor, why a total is about to grow. */
+function renderTimbreHint(){
+  var el=document.getElementById('timbre-hint');if(!el)return;
+  var sel=document.getElementById('inv-paymode');
+  el.textContent=(sel&&sel.value==='especes')?t('inv.timbreHint'):'';
+}
