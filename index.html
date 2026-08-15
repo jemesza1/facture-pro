@@ -1,1 +1,196 @@
-<PLACEHOLDER>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#006233" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="FacturePro" />
+  <title>FacturePro Algérie | Logiciel de facturation gratuit — فاتورة برو الجزائر</title>
+  <meta name="description" content="FacturePro : logiciel de facturation gratuit pour l'Algérie. Créez des factures conformes (TVA 19%, NIF, RC, NIS) en français et arabe. Modèles professionnels, suivi clients, export PDF. بياناتك محلية 100%." />
+  <meta name="keywords" content="facture algérie, logiciel facture algérie, facturation algérie, modèle facture algérie, facture TVA 19%, générateur facture, facture NIF RC, facture électronique algérie, logiciel facturation gratuit, création facture algérie, facture pro, facture SARL algérie, devis facture algérie, فاتورة الجزائر, برنامج فواتير الجزائر, نموذج فاتورة جزائرية, فاتورة ضريبية الجزائر, إنشاء فاتورة, فاتورة برو, فاتورة NIF, برنامج محاسبة الجزائر, فاتورة إلكترونية" />
+  <meta name="author" content="CheMs SoUu" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="language" content="French, Arabic" />
+  <meta name="geo.region" content="DZ" />
+  <meta name="geo.country" content="Algeria" />
+  <link rel="canonical" href="https://facture-pro-iota.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="fr_DZ" />
+  <meta property="og:locale:alternate" content="ar_DZ" />
+  <meta property="og:url" content="https://facture-pro-iota.vercel.app/" />
+  <meta property="og:site_name" content="FacturePro Algérie" />
+  <meta property="og:title" content="FacturePro Algérie | Logiciel de facturation gratuit" />
+  <meta property="og:description" content="Créez des factures professionnelles conformes à la réglementation algérienne (TVA 19%, NIF, RC). Français & Arabe. Gratuit, données locales." />
+  <meta property="og:image" content="https://facture-pro-iota.vercel.app/og-cover.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FacturePro Algérie | فاتورة برو" />
+  <meta name="twitter:description" content="Logiciel de facturation gratuit pour l'Algérie — TVA 19%, NIF, RC. Français & Arabe." />
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"FacturePro Algérie","alternateName":"فاتورة برو","url":"https://facture-pro-iota.vercel.app/","description":"Logiciel de facturation gratuit conforme à la réglementation algérienne.","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"DZD"},"author":{"@type":"Person","name":"CheMs SoUu"},"inLanguage":["fr","ar"]}
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css?v=20260815f" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { brand: { 500: '#059669', 600: '#006233', 700: '#00512a' } } } }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased safe-area">
+  <div id="app" class="flex h-[100dvh] overflow-hidden">
+    <aside id="sidebar" class="w-64 bg-white dark:bg-slate-900 border-e border-slate-200 dark:border-slate-800 flex flex-col fixed inset-y-0 start-0 z-30 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-200">
+      <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shrink-0">
+          <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-bold text-sm sm:text-base truncate">FacturePro</h1>
+          <p class="text-xs text-slate-500">Algérie • Conforme</p>
+        </div>
+        <button type="button" onclick="toggleSidebar()" class="ms-auto md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fermer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <button type="button" onclick="navigate('dashboard')" data-page="dashboard" class="nav-item active"><i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.dashboard">Tableau de bord</span></button>
+        <button type="button" onclick="navigate('invoices')" data-page="invoices" class="nav-item"><i data-lucide="receipt" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.invoices">Factures</span></button>
+        <button type="button" onclick="navigate('devis')" data-page="devis" class="nav-item"><i data-lucide="file-spreadsheet" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.devis">Devis</span></button>
+        <button type="button" onclick="navigate('products')" data-page="products" class="nav-item"><i data-lucide="package" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.products">Produits</span></button>
+        <button type="button" onclick="navigate('payments')" data-page="payments" class="nav-item"><i data-lucide="wallet" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.payments">Paiements</span></button>
+        <button type="button" onclick="navigate('clients')" data-page="clients" class="nav-item"><i data-lucide="users" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.clients">Clients</span></button>
+        <button type="button" onclick="navigate('templates')" data-page="templates" class="nav-item"><i data-lucide="layout-template" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.templates">Modèles</span></button>
+        <button type="button" onclick="navigate('settings')" data-page="settings" class="nav-item"><i data-lucide="settings" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.settings">Paramètres</span></button>
+        <button type="button" onclick="navigate('help')" data-page="help" class="nav-item"><i data-lucide="help-circle" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.help">Aide</span></button>
+        <button type="button" onclick="navigate('terms')" data-page="terms" class="nav-item"><i data-lucide="file-check" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.terms">Conditions</span></button>
+      </nav>
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800">
+        <button type="button" onclick="openNewInvoice()" class="btn-primary w-full"><i data-lucide="plus" class="w-4 h-4"></i> <span data-i18n="actions.newInvoice">Nouvelle facture</span></button>
+      </div>
+      <div class="px-3 pb-3 text-center">
+        <p class="text-[10px] text-slate-400">Created by <span class="font-semibold text-slate-600 dark:text-slate-300">CheMs SoUu</span></p>
+      </div>
+    </aside>
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-20 hidden md:hidden" onclick="toggleSidebar()"></div>
+
+    <div class="flex-1 flex flex-col min-w-0 min-h-0">
+      <header class="h-14 sm:h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 gap-2 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <button type="button" onclick="toggleSidebar()" class="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Menu">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <h2 id="page-title" class="text-base sm:text-xl font-semibold truncate">Tableau de bord</h2>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button type="button" id="lang-toggle" onclick="toggleLocale()" class="px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold">العربية</button>
+          <button type="button" onclick="toggleDark()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Thème">
+            <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+            <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+          </button>
+          <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold">DZ</div>
+        </div>
+      </header>
+
+      <div id="local-warn" class="hidden shrink-0 px-3 sm:px-6 pt-3">
+        <div class="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:p-3.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"></i>
+          <div class="min-w-0 flex-1">
+            <p id="lw-title" class="text-sm font-semibold text-amber-900 dark:text-amber-200"></p>
+            <p id="lw-body" class="text-xs sm:text-[13px] leading-relaxed text-amber-800 dark:text-amber-200/80 mt-0.5"></p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button type="button" onclick="exportData()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i><span id="lw-cta"></span>
+              </button>
+              <button type="button" onclick="dismissWarn()" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-500/10"><span id="lw-hide"></span></button>
+            </div>
+          </div>
+          <button type="button" onclick="dismissWarn()" aria-label="Fermer" class="shrink-0 rounded-lg p-1 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-500/10">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 pb-6"><div id="boot-skeleton">
+        <div class="sk-kpis">
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
+        </div>
+        <div class="sk-card">
+          <div class="sk sk-line" style="width:30%;height:16px;margin-bottom:18px"></div>
+          <div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
+        </div>
+      </div></main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+  <canvas id="confetti" hidden></canvas>
+
+  <div id="preview-root" class="hidden fixed inset-0 z-50 bg-slate-100 dark:bg-slate-950 flex flex-col safe-area">
+    <div class="h-14 bg-white dark:bg-slate-900 border-b flex items-center justify-between px-3 sm:px-4 gap-2 shrink-0">
+      <button type="button" onclick="closePreview()" class="btn-secondary"><i data-lucide="arrow-left" class="w-4 h-4"></i> <span data-i18n="actions.back">Retour</span></button>
+      <div class="flex gap-2">
+        <button type="button" onclick="downloadPdf()" class="btn-primary"><i data-lucide="download" class="w-4 h-4"></i> PDF</button>
+        <button type="button" onclick="window.print()" class="btn-secondary hidden sm:inline-flex"><i data-lucide="printer" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-3 sm:p-4" id="preview-body"></div>
+  </div>
+
+  <script src="i18n.js?v=20260815f"></script>
+  <script src="app.js?v=20260815f"></script>
+  <script>
+    var LW = {
+      fr:{t:"Vos données sont enregistrées dans ce navigateur uniquement.",
+          b:"Si vous videz le cache de votre navigateur ou utilisez un autre appareil, vos factures seront perdues. Sauvegardez régulièrement avec Exporter (fichier .json) — c'est le seul format réimportable. Un PDF est une copie de facture, pas une sauvegarde.",
+          c:"Exporter maintenant", h:"Plus tard"},
+      ar:{t:"بياناتك محفوظة في هذا المتصفح فقط.",
+          b:"إذا مسحت ذاكرة التخزين أو استخدمت جهازًا آخر، ستفقد فواتيرك. احفظ نسخة احتياطية بانتظام عبر «تصدير» (ملف .json) — وهو الصيغة الوحيدة القابلة للاستيراد. ملف PDF نسخة من الفاتورة وليس نسخة احتياطية.",
+          c:"تصدير الآن", h:"لاحقًا"}
+    };
+    function paintWarn(){
+      var l = (typeof locale !== 'undefined' && LW[locale]) ? locale : 'fr', d = LW[l];
+      var q = function(id){ return document.getElementById(id); };
+      if(q('lw-title')) q('lw-title').textContent = d.t;
+      if(q('lw-body'))  q('lw-body').textContent  = d.b;
+      if(q('lw-cta'))   q('lw-cta').textContent   = d.c;
+      if(q('lw-hide'))  q('lw-hide').textContent  = d.h;
+    }
+    function dismissWarn(){
+      var el = document.getElementById('local-warn');
+      if(el) el.classList.add('hidden');
+      try{ localStorage.setItem('fp_warn_seen','1'); }catch(e){}
+    }
+    (function(){
+      var seen = false;
+      try{ seen = localStorage.getItem('fp_warn_seen') === '1'; }catch(e){}
+      if(!seen){
+        var el = document.getElementById('local-warn');
+        if(el) el.classList.remove('hidden');
+      }
+      paintWarn();
+      window.addEventListener('load', function(){
+        var t = window.toggleLocale;
+        if(typeof t === 'function' && !t.__wrapped){
+          window.toggleLocale = function(){ t.apply(null, arguments); paintWarn(); };
+          window.toggleLocale.__wrapped = true;
+        }
+      });
+    })();
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      try { if (typeof applyLocale === 'function') applyLocale(); } catch (e) {}
+      try { lucide.createIcons(); } catch (e) {}
+    });
+  </script>
+</body>
+</html>
