@@ -8,33 +8,15 @@
   <meta name="apple-mobile-web-app-title" content="FacturePro" />
   <title>FacturePro Algérie | Logiciel de facturation gratuit — فاتورة برو الجزائر</title>
   <meta name="description" content="FacturePro : logiciel de facturation gratuit pour l'Algérie. Créez des factures conformes (TVA 19%, NIF, RC, NIS) en français et arabe. Modèles professionnels, suivi clients, export PDF. بياناتك محلية 100%." />
-  <meta name="keywords" content="facture algérie, logiciel facture algérie, facturation algérie, modèle facture algérie, facture TVA 19%, générateur facture, facture NIF RC, facture électronique algérie, logiciel facturation gratuit, création facture algérie, facture pro, facture SARL algérie, devis facture algérie, فاتورة الجزائر, برنامج فواتير الجزائر, نموذج فاتورة جزائرية, فاتورة ضريبية الجزائر, إنشاء فاتورة, فاتورة برو, فاتورة NIF, برنامج محاسبة الجزائر, فاتورة إلكترونية" />
   <meta name="author" content="CheMs SoUu" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
-  <meta name="language" content="French, Arabic" />
-  <meta name="geo.region" content="DZ" />
-  <meta name="geo.country" content="Algeria" />
+  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://facture-pro-iota.vercel.app/" />
-  <meta property="og:type" content="website" />
-  <meta property="og:locale" content="fr_DZ" />
-  <meta property="og:locale:alternate" content="ar_DZ" />
-  <meta property="og:url" content="https://facture-pro-iota.vercel.app/" />
-  <meta property="og:site_name" content="FacturePro Algérie" />
-  <meta property="og:title" content="FacturePro Algérie | Logiciel de facturation gratuit" />
-  <meta property="og:description" content="Créez des factures professionnelles conformes à la réglementation algérienne (TVA 19%, NIF, RC). Français & Arabe. Gratuit, données locales." />
-  <meta property="og:image" content="https://facture-pro-iota.vercel.app/og-cover.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="FacturePro Algérie | فاتورة برو" />
-  <meta name="twitter:description" content="Logiciel de facturation gratuit pour l'Algérie — TVA 19%, NIF, RC. Français & Arabe." />
-  <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebApplication","name":"FacturePro Algérie","alternateName":"فاتورة برو","url":"https://facture-pro-iota.vercel.app/","description":"Logiciel de facturation gratuit conforme à la réglementation algérienne.","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"DZD"},"author":{"@type":"Person","name":"CheMs SoUu"},"inLanguage":["fr","ar"]}
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles.css?v=20260815f" />
+  <link rel="stylesheet" href="styles.css?v=20260815h" />
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -63,6 +45,7 @@
         <button type="button" onclick="navigate('devis')" data-page="devis" class="nav-item"><i data-lucide="file-spreadsheet" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.devis">Devis</span></button>
         <button type="button" onclick="navigate('products')" data-page="products" class="nav-item"><i data-lucide="package" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.products">Produits</span></button>
         <button type="button" onclick="navigate('payments')" data-page="payments" class="nav-item"><i data-lucide="wallet" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.payments">Paiements</span></button>
+        <button type="button" onclick="navigate('debts')" data-page="debts" class="nav-item"><i data-lucide="hand-coins" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.debts">Créances</span></button>
         <button type="button" onclick="navigate('clients')" data-page="clients" class="nav-item"><i data-lucide="users" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.clients">Clients</span></button>
         <button type="button" onclick="navigate('templates')" data-page="templates" class="nav-item"><i data-lucide="layout-template" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.templates">Modèles</span></button>
         <button type="button" onclick="navigate('settings')" data-page="settings" class="nav-item"><i data-lucide="settings" class="w-5 h-5 shrink-0"></i><span data-i18n="nav.settings">Paramètres</span></button>
@@ -116,18 +99,7 @@
         </div>
       </div>
 
-      <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 pb-6"><div id="boot-skeleton">
-        <div class="sk-kpis">
-          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
-          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
-          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
-          <div class="sk-card"><div class="sk sk-line sm"></div><div class="sk sk-line lg"></div></div>
-        </div>
-        <div class="sk-card">
-          <div class="sk sk-line" style="width:30%;height:16px;margin-bottom:18px"></div>
-          <div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
-        </div>
-      </div></main>
+      <main id="main-content" class="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 pb-6"></main>
     </div>
   </div>
 
@@ -145,16 +117,16 @@
     <div class="flex-1 overflow-y-auto p-3 sm:p-4" id="preview-body"></div>
   </div>
 
-  <script src="i18n.js?v=20260815f"></script>
-  <script src="app.js?v=20260815f"></script>
+  <script src="i18n.js?v=20260815h"></script>
+  <script src="app.js?v=20260815h"></script>
   <script>
     var LW = {
       fr:{t:"Vos données sont enregistrées dans ce navigateur uniquement.",
-          b:"Si vous videz le cache de votre navigateur ou utilisez un autre appareil, vos factures seront perdues. Sauvegardez régulièrement avec Exporter (fichier .json) — c'est le seul format réimportable. Un PDF est une copie de facture, pas une sauvegarde.",
+          b:"Si vous videz le cache ou changez d'appareil, vos données seront perdues. Exportez régulièrement (fichier .json).",
           c:"Exporter maintenant", h:"Plus tard"},
       ar:{t:"بياناتك محفوظة في هذا المتصفح فقط.",
-          b:"إذا مسحت ذاكرة التخزين أو استخدمت جهازًا آخر، ستفقد فواتيرك. احفظ نسخة احتياطية بانتظام عبر «تصدير» (ملف .json) — وهو الصيغة الوحيدة القابلة للاستيراد. ملف PDF نسخة من الفاتورة وليس نسخة احتياطية.",
-          c:"تصدير الآن", h:"لاحقًا"}
+          b:"إذا مسحت ذاكرة التخزين أو استخدمت جهازاً آخر ستفقد بياناتك. صدّر نسخة JSON بانتظام.",
+          c:"تصدير الآن", h:"لاحقاً"}
     };
     function paintWarn(){
       var l = (typeof locale !== 'undefined' && LW[locale]) ? locale : 'fr', d = LW[l];
@@ -177,20 +149,7 @@
         if(el) el.classList.remove('hidden');
       }
       paintWarn();
-      window.addEventListener('load', function(){
-        var t = window.toggleLocale;
-        if(typeof t === 'function' && !t.__wrapped){
-          window.toggleLocale = function(){ t.apply(null, arguments); paintWarn(); };
-          window.toggleLocale.__wrapped = true;
-        }
-      });
     })();
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      try { if (typeof applyLocale === 'function') applyLocale(); } catch (e) {}
-      try { lucide.createIcons(); } catch (e) {}
-    });
   </script>
 </body>
 </html>
