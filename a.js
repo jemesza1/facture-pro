@@ -18,12 +18,14 @@ function formatDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateSt
    Article 100 du Code du timbre, bareme de la LF 2025. Il n'est du que sur
    les reglements en ESPECES : les virements, versements bancaires ou postaux
    et les paiements par TPE en sont exoneres.
-   Percu par tranche de 100 DA, toute fraction de tranche comptant pour une
-   tranche entiere :
-       jusqu'a  30 000 DA  ->  1   DA par tranche  (~1 %)
-       30 000 a 100 000 DA ->  1,5 DA par tranche  (~1,5 %)
-       au-dela de 100 000  ->  2   DA par tranche  (~2 %)
+   Taux appliques directement au montant :
+       jusqu'a  30 000 DA  ->  1   %
+       30 000 a 100 000 DA ->  1,5 %
+       au-dela de 100 000  ->  2   %
    Minimum : 5 DA.
+   L'article parle de tranches de 100 DA ; sur un montant multiple de 100 les
+   deux lectures donnent le meme resultat, et la profession retient le taux
+   direct. C'est donc celui-ci qui est applique.
    La base est le montant TTC de la facture, c'est-a-dire la somme
    effectivement encaissee.
    Seul l'ancien plafond de 10 000 DA reste interprete differemment d'un
@@ -32,7 +34,7 @@ function timbreRate(a){return a<=30000?1:(a<=100000?1.5:2);}
 function calcTimbre(amount){
   var a=Math.round(Number(amount)||0);
   if(a<=0)return 0;
-  var d=Math.ceil(a/100)*timbreRate(a);
+  var d=a*timbreRate(a)/100;
   if(d<5)d=5;
   var cap=0;try{cap=Number(state.company&&state.company.timbreCap)||0;}catch(e){}
   if(cap>0&&d>cap)d=cap;

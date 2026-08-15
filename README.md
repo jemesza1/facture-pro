@@ -55,9 +55,11 @@ shows or compares *what the client owes* (dashboard, invoice list, créances,
 payment settlement, CSV export) must read `net`. `ttc` stays for the TTC row of
 the templates only. Devis have no payment mode, so they keep `ttc`.
 
-The base is the TTC amount — the sum actually collected. The only disputed
-point left is the old 10 000 DA ceiling, which is a setting (`timbreCap`,
-0 = none), not a constant.
+The base is the TTC amount — the sum actually collected — and the rate is
+applied directly (1 / 1,5 / 2 %), not by rounding up to whole 100 DA brackets.
+On a multiple of 100 both readings agree; the direct rate is what the
+profession uses. The only disputed point left is the old 10 000 DA ceiling,
+which is a setting (`timbreCap`, 0 = none), not a constant.
 
 Invoices (`c2.js` renderers) stay French and LTR on purpose, even when the UI is
 in Arabic — they are legal documents.
