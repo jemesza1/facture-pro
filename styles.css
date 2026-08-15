@@ -160,7 +160,6 @@ body {
 
 body.sidebar-open { overflow:hidden; }
 
-/* Phone */
 @media (max-width:639px){
   .stat-card{padding:1rem;}
   .stat-value{font-size:1.25rem;}
@@ -173,29 +172,24 @@ body.sidebar-open { overflow:hidden; }
   .item-row{grid-template-columns:repeat(12,minmax(0,1fr));}
 }
 
-/* Tablet */
 @media (min-width:640px) and (max-width:1023px){
   .stat-value{font-size:1.35rem;}
   #sidebar{width:15rem;}
 }
 
-/* Desktop */
 @media (min-width:1024px){
   .stat-value{font-size:1.6rem;}
 }
 
-/* Mobile sidebar width */
 @media (max-width:767px){
   #sidebar{width:min(18rem,85vw);box-shadow:0 0 40px rgba(0,0,0,.2);}
 }
 
-/* Landscape phone */
 @media (max-height:500px) and (orientation:landscape){
   .stat-card{padding:0.75rem 1rem;}
   .stat-value{font-size:1.1rem;margin-top:0.25rem;}
 }
 
-/* Tiny phones */
 @media (max-width:360px){
   .stat-value{font-size:1.1rem;}
   .btn-primary,.btn-secondary{font-size:0.8125rem;padding:0.5rem 0.75rem;}
@@ -215,7 +209,6 @@ body.sidebar-open { overflow:hidden; }
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
 .dark ::-webkit-scrollbar-thumb{background:#475569;}
 
-/* ---- Mobile: cards instead of table ---- */
 .invoice-cards{display:none}
 .inv-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
   padding:14px;box-shadow:var(--shadow);margin-bottom:10px}
@@ -236,7 +229,6 @@ body.sidebar-open { overflow:hidden; }
   .invoice-cards{display:block}
 }
 
-/* ===== Skeleton shimmer (shown while modules load) ===== */
 #boot-skeleton{padding:4px}
 .sk{background:linear-gradient(90deg,#eef2f6 25%,#e2e8f0 37%,#eef2f6 63%);
   background-size:400% 100%;animation:sk 1.3s ease-in-out infinite;border-radius:8px}
@@ -252,32 +244,25 @@ body.sidebar-open { overflow:hidden; }
 .sk-line.sm{width:45%}
 .sk-row{height:44px;margin-bottom:8px}
 
-/* ===== Micro-interactions ===== */
 .btn-primary,.btn-secondary,.btn-danger,.btn-ghost{
   transition:transform .12s cubic-bezier(.34,1.4,.64,1),background .16s,box-shadow .16s}
 .btn-primary:active,.btn-secondary:active,.btn-danger:active,.btn-ghost:active{transform:scale(.96)}
 .nav-item:active{transform:scale(.985)}
 .stat-card{will-change:transform}
 
-/* ===== Counter ===== */
 .count{font-variant-numeric:tabular-nums}
 
-/* ===== Empty state ===== */
 .empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 24px}
 .empty-state svg{width:150px;height:120px;margin-bottom:20px}
 .empty-state h3{font-size:18px;font-weight:700;margin-bottom:6px}
 .empty-state p{font-size:14px;color:var(--muted);max-width:22rem;margin-bottom:22px}
 
-/* ===== Confetti ===== */
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:200}
 @media(prefers-reduced-motion:reduce){
   .sk{animation:none}
   .btn-primary:active,.btn-secondary:active,.btn-danger:active,.btn-ghost:active{transform:none}
 }
 
-/* ===== RTL mobile sidebar fix =====
-   Tailwind's -translate-x-full always moves LEFT. In RTL the drawer is
-   anchored right (start-0), so it must move RIGHT to leave the screen. */
 @media (max-width:767px){
   #sidebar.-translate-x-full{transform:translateX(-100%)!important}
   [dir="rtl"] #sidebar.-translate-x-full{transform:translateX(100%)!important}
@@ -285,13 +270,9 @@ body.sidebar-open { overflow:hidden; }
   [dir="rtl"] #sidebar{box-shadow:0 0 40px rgba(0,0,0,.2)}
 }
 
-/* ===== Invoices are always LTR =====
-   Template text is French, so the paper must not inherit the app's RTL
-   direction — otherwise columns and labels mirror on Arabic devices. */
 .invoice-paper,.invoice-paper *{direction:ltr!important;unicode-bidi:isolate}
 .invoice-paper{text-align:left}
 
-/* ---- Status filter chips (works on mobile: horizontal scroll, 40px touch targets) ---- */
 .filter-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:4px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
 .filter-chips::-webkit-scrollbar{display:none}
@@ -309,7 +290,6 @@ body.sidebar-open { overflow:hidden; }
 .dark .filter-chips .chip-n{background:rgba(255,255,255,.10)}
 .dark .filter-chips .chip-on{background:#006233;color:#fff;border-color:#006233}
 
-/* ---- Tappable status on mobile invoice cards ---- */
 .inv-card .badge-wrap{margin-left:auto;margin-inline-start:auto;margin-inline-end:0}
 .card-status{appearance:none;-webkit-appearance:none;border-radius:9999px;
   min-height:36px;padding:0 30px 0 14px;font-size:12px;font-weight:600;cursor:pointer;
@@ -318,3 +298,104 @@ body.sidebar-open { overflow:hidden; }
   background-repeat:no-repeat;background-position:right 10px center;background-size:11px}
 [dir="rtl"] .card-status{padding:0 14px 0 30px;background-position:left 10px center}
 .card-status:focus-visible{outline:2px solid #006233;outline-offset:2px}
+
+/* ===== Premium visual polish (design refresh) — CSS only ===== */
+.dark body,
+.dark {
+  --page: #0b1220;
+  --surface: #111827;
+  --border: #1f2937;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+}
+.dark body { background: #0b1220; }
+
+:root {
+  --brand: #006233;
+  --brand-soft: #e7f5ee;
+  --paid: #059669;
+  --pending: #d97706;
+  --overdue: #dc2626;
+  --month: #0284c7;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.1rem;
+}
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+  background: var(--brand);
+  opacity: .85;
+}
+.dark .stat-card {
+  background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+  border-color: #1e293b;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(15,23,42,.12);
+}
+.dark .stat-card:hover {
+  box-shadow: 0 12px 32px rgba(0,0,0,.35);
+}
+
+.stat-card .w-10.h-10.rounded-xl.bg-emerald-100 { background: #d1fae5 !important; }
+.stat-card .w-10.h-10.rounded-xl.bg-blue-100 { background: #dbeafe !important; }
+.stat-card .w-10.h-10.rounded-xl.bg-red-100 { background: #fee2e2 !important; }
+.stat-card .w-10.h-10.rounded-xl.bg-sky-100 { background: #e0f2fe !important; }
+.dark .stat-card .w-10.h-10.rounded-xl.bg-emerald-100 { background: rgba(16,185,129,.18) !important; }
+.dark .stat-card .w-10.h-10.rounded-xl.bg-blue-100 { background: rgba(59,130,246,.18) !important; }
+.dark .stat-card .w-10.h-10.rounded-xl.bg-red-100 { background: rgba(239,68,68,.18) !important; }
+.dark .stat-card .w-10.h-10.rounded-xl.bg-sky-100 { background: rgba(14,165,233,.18) !important; }
+
+.dark #sidebar {
+  background: #0a0f1a !important;
+  border-color: #1e293b !important;
+}
+.dark .nav-item.active {
+  background: rgba(0,98,51,.28);
+  color: #6ee7b7;
+  box-shadow: inset 3px 0 0 #10b981;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #067a3f 0%, #006233 100%);
+  box-shadow: 0 6px 16px rgba(0,98,51,.28);
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #078a47 0%, #00512a 100%);
+}
+
+.dark .data-table thead th {
+  background: #0a0f1a;
+  color: #94a3b8;
+}
+.dark .card {
+  background: #111827;
+  border-color: #1e293b;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+
+.dark .badge-payee { background: rgba(16,185,129,.18); color: #6ee7b7; border-color: rgba(16,185,129,.3); }
+.dark .badge-enretard { background: rgba(239,68,68,.18); color: #fca5a5; border-color: rgba(239,68,68,.3); }
+.dark .badge-envoyee { background: rgba(245,158,11,.18); color: #fcd34d; border-color: rgba(245,158,11,.3); }
+.dark .badge-brouillon { background: rgba(148,163,184,.12); color: #cbd5e1; border-color: rgba(148,163,184,.2); }
+
+.dark .inv-card {
+  background: #111827;
+  border-color: #1e293b;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+
+.dark #app {
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(0,98,51,.12), transparent 50%), #0b1220;
+}
