@@ -2,7 +2,7 @@ function renderInvoiceHTML(inv){
   const tpl=getTpl(inv.template);
   if(tpl.layout==='dz')return renderInvoiceDZ(inv,tpl);
   if(tpl.layout==='studio')return renderInvoiceStudio(inv,tpl);
-  return renderInvoiceClassic(inv,tpl);
+  return renderInvoiceDZ(inv,tpl);
 }
 function renderInvoiceClassic(inv,tpl){
   const company=state.company, client=getClient(inv.clientId), totals=calcInvoiceTotals(inv);
@@ -59,6 +59,15 @@ function renderInvoiceClassic(inv,tpl){
     <div style="margin-top:8px;font-size:9px;color:#94a3b8">Created by CheMs SoUu · FacturePro Algérie</div>
   </div>`;
 }
+function legalLines(e,inline){
+  const L=[];
+  if(e.nif)L.push('NIF : '+e.nif);
+  if(e.nis)L.push('NIS : '+e.nis);
+  if(e.rc)L.push('RC : '+e.rc);
+  if(e.ai)L.push('AI : '+e.ai);
+  if(!L.length)return '';
+  return inline?L.join(' &nbsp;·&nbsp; '):L.map(x=>'<div>'+x+'</div>').join('');
+}
 function renderInvoiceDZ(inv,tpl){
   const company=state.company, client=getClient(inv.clientId), totals=calcInvoiceTotals(inv);
   const g=tpl.color||'#006233', g2=tpl.color2||'#059669', words=amountInWords(totals.ttc);
@@ -87,9 +96,7 @@ function renderInvoiceDZ(inv,tpl){
       </div>
       <div style="text-align:right;font-size:10.5px;color:rgba(255,255,255,.92);line-height:1.7">
         <div style="font-size:13px;font-weight:700;color:#fff">${inv.number}</div>
-        <div>NIF : ${company.nif||'—'}</div>
-        <div>RC : ${company.rc||'—'}</div>
-        ${company.ai?`<div>AI : ${company.ai}</div>`:''}
+        ${legalLines(company,false)||'<div>—</div>'}
       </div>
     </div>
     <div style="padding:26px 32px 32px">
@@ -98,7 +105,7 @@ function renderInvoiceDZ(inv,tpl){
           <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:${g};font-weight:700;margin-bottom:5px">Facturé à</div>
           <div style="font-weight:700;font-size:14px">${client.name}</div>
           <div style="font-size:11px;color:#64748b;white-space:pre-line;margin-top:2px">${client.address||''}</div>
-          ${client.nif?`<div style="font-size:10px;color:#94a3b8;margin-top:3px">NIF : ${client.nif}</div>`:''}
+          ${legalLines(client,false)?`<div style="font-size:9.5px;color:#94a3b8;margin-top:4px;line-height:1.6">${legalLines(client,false)}</div>`:''}
         </div>
         <div style="text-align:right;font-size:11px;color:#475569;line-height:1.9">
           <div><span style="color:#94a3b8">Date&nbsp;:</span> <strong>${formatDate(inv.date)}</strong></div>
@@ -130,7 +137,7 @@ function renderInvoiceDZ(inv,tpl){
       <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:26px;padding-top:16px;border-top:1px solid #eef2f7">
         <div style="font-size:10px;color:#94a3b8;line-height:1.7">
           ${company.rib?`<div>RIB : ${company.rib} — ${company.banque||''}</div>`:''}
-          ${company.nis?`<div>NIS : ${company.nis}</div>`:''}
+          ${company.email||company.phone?`<div>${company.email||''}${company.email&&company.phone?' · ':''}${company.phone||''}</div>`:''}
           <div style="margin-top:5px;color:#cbd5e1">Created by CheMs SoUu · FacturePro Algérie</div>
         </div>
         <div style="text-align:center;min-width:150px">
