@@ -2,16 +2,71 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#006233" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>FacturePro Algérie | فاتورة برو</title>
+  <meta name="apple-mobile-web-app-title" content="FacturePro" />
+
+  <!-- SEO primaire -->
+  <title>FacturePro Algérie | Logiciel de facturation gratuit — فاتورة برو الجزائر</title>
+  <meta name="description" content="FacturePro : logiciel de facturation gratuit pour l'Algérie. Créez des factures conformes (TVA 19%, NIF, RC, NIS) en français et arabe. Modèles professionnels, suivi clients, export PDF. بياناتك محلية 100%." />
+  <meta name="keywords" content="facture algérie, logiciel facture algérie, facturation algérie, modèle facture algérie, facture TVA 19%, générateur facture, facture NIF RC, facture électronique algérie, logiciel facturation gratuit, création facture algérie, facture pro, facture SARL algérie, devis facture algérie, فاتورة الجزائر, برنامج فواتير الجزائر, نموذج فاتورة جزائرية, فاتورة ضريبية الجزائر, إنشاء فاتورة, فاتورة برو, فاتورة NIF, برنامج محاسبة الجزائر, فاتورة إلكترونية" />
+  <meta name="author" content="CheMs SoUu" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="language" content="French, Arabic" />
+  <meta name="geo.region" content="DZ" />
+  <meta name="geo.country" content="Algeria" />
+  <link rel="canonical" href="https://facture-pro-iota.vercel.app/" />
+
+  <!-- Open Graph (Facebook / WhatsApp / LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="fr_DZ" />
+  <meta property="og:locale:alternate" content="ar_DZ" />
+  <meta property="og:url" content="https://facture-pro-iota.vercel.app/" />
+  <meta property="og:site_name" content="FacturePro Algérie" />
+  <meta property="og:title" content="FacturePro Algérie | Logiciel de facturation gratuit" />
+  <meta property="og:description" content="Créez des factures professionnelles conformes à la réglementation algérienne (TVA 19%, NIF, RC). Français & Arabe. Gratuit, données locales." />
+  <meta property="og:image" content="https://facture-pro-iota.vercel.app/og-cover.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="FacturePro Algérie | فاتورة برو" />
+  <meta name="twitter:description" content="Logiciel de facturation gratuit pour l'Algérie — TVA 19%, NIF, RC. Français & Arabe." />
+
+  <!-- Données structurées (Google) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "FacturePro Algérie",
+    "alternateName": "فاتورة برو",
+    "url": "https://facture-pro-iota.vercel.app/",
+    "description": "Logiciel de facturation gratuit conforme à la réglementation algérienne (TVA 19%, NIF, RC, NIS). Interface bilingue français/arabe.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "DZD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "CheMs SoUu"
+    },
+    "inLanguage": ["fr", "ar"],
+    "countryOfOrigin": {
+      "@type": "Country",
+      "name": "Algeria"
+    }
+  }
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles.css?v=20260815a" />
+  <link rel="stylesheet" href="styles.css?v=20260815b" />
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -125,8 +180,8 @@
     <div class="flex-1 overflow-y-auto p-3 sm:p-4" id="preview-body"></div>
   </div>
 
-  <script src="i18n.js?v=20260815a"></script>
-  <script src="app.js?v=20260815a"></script>
+  <script src="i18n.js?v=20260815b"></script>
+  <script src="app.js?v=20260815b"></script>
   <script>
     /* ---- Avertissement stockage local (bilingue) ---- */
     var LW = {
@@ -158,7 +213,6 @@
         if(el) el.classList.remove('hidden');
       }
       paintWarn();
-      var orig = window.toggleLocale;
       window.addEventListener('load', function(){
         var t = window.toggleLocale;
         if(typeof t === 'function' && !t.__wrapped){
