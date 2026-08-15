@@ -1,5 +1,6 @@
 function renderInvoiceHTML(inv){
   const tpl=getTpl(inv.template);
+  if(tpl.layout==='dz')return renderInvoiceDZ(inv,tpl);
   if(tpl.layout==='studio')return renderInvoiceStudio(inv,tpl);
   return renderInvoiceClassic(inv,tpl);
 }
@@ -56,6 +57,88 @@ function renderInvoiceClassic(inv,tpl){
     <div style="margin-top:12px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
     ${company.rib?`<div style="margin-top:16px;font-size:10px;color:#64748b">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
     <div style="margin-top:8px;font-size:9px;color:#94a3b8">Created by CheMs SoUu · FacturePro Algérie</div>
+  </div>`;
+}
+function renderInvoiceDZ(inv,tpl){
+  const company=state.company, client=getClient(inv.clientId), totals=calcInvoiceTotals(inv);
+  const g=tpl.color||'#006233', g2=tpl.color2||'#059669', words=amountInWords(totals.ttc);
+  const logo=company.logo
+    ?`<img src="${company.logo}" style="max-height:46px;max-width:100px;object-fit:contain"/>`
+    :`<div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:${g};font-weight:800;font-size:17px">${(company.name||'FP').slice(0,2).toUpperCase()}</div>`;
+  const rows=(inv.items||[]).map((it,i)=>{
+    const line=(it.qty||0)*(it.unitPrice||0);
+    const bg=i%2?'#f8fafc':'#ffffff';
+    return `<tr style="background:${bg}">
+      <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #eef2f7">${it.description}</td>
+      <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.qty}</td>
+      <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #eef2f7">${formatMoney(it.unitPrice)}</td>
+      <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.tva}%</td>
+      <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;border-bottom:1px solid #eef2f7">${formatMoney(line)}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="invoice-paper" id="invoice-paper" style="padding:0;font-family:Inter,Arial,sans-serif;color:#0f172a;overflow:hidden">
+    <div style="background:linear-gradient(100deg,${g},${g2});padding:26px 32px;display:flex;justify-content:space-between;align-items:flex-start;gap:18px">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${logo}
+        <div>
+          <div style="font-size:25px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.1">FACTURE</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:2px">${company.name||''}</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:10.5px;color:rgba(255,255,255,.92);line-height:1.7">
+        <div style="font-size:13px;font-weight:700;color:#fff">${inv.number}</div>
+        <div>NIF : ${company.nif||'—'}</div>
+        <div>RC : ${company.rc||'—'}</div>
+        ${company.ai?`<div>AI : ${company.ai}</div>`:''}
+      </div>
+    </div>
+    <div style="padding:26px 32px 32px">
+      <div style="display:flex;justify-content:space-between;gap:24px;margin-bottom:22px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:${g};font-weight:700;margin-bottom:5px">Facturé à</div>
+          <div style="font-weight:700;font-size:14px">${client.name}</div>
+          <div style="font-size:11px;color:#64748b;white-space:pre-line;margin-top:2px">${client.address||''}</div>
+          ${client.nif?`<div style="font-size:10px;color:#94a3b8;margin-top:3px">NIF : ${client.nif}</div>`:''}
+        </div>
+        <div style="text-align:right;font-size:11px;color:#475569;line-height:1.9">
+          <div><span style="color:#94a3b8">Date&nbsp;:</span> <strong>${formatDate(inv.date)}</strong></div>
+          ${inv.dueDate?`<div><span style="color:#94a3b8">Échéance&nbsp;:</span> <strong>${formatDate(inv.dueDate)}</strong></div>`:''}
+          <div style="font-size:10px;color:#94a3b8;white-space:pre-line;margin-top:4px">${company.address||''}</div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;border-radius:6px;overflow:hidden">
+        <thead><tr style="background:${g};color:#fff">
+          <th style="padding:11px 12px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Désignation</th>
+          <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Qté</th>
+          <th style="padding:11px 8px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">P.U. HT</th>
+          <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">TVA</th>
+          <th style="padding:11px 12px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Total</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-top:18px">
+        <div style="width:250px;border-radius:6px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f1f5f9;color:#475569"><span>Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f8fafc;color:#475569"><span>TVA</span><span>${formatMoney(totals.tva)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:14.5px;font-weight:800;background:${g};color:#fff"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
+        </div>
+      </div>
+      <div style="margin-top:18px;padding:11px 14px;background:#f0fdf4;border-left:3px solid ${g2};border-radius:4px;font-size:11px;font-style:italic">
+        Arrêté la présente facture à la somme de : <strong>${words}</strong>
+      </div>
+      ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${inv.notes}</div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:26px;padding-top:16px;border-top:1px solid #eef2f7">
+        <div style="font-size:10px;color:#94a3b8;line-height:1.7">
+          ${company.rib?`<div>RIB : ${company.rib} — ${company.banque||''}</div>`:''}
+          ${company.nis?`<div>NIS : ${company.nis}</div>`:''}
+          <div style="margin-top:5px;color:#cbd5e1">Created by CheMs SoUu · FacturePro Algérie</div>
+        </div>
+        <div style="text-align:center;min-width:150px">
+          <div style="height:34px;border-bottom:1px solid #cbd5e1;margin-bottom:5px"></div>
+          <div style="font-size:9.5px;color:#94a3b8">Cachet et signature</div>
+        </div>
+      </div>
+    </div>
   </div>`;
 }
 function renderInvoiceStudio(inv,tpl){
