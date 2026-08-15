@@ -31,9 +31,12 @@ A page missing from that array silently bounces the user back to the dashboard.
 There is a second list in `app.js`, but it is only a fallback — `c2.js` is the one
 that runs.
 
-**3. Bump `V` in `app.js` when you change a module.**
-Assets load as `a.js?v=<V>`. Without a bump, browsers keep serving the old file
-and your fix never reaches users, no matter how many times you redeploy.
+**3. Bump `V` in `app.js` when you change a module — and the three `?v=` in `index.html`.**
+Modules load as `a.js?v=<V>`; `index.html` carries its own `?v=` for `styles.css`,
+`i18n.js` and `app.js`. Both must move together. Without a bump, browsers keep
+serving the old file and your fix never reaches users, no matter how many times
+you redeploy. The `must-revalidate` header in `vercel.json` currently hides this
+mistake — do not rely on it, it is a safety net, not the mechanism.
 
 **4. Codes must not be reordered in Arabic.**
 Decree numbers, RC, phone and RIB reverse under RTL bidi (`05-468` renders as
