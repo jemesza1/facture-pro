@@ -282,5 +282,7 @@ function downloadPdf(){downloadPDF();}
 function initApp(){
   loadData();
   if(localStorage.getItem('facturepro_dark')==='1'){state.dark=true;document.documentElement.classList.add('dark');}
-  navigate('dashboard');
+  var ok=['dashboard','invoices','clients','templates','settings','help','terms'];
+  var p=state.currentPage;
+  navigate(ok.indexOf(p)>-1?p:'dashboard');
 }

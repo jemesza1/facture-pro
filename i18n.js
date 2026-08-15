@@ -1,44 +1,48 @@
 /* FacturePro i18n FR/AR */
 const I18N={
 fr:{
-nav:{dashboard:'Tableau de bord',invoices:'Factures',clients:'Clients',templates:'Modèles',settings:'Paramètres',help:'Aide',terms:'Conditions'},
-actions:{newInvoice:'Nouvelle facture',newClient:'Nouveau client',save:'Enregistrer',back:'Retour',delete:'Supprimer',edit:'Modifier',preview:'Aperçu',pdf:'PDF',print:'Imprimer',addLine:'Ajouter une ligne',seeAll:'Voir tout',duplicate:'Dupliquer',export:'Exporter',import:'Importer'},
+nav:{dashboard:'Tableau de bord',invoices:'Factures',clients:'Clients',templates:'Modèles de facture',settings:'Paramètres',help:'Aide',terms:'Conditions'},
+actions:{newInvoice:'Nouvelle facture',newClient:'Nouveau client',save:'Enregistrer',back:'Retour',delete:'Supprimer',edit:'Modifier',preview:'Aperçu',pdf:'PDF',print:'Imprimer',addLine:'Ajouter une ligne',add:'+ Ajouter',seeAll:'Voir tout →',duplicate:'Dupliquer',export:'Exporter',import:'Importer',reset:'Réinitialiser',changeStatus:'Changer le statut',filterByStatus:'Filtrer par statut',createInvoice:'Créer une facture',addLogo:'Ajouter un logo'},
 stats:{paid:'CA payé',pending:'En attente',overdue:'En retard',month:'Ce mois'},
-inv:{title:'FACTURE',recent:'Dernières factures',empty:'Aucune facture',number:'N°',client:'Client',amount:'Montant',status:'Statut',date:'Date',due:'Échéance',billedTo:'Facturé à',desc:'Désignation',qty:'Qté',unit:'P.U. HT',vat:'TVA',subtotal:'Sous-total',totalTtc:'Total TTC',notes:'Conditions de paiement',words:'Arrêté la présente facture à la somme de'},
-status:{brouillon:'Brouillon',envoyee:'Envoyée',payee:'Payée',enretard:'En retard',annulee:'Annulée'},
-clients:{title:'Clients',empty:'Aucun client',name:'Nom',email:'Email',phone:'Téléphone',address:'Adresse',nif:'NIF'},
-company:{name:'Raison sociale',address:'Adresse',nif:'NIF',nis:'NIS',rc:'RC',ai:'AI',rib:'RIB',bank:'Banque',logo:'Logo'},
-tpl:{title:'24 modèles professionnels',pick:'Choisissez un modèle pour vos factures'},
-help:{title:'Comment utiliser FacturePro',s1:'1. Renseignez votre entreprise dans Paramètres (NIF, RC, RIB).',s2:'2. Ajoutez vos clients.',s3:'3. Créez une facture, choisissez un modèle, téléchargez le PDF.',s4:'Vos données restent dans votre navigateur (localStorage).'},
-terms:{title:"Conditions d'utilisation",p1:'FacturePro est un outil local. Aucune donnée n\'est envoyée sur nos serveurs.',p2:'Vous êtes responsable de la conformité de vos factures avec la législation algérienne.',p3:'Sauvegardez régulièrement via Export JSON.'},
+inv:{title:'FACTURE',recent:'Dernières factures',empty:'Aucune facture pour le moment',emptyHint:"Créez votre première facture conforme — il vous faut moins d'une minute.",number:'N°',client:'Client',amount:'Montant',status:'Statut',date:'Date',due:'Échéance',billedTo:'Facturé à',desc:'Désignation',qty:'Qté',unit:'P.U. HT',vat:'TVA',subtotal:'Sous-total',totalTtc:'Total TTC',notes:'Notes',lines:'Lignes',template:'Modèle',actions:'Actions',choose:'— Choisir —',clientReq:'Client *',words:'Arrêté la présente facture à la somme de'},
+status:{brouillon:'Brouillon',envoyee:'Envoyée',payee:'Payée',enretard:'En retard',annulee:'Annulée',all:'Toutes'},
+clients:{title:'Clients',empty:'Aucun client',count:'client(s)',name:'Nom',nameReq:'Nom *',email:'Email',phone:'Téléphone',address:'Adresse',nif:'NIF',nis:'NIS',rc:'RC',ai:"Article d'imposition (AI)"},
+company:{title:'Entreprise (Algérie)',name:'Raison sociale *',address:'Adresse *',nif:'NIF *',nis:'NIS *',rc:'RC *',ai:'AI',rib:'RIB',bank:'Banque',logo:'Logo',email:'Email',phone:'Téléphone',data:'Données',compliance:'Conformité Décret 05-468'},
+tpl:{wordTemplates:'modèles professionnels',title:'29 modèles professionnels',pick:'Choisissez un modèle pour vos factures'},
+help:{title:'Comment utiliser FacturePro',settings:'Paramètres',s1:'— Renseignez NIF, NIS, RC, AI, RIB de votre entreprise.',clients:'Clients',s2:'— Ajoutez vos clients (avec NIF si pro).',newInvoice:'Nouvelle facture',s3:'— Choisissez client + modèle (29) + lignes + TVA.',pdf:'PDF',s4:'— Aperçu (œil) puis téléchargez. Montant en lettres inclus.',follow:'Suivi',s5:'— Changez le statut directement dans le tableau.',exportK:'Export',s6:'— Sauvegardez vos données en JSON.',tip:'Conseil :',tipStart:'Commencez par',tipEnd:', puis clients, puis factures.'},
+terms:{title:"Conditions d'utilisation",intro:"FacturePro est un outil de facturation pour entreprises et indépendants en Algérie.",h1:'1. Utilisation',p1:"Vous êtes responsable des infos saisies. L'outil aide à la conformité Décret 05-468.",h2:'2. Données',p2:'Stockées localement dans votre navigateur (localStorage). Exportez régulièrement.',h3:'3. Mentions légales',p3:'Chaque facture inclut NIF, NIS, RC, AI, montant en lettres, RIB.',h4:'4. Limitation',p4:'Fourni tel quel. Aucune responsabilité en cas de perte de données.'},
+ui:{search:'Rechercher...',notFound:'Page non trouvée',imageOnly:'Image uniquement'},
+toast:{saved:'Enregistré',logoSaved:'Logo enregistré',logoDeleted:'Logo supprimé',maxSize:'Max 1.5 Mo',imageOnly:'Image uniquement',exportOk:'Export OK',clientDeleted:'Client supprimé',clientNotFound:'Client introuvable',nameRequired:'Nom obligatoire',invoiceDeleted:'Facture supprimée',invoiceDuplicated:'Facture dupliquée',invoicePaid:'Facture payée 🎉',statusUpdated:'Statut mis à jour',invoiceNotFound:'Facture introuvable',created:'Créée',updated:'Mise à jour',pickClient:'Choisissez un client',addLine:'Ajoutez une ligne',badFile:'Fichier invalide — import annulé',unreadable:'Lecture du fichier impossible'},
+confirm:{deleteClient:'Supprimer ce client ?',deleteClientInvoices:'Ce client a des factures.\n\nOK = supprimer le client (les factures restent)\nAnnuler = ne rien faire',deleteInvoice:'Supprimer cette facture ?',resetAll:'Tout effacer ?'},
 privacy:'Vos données sont traitées localement dans votre navigateur et ne sont jamais stockées sur nos serveurs. · Created by CheMs SoUu',
 langBtn:'العربية',
-confirmDeleteClient:'Supprimer ce client ?',
-confirmDeleteClientInvoices:'Ce client a des factures.\n\nOK = supprimer le client (les factures restent)\nAnnuler = ne rien faire',
-deleted:'Client supprimé',
 currency:' DA'
 },
 ar:{
-nav:{dashboard:'لوحة التحكم',invoices:'الفواتير',clients:'العملاء',templates:'القوالب',settings:'الإعدادات',help:'المساعدة',terms:'الشروط'},
-actions:{newInvoice:'فاتورة جديدة',newClient:'عميل جديد',save:'حفظ',back:'رجوع',delete:'حذف',edit:'تعديل',preview:'معاينة',pdf:'PDF',print:'طباعة',addLine:'إضافة سطر',seeAll:'عرض الكل',duplicate:'نسخ',export:'تصدير',import:'استيراد'},
-stats:{paid:'رقم الأعمال المدفوع',pending:'قيد الانتظار',overdue:'متأخرة',month:'هذا الشهر'},
-inv:{title:'فاتورة',recent:'آخر الفواتير',empty:'لا توجد فواتير',number:'رقم',client:'العميل',amount:'المبلغ',status:'الحالة',date:'التاريخ',due:'الاستحقاق',billedTo:'فاتورة إلى',desc:'البيان',qty:'الكمية',unit:'سعر الوحدة',vat:'الضريبة',subtotal:'المجموع الفرعي',totalTtc:'المجموع شامل الضريبة',notes:'شروط الدفع',words:'حررت هذه الفاتورة بمبلغ'},
-status:{brouillon:'مسودة',envoyee:'مرسلة',payee:'مدفوعة',enretard:'متأخرة',annulee:'ملغاة'},
-clients:{title:'العملاء',empty:'لا يوجد عملاء',name:'الاسم',email:'البريد',phone:'الهاتف',address:'العنوان',nif:'الرقم الجبائي'},
-company:{name:'اسم الشركة',address:'العنوان',nif:'الرقم الجبائي',nis:'الرقم الإحصائي',rc:'السجل التجاري',ai:'المادة الضريبية',rib:'رقم الحساب',bank:'البنك',logo:'الشعار'},
-tpl:{title:'24 قالبًا احترافيًا',pick:'اختر قالبًا لفواتيرك'},
-help:{title:'كيفية استخدام فاتورة برو',s1:'1. أدخل بيانات شركتك في الإعدادات (NIF، RC، RIB).',s2:'2. أضف عملاءك.',s3:'3. أنشئ فاتورة، اختر قالبًا، حمّل PDF.',s4:'بياناتك تبقى في متصفحك فقط.'},
-terms:{title:'شروط الاستخدام',p1:'فاتورة برو أداة محلية. لا تُرسل أي بيانات إلى خوادمنا.',p2:'أنت مسؤول عن توافق فواتيرك مع القانون الجزائري.',p3:'احفظ نسخة عبر تصدير JSON بانتظام.'},
-privacy:'بياناتك تُعالَج محليًا في متصفحك ولا تُخزَّن أبدًا على خوادمنا. · Created by CheMs SoUu',
+nav:{dashboard:'لوحة التحكم',invoices:'الفواتير',clients:'العملاء',templates:'قوالب الفواتير',settings:'الإعدادات',help:'المساعدة',terms:'الشروط'},
+actions:{newInvoice:'فاتورة جديدة',newClient:'عميل جديد',save:'حفظ',back:'رجوع',delete:'حذف',edit:'تعديل',preview:'معاينة',pdf:'PDF',print:'طباعة',addLine:'إضافة سطر',add:'+ إضافة',seeAll:'عرض الكل ←',duplicate:'نسخ',export:'تصدير',import:'استيراد',reset:'إعادة تعيين',changeStatus:'تغيير الحالة',filterByStatus:'تصفية حسب الحالة',createInvoice:'إنشاء فاتورة',addLogo:'إضافة شعار'},
+stats:{paid:'المبالغ المحصّلة',pending:'قيد الانتظار',overdue:'متأخرة',month:'هذا الشهر'},
+inv:{title:'فاتورة',recent:'آخر الفواتير',empty:'لا توجد فواتير حاليًا',emptyHint:'أنشئ أول فاتورة مطابقة للقانون — لن يستغرق الأمر دقيقة واحدة.',number:'الرقم',client:'العميل',amount:'المبلغ',status:'الحالة',date:'التاريخ',due:'تاريخ الاستحقاق',billedTo:'فاتورة إلى',desc:'البيان',qty:'الكمية',unit:'سعر الوحدة خارج الرسم',vat:'الرسم على القيمة المضافة',subtotal:'المجموع الفرعي',totalTtc:'المجموع شامل الرسم',notes:'ملاحظات',lines:'السطور',template:'القالب',actions:'إجراءات',choose:'— اختر —',clientReq:'العميل *',words:'حررت هذه الفاتورة بمبلغ'},
+status:{brouillon:'مسودة',envoyee:'مرسلة',payee:'مدفوعة',enretard:'متأخرة',annulee:'ملغاة',all:'الكل'},
+clients:{title:'العملاء',empty:'لا يوجد عملاء',count:'عميل',name:'الاسم',nameReq:'الاسم *',email:'البريد الإلكتروني',phone:'الهاتف',address:'العنوان',nif:'الرقم الجبائي',nis:'الرقم الإحصائي',rc:'السجل التجاري',ai:'المادة الضريبية'},
+company:{title:'المؤسسة (الجزائر)',name:'التسمية الاجتماعية *',address:'العنوان *',nif:'الرقم الجبائي *',nis:'الرقم الإحصائي *',rc:'السجل التجاري *',ai:'المادة الضريبية',rib:'رقم الحساب البنكي',bank:'البنك',logo:'الشعار',email:'البريد الإلكتروني',phone:'الهاتف',data:'البيانات',compliance:'مطابقة المرسوم 05-468'},
+tpl:{wordTemplates:'قالبًا احترافيًا',title:'29 قالبًا احترافيًا',pick:'اختر قالبًا لفواتيرك'},
+help:{title:'كيفية استخدام فاتورة برو',settings:'الإعدادات',s1:'— أدخل الرقم الجبائي والإحصائي والسجل التجاري والمادة الضريبية ورقم الحساب.',clients:'العملاء',s2:'— أضف عملاءك (مع الرقم الجبائي للمهنيين).',newInvoice:'فاتورة جديدة',s3:'— اختر العميل + القالب (29) + السطور + الرسم.',pdf:'PDF',s4:'— عاين الفاتورة (أيقونة العين) ثم حمّلها. المبلغ بالحروف مُدرج.',follow:'المتابعة',s5:'— غيّر الحالة مباشرة من الجدول.',exportK:'التصدير',s6:'— احفظ بياناتك بصيغة JSON.',tip:'نصيحة:',tipStart:'ابدأ بـ',tipEnd:'، ثم العملاء، ثم الفواتير.'},
+terms:{title:'شروط الاستخدام',intro:'فاتورة برو أداة لإصدار الفواتير للمؤسسات والمستقلين في الجزائر.',h1:'1. الاستخدام',p1:'أنت مسؤول عن صحة المعلومات المُدخلة. الأداة تساعد على مطابقة المرسوم 05-468.',h2:'2. البيانات',p2:'تُحفظ محليًا في متصفحك (localStorage). قم بالتصدير بانتظام.',h3:'3. البيانات القانونية',p3:'كل فاتورة تتضمن الرقم الجبائي والإحصائي والسجل التجاري والمادة الضريبية والمبلغ بالحروف ورقم الحساب.',h4:'4. حدود المسؤولية',p4:'تُقدَّم الأداة كما هي. لا نتحمل أي مسؤولية في حال فقدان البيانات.'},
+ui:{search:'بحث...',notFound:'الصفحة غير موجودة',imageOnly:'الصور فقط'},
+toast:{saved:'تم الحفظ',logoSaved:'تم حفظ الشعار',logoDeleted:'تم حذف الشعار',maxSize:'الحد الأقصى 1.5 ميغا',imageOnly:'الصور فقط',exportOk:'تم التصدير',clientDeleted:'تم حذف العميل',clientNotFound:'العميل غير موجود',nameRequired:'الاسم إجباري',invoiceDeleted:'تم حذف الفاتورة',invoiceDuplicated:'تم نسخ الفاتورة',invoicePaid:'تم دفع الفاتورة 🎉',statusUpdated:'تم تحديث الحالة',invoiceNotFound:'الفاتورة غير موجودة',created:'تم الإنشاء',updated:'تم التحديث',pickClient:'اختر عميلاً',addLine:'أضف سطرًا',badFile:'ملف غير صالح — تم إلغاء الاستيراد',unreadable:'تعذّرت قراءة الملف'},
+confirm:{deleteClient:'حذف هذا العميل؟',deleteClientInvoices:'هذا العميل لديه فواتير.\n\nموافق = حذف العميل (الفواتير تبقى)\nإلغاء = لا شيء',deleteInvoice:'حذف هذه الفاتورة؟',resetAll:'حذف كل البيانات؟'},
+privacy:'بياناتك تُعالَج محليًا في متصفحك ولا تُخزَّن أبدًا على خوادمنا. · Created by CheMs SoUu',
 langBtn:'Français',
-confirmDeleteClient:'حذف هذا العميل؟',
-confirmDeleteClientInvoices:'هذا العميل لديه فواتير.\n\nموافق = حذف العميل (الفواتير تبقى)\nإلغاء = لا شيء',
-deleted:'تم حذف العميل',
 currency:' د.ج'
 }
 };
 let locale=localStorage.getItem('fp_locale')||'fr';
-function t(path){const parts=path.split('.');let cur=I18N[locale]||I18N.fr;for(const p of parts){if(cur==null)return path;cur=cur[p];}return typeof cur==='string'?cur:path;}
+function t(path){const parts=path.split('.');let cur=I18N[locale]||I18N.fr;for(const p of parts){if(cur==null)break;cur=cur[p];}
+  if(typeof cur==='string')return cur;
+  let f=I18N.fr;for(const p of parts){if(f==null)return path;f=f[p];}
+  return typeof f==='string'?f:path;}
+function setPageTitle(){try{var pt=document.getElementById('page-title');if(pt&&typeof state!=='undefined'){pt.textContent=t('nav.'+state.currentPage)||state.currentPage;}}catch(e){}}
 function toggleLocale(){locale=locale==='fr'?'ar':'fr';localStorage.setItem('fp_locale',locale);try{var sb=document.getElementById('sidebar');if(sb){sb.classList.add('-translate-x-full');sb.classList.remove('translate-x-0');}var ov=document.getElementById('sidebar-overlay');if(ov)ov.classList.add('hidden');if(typeof state!=='undefined')state.sidebarOpen=false;}catch(e){}applyLocale();if(typeof renderPage==='function')renderPage();}
 function applyLocale(){
   document.documentElement.lang=locale;
@@ -47,5 +51,6 @@ function applyLocale(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(k)el.textContent=t(k);});
   const btn=document.getElementById('lang-toggle');if(btn)btn.textContent=t('langBtn');
   if(typeof STATUS!=='undefined'){Object.keys(STATUS).forEach(k=>{if(I18N[locale].status[k])STATUS[k].label=I18N[locale].status[k];});}
+  setPageTitle();
   if(typeof lucide!=='undefined')try{lucide.createIcons();}catch(e){}
 }
