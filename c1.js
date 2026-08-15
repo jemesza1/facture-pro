@@ -8,7 +8,7 @@ function openNewInvoice(editId){
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><label class="form-label">Client *</label>
           <select id="inv-client" class="form-select"><option value="">— Choisir —</option>
-          ${state.clients.map(c=>`<option value="${c.id}" ${inv&&inv.clientId===c.id?'selected':''}>${c.name}</option>`).join('')}
+          ${state.clients.map(c=>`<option value="${c.id}" ${inv&&inv.clientId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
           </select></div>
         <div><label class="form-label">Modèle</label>
           <select id="inv-template" class="form-select">
@@ -41,7 +41,7 @@ function itemRowHtml(item){
   item=item||{};
   return `<div class="grid grid-cols-12 gap-1.5 items-end item-row">
     <div class="col-span-12 sm:col-span-5"><label class="form-label text-xs">Désignation</label>
-      <input class="form-input item-desc" value="${(item.description||'').replace(/"/g,'&quot;')}"/></div>
+      <input class="form-input item-desc" value="${esc(item.description)}"/></div>
     <div class="col-span-3 sm:col-span-2"><label class="form-label text-xs">Qté</label>
       <input type="number" min="0" class="form-input item-qty" value="${item.qty!=null?item.qty:1}"/></div>
     <div class="col-span-4 sm:col-span-2"><label class="form-label text-xs">P.U. HT</label>
@@ -75,7 +75,9 @@ function saveInvoice(editId){
   });
   if(!items.length)return toast('Ajoutez une ligne','err');
   const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,items,notes:document.getElementById('inv-notes').value.trim()};
-  if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);state.invoices[idx]={...state.invoices[idx],...data};toast('Mise à jour');}
+  if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);
+    if(idx<0)return toast('Facture introuvable','err');
+    state.invoices[idx]={...state.invoices[idx],...data};toast('Mise à jour');}
   else{const year=new Date().getFullYear();const number='FAC-'+year+'-'+String(state.nextInvoiceNumber).padStart(3,'0');state.invoices.push({id:uid(),number,...data});state.nextInvoiceNumber++;toast('Créée');}
   saveData();closeModal();navigate('invoices');
 }

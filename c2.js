@@ -5,13 +5,13 @@ function renderInvoiceHTML(inv){
   return renderInvoiceDZ(inv,tpl);
 }
 function renderInvoiceClassic(inv,tpl){
-  const company=state.company, client=getClient(inv.clientId), totals=calcInvoiceTotals(inv);
+  const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
   const color=tpl.color||'#0f172a', words=amountInWords(totals.ttc);
   const logo=company.logo?`<img src="${company.logo}" style="max-height:52px;max-width:110px;object-fit:contain;margin-bottom:8px"/>`:'';
   const rows=(inv.items||[]).map(it=>{
     const line=(it.qty||0)*(it.unitPrice||0);
     return `<tr>
-      <td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px">${it.description}</td>
+      <td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px">${esc(it.description)}</td>
       <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.qty}</td>
       <td style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:12px">${formatMoney(it.unitPrice)}</td>
       <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.tva}%</td>
@@ -26,7 +26,7 @@ function renderInvoiceClassic(inv,tpl){
       </div>
       <div style="text-align:right">
         <div style="font-size:22px;font-weight:800;color:${color}">FACTURE</div>
-        <div style="font-size:13px;font-weight:600">${inv.number}</div>
+        <div style="font-size:13px;font-weight:600">${esc(inv.number)}</div>
         <div style="font-size:11px;color:#64748b">Date: ${formatDate(inv.date)}</div>
         ${inv.dueDate?`<div style="font-size:11px;color:#64748b">Échéance: ${formatDate(inv.dueDate)}</div>`:''}
       </div>
@@ -60,15 +60,15 @@ function renderInvoiceClassic(inv,tpl){
 }
 function legalLines(e,inline){
   const L=[];
-  if(e.nif)L.push('NIF : '+e.nif);
-  if(e.nis)L.push('NIS : '+e.nis);
-  if(e.rc)L.push('RC : '+e.rc);
-  if(e.ai)L.push('AI : '+e.ai);
+  if(e.nif)L.push('NIF : '+esc(e.nif));
+  if(e.nis)L.push('NIS : '+esc(e.nis));
+  if(e.rc)L.push('RC : '+esc(e.rc));
+  if(e.ai)L.push('AI : '+esc(e.ai));
   if(!L.length)return '';
   return inline?L.join(' &nbsp;·&nbsp; '):L.map(x=>'<div>'+x+'</div>').join('');
 }
 function renderInvoiceDZ(inv,tpl){
-  const company=state.company, client=getClient(inv.clientId), totals=calcInvoiceTotals(inv);
+  const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
   const g=tpl.color||'#006233', g2=tpl.color2||'#059669', words=amountInWords(totals.ttc);
   const logo=company.logo
     ?`<img src="${company.logo}" style="max-height:46px;max-width:100px;object-fit:contain"/>`
@@ -77,7 +77,7 @@ function renderInvoiceDZ(inv,tpl){
     const line=(it.qty||0)*(it.unitPrice||0);
     const bg=i%2?'#f8fafc':'#ffffff';
     return `<tr style="background:${bg}">
-      <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #eef2f7">${it.description}</td>
+      <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #eef2f7">${esc(it.description)}</td>
       <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.qty}</td>
       <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #eef2f7">${formatMoney(it.unitPrice)}</td>
       <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.tva}%</td>
@@ -94,7 +94,7 @@ function renderInvoiceDZ(inv,tpl){
         </div>
       </div>
       <div style="text-align:right;font-size:10.5px;color:rgba(255,255,255,.92);line-height:1.7">
-        <div style="font-size:13px;font-weight:700;color:#fff">${inv.number}</div>
+        <div style="font-size:13px;font-weight:700;color:#fff">${esc(inv.number)}</div>
         ${legalLines(company,false)||'<div>—</div>'}
       </div>
     </div>
@@ -132,7 +132,7 @@ function renderInvoiceDZ(inv,tpl){
       <div style="margin-top:18px;padding:11px 14px;background:#f0fdf4;border-left:3px solid ${g2};border-radius:4px;font-size:11px;font-style:italic">
         Arrêté la présente facture à la somme de : <strong>${words}</strong>
       </div>
-      ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${inv.notes}</div>`:''}
+      ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:26px;padding-top:16px;border-top:1px solid #eef2f7">
         <div style="font-size:10px;color:#94a3b8;line-height:1.7">
           ${company.rib?`<div>RIB : ${company.rib} — ${company.banque||''}</div>`:''}
@@ -147,13 +147,13 @@ function renderInvoiceDZ(inv,tpl){
   </div>`;
 }
 function renderInvoiceStudio(inv,tpl){
-  const company=state.company, client=getClient(inv.clientId), totals=calcInvoiceTotals(inv);
+  const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
   const c1=tpl.color||'#0ea5e9', c2=tpl.color2||tpl.color||'#0369a1', words=amountInWords(totals.ttc);
   const logo=company.logo?`<img src="${company.logo}" style="max-height:56px;max-width:120px;object-fit:contain"/>`:'';
   const rows=(inv.items||[]).map(it=>{
     const line=(it.qty||0)*(it.unitPrice||0);
     return `<tr style="border-bottom:1px solid #f1f5f9">
-      <td style="padding:9px 12px;font-size:12px">${it.description}</td>
+      <td style="padding:9px 12px;font-size:12px">${esc(it.description)}</td>
       <td style="padding:9px 8px;text-align:center;font-size:12px">${it.qty}</td>
       <td style="padding:9px 8px;text-align:right;font-size:12px">${formatMoney(it.unitPrice)}</td>
       <td style="padding:9px 8px;text-align:center;font-size:12px">${it.tva}%</td>
@@ -173,7 +173,7 @@ function renderInvoiceStudio(inv,tpl){
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;color:${c2}">FACTURE</div>
-        <div style="font-size:13px;color:#64748b">${inv.number}</div>
+        <div style="font-size:13px;color:#64748b">${esc(inv.number)}</div>
         <div style="font-size:11px;margin-top:8px">Date : <strong>${formatDate(inv.date)}</strong></div>
         ${inv.dueDate?`<div style="font-size:11px">Échéance : <strong>${formatDate(inv.dueDate)}</strong></div>`:''}
       </div>
@@ -202,7 +202,7 @@ function renderInvoiceStudio(inv,tpl){
       </div>
     </div>
     <div style="margin-top:16px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
-    ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${inv.notes}</div>`:''}
+    ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
     ${company.rib?`<div style="margin-top:8px;font-size:10px;color:#94a3b8">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
   </div>`;
 }
@@ -223,6 +223,7 @@ function previewTemplate(tid){
   if(!root||!body)return;
   body.innerHTML=renderInvoiceHTML(demo);
   root.classList.remove('hidden');
+  window._previewInvId=null;
 }
 function closePreview(){
   const root=document.getElementById('preview-root');
