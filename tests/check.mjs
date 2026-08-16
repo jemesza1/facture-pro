@@ -252,6 +252,86 @@ check('the interface flips to RTL', rtl.dir === 'rtl', rtl.dir);
 check('but the RIB field stays left-to-right', rtl.css === 'ltr', rtl.css);
 check('and is isolated from the surrounding text', rtl.bidi === 'isolate', rtl.bidi);
 
+/* ---------------------------------------------------------------- *
+ * 8. Batch 0 — the paths that used to destroy data silently.
+ * ---------------------------------------------------------------- */
+console.log('\nData loss paths');
+
+const drafts = await page.evaluate(() => {
+  state.invoices = [
+    {id:'d1', clientId:'c1', status:'brouillon', items:[{qty:1, unitPrice:100000, tva:19}]},
+    {id:'d2', clientId:'c1', status:'envoyee',   items:[{qty:1, unitPrice:100000, tva:19}]},
+  ];
+  navigate('debts');
+  const txt = document.getElementById('main-content').textContent;
+  return {shows119: /119\s?000/.test(txt.replace(/\u202f|\u00a0/g, ' ')),
+          shows238: /238\s?000/.test(txt.replace(/\u202f|\u00a0/g, ' '))};
+});
+check('a draft is not counted as a debt', drafts.shows119 && !drafts.shows238,
+      JSON.stringify(drafts));
+
+const imp = await page.evaluate(async () => {
+  const feed = obj => new Promise(res => {
+    const file = new File([JSON.stringify(obj)], 'b.json', {type:'application/json'});
+    const dt = new DataTransfer(); dt.items.add(file);
+    const input = document.createElement('input'); input.type = 'file'; input.files = dt.files;
+    importData({target: input});
+    setTimeout(res, 250);
+  });
+  const before = state.clients.length;
+
+  window.confirm = () => true;
+  await feed({clients: 'not-an-array'});
+  const afterBadShape = state.clients.length;
+
+  await feed({invoices: [{id:'x', items:'Prestation'}]});
+  const afterBadItems = state.clients.length;
+
+  window.confirm = () => false;
+  await feed({clients: []});
+  const afterRefused = state.clients.length;
+
+  window.confirm = () => true;
+  await feed({clients: [{id:'k1', name:'Nouveau'}],
+              invoices: [{number:'FAC-2026-042', clientId:'k1', items:[{qty:1, unitPrice:1000, tva:19}]}]});
+  return {before, afterBadShape, afterBadItems, afterRefused,
+          imported: state.clients.length, name: (state.clients[0]||{}).name,
+          invoiceGotId: !!(state.invoices[0]||{}).id,
+          nextNumber: state.nextInvoiceNumber,
+          backedUp: !!localStorage.getItem('facturepro_dz_v24_avant_import')};
+});
+check('a file with the wrong shape is refused', imp.afterBadShape === imp.before, JSON.stringify(imp));
+check('an invoice whose items are not a list is refused', imp.afterBadItems === imp.before);
+check('nothing is replaced when the user declines', imp.afterRefused === imp.before);
+check('a valid backup imports', imp.imported === 1 && imp.name === 'Nouveau');
+check('an imported invoice without an id gets one', imp.invoiceGotId);
+check('numbering is reconciled so no number repeats', imp.nextNumber >= 43, String(imp.nextNumber));
+check('the previous data is copied aside before the import', imp.backedUp);
+
+const demo = await page.evaluate(() => {
+  localStorage.removeItem('facturepro_dz_v24');
+  state.clients = []; state.invoices = []; state.payments = [];
+  loadData();
+  const seeded = hasDemoData();
+  window.confirm = () => true;
+  clearDemoData();
+  return {seeded, after: hasDemoData(), clients: state.clients.length};
+});
+check('the seeded examples are marked as examples', demo.seeded);
+check('and can be removed in one click', demo.after === false && demo.clients === 0);
+
+/* corrupted storage must not be overwritten with demo data */
+await page.evaluate(() => localStorage.setItem('facturepro_dz_v24', '{"clients":[{"id"'));
+await page.reload();
+await page.waitForFunction(() => typeof state !== 'undefined', {timeout: 30000});
+const corrupt = await page.evaluate(() => ({
+  rescued: (localStorage.getItem('facturepro_dz_v24_illisible') || '').startsWith('{"clients"'),
+  noDemo: !(state.clients || []).some(c => c.demo),
+  keyIntact: (localStorage.getItem('facturepro_dz_v24') || '').startsWith('{"clients"'),
+}));
+check('unreadable data is put aside instead of being lost', corrupt.rescued, JSON.stringify(corrupt));
+check('and is not overwritten with demo invoices', corrupt.noDemo && corrupt.keyIntact);
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
