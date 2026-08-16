@@ -31,7 +31,10 @@ The suite prints `Safe to deploy.` or lists the failing checks and exits 1.
 6. **Stock and payments** — a refused invoice must not move the stock, a removed
    payment must reopen the invoice, a deleted invoice must take its payments.
 7. **Arabic layout** — the interface flips to RTL while codes stay left-to-right.
-8. **Data loss paths** — a draft is not a debt; a malformed backup is refused
+8. **Public tool pages** — `montant-en-lettres.html` and `droit-de-timbre.html`
+   load `lib-calc.js`, the same file the app loads first, so the calculator
+   someone finds through a search cannot drift from the one inside the app.
+9. **Data loss paths** — a draft is not a debt; a malformed backup is refused
    before it can replace anything; the previous data is copied aside first;
    numbering is reconciled so no invoice number repeats; the seeded examples are
    marked and removable; unreadable storage is put aside rather than overwritten

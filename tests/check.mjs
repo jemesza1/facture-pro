@@ -332,6 +332,50 @@ const corrupt = await page.evaluate(() => ({
 check('unreadable data is put aside instead of being lost', corrupt.rescued, JSON.stringify(corrupt));
 check('and is not overwritten with demo invoices', corrupt.noDemo && corrupt.keyIntact);
 
+/* ---------------------------------------------------------------- *
+ * 9. The public tool pages must run the same code as the app.
+ * ---------------------------------------------------------------- */
+console.log('\nPublic tool pages');
+{
+  const tools = await browser.newPage();
+  const toolErrors = [];
+  tools.on('pageerror', e => { if (!/tailwind|font/i.test(String(e))) toolErrors.push(String(e)); });
+
+  await tools.goto(`${BASE}/montant-en-lettres.html`);
+  await tools.waitForFunction(() => typeof amountInWords === 'function', {timeout: 20000});
+  await tools.fill('#amount', '713714.40');
+  const words = await tools.textContent('#result');
+  const full = await tools.textContent('#full');
+  check('the words page converts an amount',
+        /Sept cent treize mille sept cent quatorze dinars/.test(words), words);
+  check('and offers the full invoice wording',
+        /Arrêté la présente facture à la somme de/.test(full), full);
+
+  await tools.goto(`${BASE}/droit-de-timbre.html`);
+  await tools.waitForFunction(() => typeof timbreFor === 'function', {timeout: 20000});
+  await tools.fill('#amount', '699720');
+  const duty = await tools.textContent('#duty');
+  const net = await tools.textContent('#net');
+  const rate = await tools.textContent('#rate');
+  const clean = t => t.replace(/[\u202f\u00a0\s]/g, '');
+  check('the duty page applies the right band', clean(rate) === '2%', rate);
+  check('and computes the duty', clean(duty) === '13994,40DA', duty);
+  check('and the net', clean(net) === '713714,40DA', net);
+
+  await tools.check('#useCap');
+  const capped = await tools.textContent('#duty');
+  check('the optional ceiling is offered', clean(capped) === '10000,00DA', capped);
+
+  await tools.click('#lang');
+  const arDir = await tools.evaluate(() => document.documentElement.dir);
+  const arDuty = await tools.textContent('#duty');
+  check('the page switches to Arabic', arDir === 'rtl', arDir);
+  check('and the figure is not reordered by the switch', clean(arDuty) === '10000,00DA', arDuty);
+
+  check('no script error on the tool pages', toolErrors.length === 0, toolErrors.join(' | '));
+  await tools.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
