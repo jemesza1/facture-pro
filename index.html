@@ -11,18 +11,20 @@
   <meta name="author" content="CheMs SoUu" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://facture-pro-iota.vercel.app/" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Served from this domain, not from a CDN. A blocked or slow
+       cdn.tailwindcss.com used to leave the app an unstyled column of links,
+       and a blocked cdnjs left the PDF button throwing. Nothing here can be
+       taken away by a third party, and nothing follows @latest. -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles.css?v=20260816d" />
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: { extend: { colors: { brand: { 500: '#059669', 600: '#006233', 700: '#00512a' } } } }
-    }
-  </script>
+  <link rel="stylesheet" href="styles.css?v=20260816e" />
+  <!-- Last, because the Play CDN appended its <style> to the end of the head
+       and the design was drawn against that cascade: the utilities win the
+       ties. Move this above styles.css and the overdue total stops being red
+       and the accent border comes off the cards. -->
+  <link rel="stylesheet" href="vendor/tailwind.css?v=20260816e" />
+  <script defer src="vendor/lucide.min.js"></script>
+  <script defer src="vendor/jspdf.umd.min.js"></script>
+  <script defer src="vendor/html2canvas.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased safe-area">
   <div id="app" class="flex h-[100dvh] overflow-hidden">

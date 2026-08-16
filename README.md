@@ -7,6 +7,44 @@ Static SPA — **Created by CheMs SoUu**
 - Build Command: `npm run build` (or leave default)
 - Output Directory: **public**
 
+`public/` is build output and is not tracked. `npm run build` regenerates it:
+the stylesheet first, then a copy of the site into it.
+
+## No CDN
+
+Every library the pages need is served from this domain, out of `/vendor/`.
+
+That is not a preference. `cdn.tailwindcss.com` compiled the stylesheet in the
+visitor's browser, so an hour where the CDN was slow or blocked — not rare on
+an Algerian connection — left the application an unstyled column of links, and
+a blocked `cdnjs` left the PDF button throwing `html2canvas is not defined`.
+The icons came from `unpkg.com/lucide@latest`, which is to say from whatever
+lucide happened to publish that morning.
+
+Nothing is committed. `npm run build` fills `public/vendor/` from packages
+pinned in `package.json`, so the versions live in the lockfile where they can
+be read and bumped:
+
+- `tailwind.css` — compiled by `npm run css` from `tailwind/config.js` and
+  `tailwind/input.css`. 21 KB of the utilities these pages actually use,
+  instead of a compiler shipped to every visitor.
+- `lucide.min.js`, `jspdf.umd.min.js`, `html2canvas.min.js` — copied out of
+  `node_modules`.
+
+Two things to know before editing:
+
+- **A new class needs `npm run build`**, or nothing generates the rule behind
+  it. `tailwind/config.js` lists the scanned files; a new source file has to
+  be added there.
+- **`vendor/tailwind.css` is linked last in every `<head>`.** The Play CDN
+  appended its `<style>` there and the design was drawn against that cascade,
+  so the utilities win the ties. Move the link above `styles.css` and the
+  overdue total stops being red and the example card loses its accent border.
+
+Google Fonts is still loaded from Google. It is the one dependency that fails
+softly — a missing font falls back to the system sans-serif and everything
+stays readable.
+
 ## Excel export
 
 `lib-xlsx.js` writes real `.xlsx` files — a zip of XML parts, stored
