@@ -1,0 +1,267 @@
+/* FacturePro — regression suite.
+ *
+ * Run it before every deploy:   cd tests && npm install && npm test
+ *
+ * It serves the repository root, opens it in a headless Chromium and calls the
+ * application's own functions. Nothing is mocked: if a check fails here, a user
+ * would have hit the same thing.
+ *
+ * The CDN scripts (tailwind, lucide) are expected to fail offline — that is not
+ * a failure of the app, so console errors mentioning them are ignored.
+ */
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, join, normalize } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const TYPES = {'.html':'text/html','.js':'text/javascript','.css':'text/css',
+               '.json':'application/json','.xml':'application/xml','.txt':'text/plain'};
+
+let passed = 0; const failures = [];
+function check(name, ok, detail) {
+  if (ok) { passed++; console.log(`  ✓ ${name}`); }
+  else { failures.push({name, detail}); console.log(`  ✗ ${name}${detail ? ' — ' + detail : ''}`); }
+}
+const near = (a, b, eps = 0.001) => Math.abs(a - b) <= eps;
+
+const server = createServer(async (req, res) => {
+  const p = join(ROOT, normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+  try {
+    const body = await readFile(p);
+    res.writeHead(200, {'Content-Type': TYPES[extname(p)] || 'application/octet-stream'});
+    res.end(body);
+  } catch { res.writeHead(404); res.end('not found'); }
+});
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+const BASE = `http://127.0.0.1:${server.address().port}`;
+
+const browser = await chromium.launch();
+const page = await browser.newPage();
+const consoleErrors = [];
+page.on('pageerror', e => { if (!/tailwind|lucide/i.test(String(e))) consoleErrors.push(String(e)); });
+
+/* ---------------------------------------------------------------- *
+ * 1. Data written by an older version must survive the update.
+ *    This is the check that lets us ship without losing anyone's work.
+ * ---------------------------------------------------------------- */
+console.log('\nData written by a previous version');
+const LEGACY = {
+  company: {name:'Mon Entreprise SARL', address:'12 Rue Didouche', nif:'0999', nis:'0888',
+            rc:'16/00-1B00', ai:'0004', email:'a@b.dz', phone:'021',
+            rib:'007 99999 0000000000 00', banque:'BNA', logo:''},
+  clients: [{id:'c1', name:'SARL Atlas', email:'x@atlas.dz', address:'Alger', nif:'0999', phone:'021'}],
+  invoices: [{id:'i1', number:'FAC-2026-001', clientId:'c1', template:'classique', date:'2026-07-01',
+              dueDate:'2026-07-31', status:'envoyee',
+              items:[{description:'Prestation', qty:1, unitPrice:100000, tva:19}], notes:'Merci.'}],
+  payments: [], products: [], devis: [], nextInvoiceNumber: 2, currentPage: 'invoices',
+};
+await page.goto(`${BASE}/index.html`);
+await page.evaluate(d => localStorage.setItem('facturepro_dz_v24', JSON.stringify(d)), LEGACY);
+await page.reload();
+await page.waitForFunction(() => typeof state !== 'undefined' && typeof calcInvoiceTotals === 'function', {timeout: 30000});
+
+const legacy = await page.evaluate(() => ({
+  rib: state.company.rib, client: state.clients[0].name, number: state.invoices[0].number,
+  notes: state.invoices[0].notes, net: calcInvoiceTotals(state.invoices[0]).net,
+  paymentMode: state.invoices[0].paymentMode,
+}));
+check('company RIB intact', legacy.rib === '007 99999 0000000000 00', legacy.rib);
+check('client intact', legacy.client === 'SARL Atlas', legacy.client);
+check('invoice number intact', legacy.number === 'FAC-2026-001', legacy.number);
+check('notes intact', legacy.notes === 'Merci.', legacy.notes);
+check('an old invoice keeps its total', legacy.net === 119000, String(legacy.net));
+check('old invoices default to virement, so no stamp duty appears', legacy.paymentMode === 'virement', legacy.paymentMode);
+
+/* ---------------------------------------------------------------- *
+ * 2. Money. The one thing that must never be approximately right.
+ * ---------------------------------------------------------------- */
+console.log('\nTotals');
+const drift = await page.evaluate(() => {
+  const rnd = (s => () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648)(42);
+  let worst = 0;
+  for (let i = 0; i < 3000; i++) {
+    const items = [];
+    for (let k = 0, n = 1 + Math.floor(rnd() * 6); k < n; k++)
+      items.push({qty: 1 + Math.floor(rnd() * 20),
+                  unitPrice: Math.round(rnd() * 500000) / (rnd() < 0.3 ? 100 : 1),
+                  tva: [0, 9, 19][Math.floor(rnd() * 3)]});
+    const t = calcInvoiceTotals({items});
+    let ht = 0, tv = 0;
+    for (const it of items) { const l = it.qty * it.unitPrice; ht += l; tv += l * it.tva / 100; }
+    worst = Math.max(worst, Math.abs(t.ht - ht), Math.abs(t.tva - tv), Math.abs(t.ttc - (ht + tv)));
+  }
+  return worst;
+});
+check('3000 random invoices agree with independent arithmetic', drift < 1e-6, `worst drift ${drift}`);
+
+const guards = await page.evaluate(() => ({
+  empty: calcInvoiceTotals({items: []}).ttc,
+  nan: calcInvoiceTotals({items: [{qty: 1, unitPrice: NaN, tva: 19}]}).ttc,
+  strings: calcInvoiceTotals({items: [{qty: '3', unitPrice: '1000', tva: '19'}]}).ttc,
+}));
+check('an empty invoice totals zero', guards.empty === 0, String(guards.empty));
+check('a non-numeric price does not produce NaN', guards.nan === 0, String(guards.nan));
+check('numbers typed as text still add up', guards.strings === 3570, String(guards.strings));
+
+/* ---------------------------------------------------------------- *
+ * 3. Droit de timbre — art. 100, LF 2025. Cash only, on the TTC amount.
+ * ---------------------------------------------------------------- */
+console.log('\nDroit de timbre');
+const RATES = [[250, 5], [15500, 155], [30000, 300], [30001, 450.02],
+               [100000, 1500], [100001, 2000.02], [699720, 13994.4], [0, 0]];
+const rates = await page.evaluate(cs => cs.map(([a, e]) => [a, e, calcTimbre(a)]), RATES);
+for (const [amount, expected, got] of rates)
+  check(`${amount} DA → ${expected} DA`, near(got, expected), `got ${got}`);
+
+const modes = await page.evaluate(() => {
+  const items = [{qty: 1, unitPrice: 588000, tva: 19}];
+  return Object.fromEntries(['virement','especes','cheque','carte']
+    .map(m => [m, calcInvoiceTotals({paymentMode: m, items}).timbre]));
+});
+check('cash is charged', near(modes.especes, 13994.4), String(modes.especes));
+check('transfer is exempt', modes.virement === 0);
+check('cheque is exempt', modes.cheque === 0);
+check('card / TPE is exempt', modes.carte === 0);
+
+const cap = await page.evaluate(() => {
+  state.company.timbreCap = 10000; const v = calcTimbre(699720);
+  state.company.timbreCap = 0; return v;
+});
+check('the optional 10 000 DA ceiling is honoured', cap === 10000, String(cap));
+
+/* ---------------------------------------------------------------- *
+ * 4. Every template must carry the legal identifiers and the duty.
+ * ---------------------------------------------------------------- */
+console.log('\nTemplates');
+const tpl = await page.evaluate(() => {
+  state.company.nin = '109912340056781234';
+  state.clients[0].nin = '210087650043219876';
+  const ids = TEMPLATES.map(t => t.id);
+  const base = {id:'t', number:'F1', clientId:'c1', date:'2026-08-12', dueDate:'2026-09-11',
+                items:[{description:'a', qty:1, unitPrice:588000, tva:19}], notes:''};
+  const bad = {nin: [], duty: [], mode: [], wire: []};
+  for (const id of ids) {
+    const cash = renderInvoiceHTML({...base, template: id, paymentMode: 'especes'});
+    const wire = renderInvoiceHTML({...base, template: id, paymentMode: 'virement'});
+    if (!/NIN\s*:\s*109912340056781234/.test(cash) || !/NIN\s*:\s*210087650043219876/.test(cash)) bad.nin.push(id);
+    if (!/Droit de timbre/.test(cash) || !/Net à payer/.test(cash)) bad.duty.push(id);
+    if (!/Mode de règlement\s*:\s*Espèces/.test(cash)) bad.mode.push(id);
+    if (/Droit de timbre/.test(wire)) bad.wire.push(id);
+  }
+  const words = (renderInvoiceHTML({...base, template:'classique', paymentMode:'especes'})
+                 .match(/somme de : <strong>([^<]+)</) || [])[1];
+  return {count: ids.length, ...bad, words};
+});
+check(`${tpl.count} templates print both NIN`, tpl.nin.length === 0, tpl.nin.join(', '));
+check('all templates print the duty and the net when cash', tpl.duty.length === 0, tpl.duty.join(', '));
+check('all templates print the payment mode', tpl.mode.length === 0, tpl.mode.join(', '));
+check('no template prints a duty on a transfer', tpl.wire.length === 0, tpl.wire.join(', '));
+check('the amount in words follows the net, not the TTC',
+      /Sept cent treize mille sept cent quatorze/.test(tpl.words || ''), tpl.words);
+
+/* ---------------------------------------------------------------- *
+ * 5. A straight quote used to truncate the field and lose a RIB.
+ * ---------------------------------------------------------------- */
+console.log('\nFields containing quotes, ampersands and angle brackets');
+const HOSTILE = 'SARL "El Baraka" & Fils <SARL>';
+const esc = await page.evaluate(v => {
+  state.company.name = v; state.company.rib = '007 "99999" 0000000000 00';
+  state.company.address = 'Rue <A> & "B"';
+  navigate('settings');
+  const seen = {name: document.getElementById('set-name').value,
+                rib: document.getElementById('set-rib').value,
+                address: document.getElementById('set-address').value};
+  saveSettings();
+  return {seen, saved: state.company.name, savedRib: state.company.rib};
+}, HOSTILE);
+check('the company name survives the form', esc.seen.name === HOSTILE, esc.seen.name);
+check('the RIB survives the form', esc.seen.rib === '007 "99999" 0000000000 00', esc.seen.rib);
+check('the address survives the form', esc.seen.address === 'Rue <A> & "B"', esc.seen.address);
+check('and survives the save', esc.saved === HOSTILE, esc.saved);
+
+const inject = await page.evaluate(() => {
+  state.clients[0].name = 'ETS "Nour" & Cie';
+  state.clients[0].address = '</textarea><img src=x onerror="window.__x=1">';
+  openClientModal('c1');
+  const r = {name: document.getElementById('cli-name').value,
+             addr: document.getElementById('cli-address').value,
+             injected: !!document.querySelector('.modal img')};
+  closeModal();
+  return r;
+});
+check('the client name survives the modal', inject.name === 'ETS "Nour" & Cie', inject.name);
+check('a closing tag in an address is text, not markup', inject.injected === false);
+
+/* ---------------------------------------------------------------- *
+ * 6. Stock, payments and status must stay consistent.
+ * ---------------------------------------------------------------- */
+console.log('\nStock and payments');
+const stock = await page.evaluate(() => {
+  state.products = [{id:'pr1', name:'Clavier', price:5000, stock:10, tva:19}];
+  saveData(); openNewInvoice();
+  const d = document.querySelector('#items-container .item-desc');
+  const q = document.querySelector('#items-container .item-qty');
+  const row = document.querySelector('#items-container .item-row');
+  if (d) d.value = 'Clavier'; if (q) q.value = 4;
+  if (row) row.setAttribute('data-product-id', 'pr1');
+  document.getElementById('inv-client').value = '';
+  saveInvoice('');
+  const afterFail = state.products[0].stock;
+  document.getElementById('inv-client').value = 'c1';
+  saveInvoice('');
+  return {afterFail, afterOk: state.products[0].stock};
+});
+check('a refused invoice does not touch the stock', stock.afterFail === 10, String(stock.afterFail));
+check('an accepted invoice deducts it once', stock.afterOk === 6, String(stock.afterOk));
+
+const pay = await page.evaluate(() => {
+  const inv = state.invoices.find(i => i.id === 'i1');
+  const net = calcInvoiceTotals(inv).net;
+  state.payments = [{id:'p1', invoiceId:'i1', clientId:'c1', amount: net, date:'2026-08-15', method:'especes'}];
+  syncInvoiceStatus('i1');
+  const settled = inv.status;
+  state.payments = [];
+  syncInvoiceStatus('i1');
+  return {settled, reopened: inv.status};
+});
+check('a full payment settles the invoice', pay.settled === 'payee', pay.settled);
+check('removing it reopens the invoice', pay.reopened !== 'payee', pay.reopened);
+
+const orphan = await page.evaluate(() => {
+  state.payments = [{id:'p2', invoiceId:'i1', clientId:'c1', amount: 5000, date:'2026-08-15', method:'especes'}];
+  window.confirm = () => true;
+  deleteInvoice('i1');
+  return state.payments.length;
+});
+check('deleting an invoice takes its payments with it', orphan === 0, String(orphan));
+
+/* ---------------------------------------------------------------- *
+ * 7. Arabic must not reverse legal or banking codes.
+ * ---------------------------------------------------------------- */
+console.log('\nArabic layout');
+const rtl = await page.evaluate(() => {
+  if (typeof toggleLocale === 'function' && locale !== 'ar') toggleLocale();
+  navigate('settings');
+  const el = document.getElementById('set-rib');
+  const s = getComputedStyle(el);
+  return {dir: document.documentElement.dir, css: s.direction, bidi: s.unicodeBidi};
+});
+check('the interface flips to RTL', rtl.dir === 'rtl', rtl.dir);
+check('but the RIB field stays left-to-right', rtl.css === 'ltr', rtl.css);
+check('and is isolated from the surrounding text', rtl.bidi === 'isolate', rtl.bidi);
+
+check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
+
+/* ---------------------------------------------------------------- */
+await browser.close();
+server.close();
+
+console.log(`\n${passed} passed, ${failures.length} failed`);
+if (failures.length) {
+  console.log('\nDo not deploy. Failing checks:');
+  for (const f of failures) console.log(`  - ${f.name}${f.detail ? ': ' + f.detail : ''}`);
+  process.exit(1);
+}
+console.log('Safe to deploy.');
