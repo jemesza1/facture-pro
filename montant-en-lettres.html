@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Montant en lettres — convertisseur gratuit (dinars algériens) | تحويل المبلغ إلى حروف</title>
+<meta name="description" content="Convertissez gratuitement un montant en dinars algériens en toutes lettres, pour la mention « Arrêté la présente facture à la somme de » exigée par le décret 05-468. Sans inscription. تحويل المبلغ إلى حروف مجانًا." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://facture-pro-iota.vercel.app/montant-en-lettres.html" />
+<meta property="og:title" content="Montant en lettres — convertisseur gratuit (dinars algériens)" />
+<meta property="og:description" content="La somme en toutes lettres pour vos factures, gratuitement et sans inscription." />
+<meta property="og:type" content="website" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .out{direction:ltr;unicode-bidi:isolate;text-align:start}
+  input[type=number]{direction:ltr;text-align:start}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <span class="w-9 h-9 rounded-xl grid place-items-center text-white font-bold shrink-0" style="background:var(--brand)">F</span>
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 pb-16">
+
+  <h1 id="h1" class="text-2xl sm:text-3xl font-bold mb-2">Montant en lettres</h1>
+  <p id="sub" class="text-slate-500 mb-6">Écrivez un montant en dinars, obtenez la somme en toutes lettres pour votre facture.</p>
+
+  <div class="card p-5 sm:p-6">
+    <label id="lbl" class="block text-sm font-medium mb-2" for="amount">Montant en DA</label>
+    <input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="699720"
+           class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+
+    <div class="mt-5">
+      <p id="reslbl" class="text-xs uppercase tracking-wide text-slate-400 mb-1">En toutes lettres</p>
+      <p id="result" class="out text-lg font-semibold leading-relaxed min-h-[2rem]">—</p>
+    </div>
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <button id="copy" class="px-4 py-2 rounded-xl text-white font-medium" style="background:var(--brand)">Copier</button>
+      <button id="copyFull" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-medium">Copier la mention complète</button>
+    </div>
+    <p id="full" class="out mt-3 text-sm text-slate-500 italic"></p>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5 text-sm leading-relaxed">
+    <h2 id="whyT" class="font-semibold mb-2">Pourquoi cette mention ?</h2>
+    <p id="whyP" class="text-slate-600 dark:text-slate-400">
+      Une facture algérienne doit porter le montant total arrêté en toutes lettres. La formule
+      d’usage est <em>« Arrêté la présente facture à la somme de… »</em>. Le montant en lettres doit
+      correspondre exactement au montant en chiffres — y compris le droit de timbre lorsque le
+      règlement est en espèces.
+    </p>
+  </section>
+
+  <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">Cette mention est ajoutée automatiquement à vos factures.</p>
+    <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
+      <span id="ctaB">Créer une facture gratuitement</span>
+    </a>
+  </div>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="lib-calc.js"></script>
+<script>
+(function(){
+  var T={
+    fr:{h1:'Montant en lettres',sub:'Écrivez un montant en dinars, obtenez la somme en toutes lettres pour votre facture.',
+        lbl:'Montant en DA',reslbl:'En toutes lettres',copy:'Copier',copyFull:'Copier la mention complète',
+        whyT:'Pourquoi cette mention ?',
+        whyP:"Une facture algérienne doit porter le montant total arrêté en toutes lettres. La formule d’usage est « Arrêté la présente facture à la somme de… ». Le montant en lettres doit correspondre exactement au montant en chiffres — y compris le droit de timbre lorsque le règlement est en espèces.",
+        ctaT:'Cette mention est ajoutée automatiquement à vos factures.',ctaB:'Créer une facture gratuitement',
+        other:'العربية',copied:'Copié',title:'Montant en lettres — convertisseur gratuit'},
+    ar:{h1:'المبلغ بالحروف',sub:'اكتب المبلغ بالدينار، واحصل على الصيغة الحرفية لفاتورتك.',
+        lbl:'المبلغ بالدينار',reslbl:'بالحروف',copy:'نسخ',copyFull:'نسخ العبارة كاملة',
+        whyT:'لماذا هذه العبارة؟',
+        whyP:'يجب أن تحمل الفاتورة الجزائرية المبلغ الإجمالي محرَّرًا بالحروف، والصيغة المعتمدة هي « Arrêté la présente facture à la somme de… ». ويجب أن يطابق المبلغ بالحروف المبلغ بالأرقام تمامًا — بما في ذلك رسم الطابع عند الدفع نقدًا.',
+        ctaT:'هذه العبارة تُضاف تلقائيًا إلى فواتيرك.',ctaB:'أنشئ فاتورة مجانًا',
+        other:'Français',copied:'تم النسخ',title:'المبلغ بالحروف — محوّل مجاني'}
+  };
+  var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
+  var $=function(id){return document.getElementById(id);};
+
+  function apply(){
+    var d=T[loc];
+    document.documentElement.lang=loc==='ar'?'ar':'fr';
+    document.documentElement.dir=loc==='ar'?'rtl':'ltr';
+    document.body.classList.toggle('ar',loc==='ar');
+    ['h1','sub','lbl','reslbl','whyT','whyP','ctaT','ctaB'].forEach(function(k){$(k).textContent=d[k];});
+    $('copy').textContent=d.copy; $('copyFull').textContent=d.copyFull; $('lang').textContent=d.other;
+    render();
+  }
+
+  function render(){
+    var v=parseFloat($('amount').value);
+    if(!isFinite(v)||v<0){ $('result').textContent='—'; $('full').textContent=''; return; }
+    var words=amountInWords(v);
+    $('result').textContent=words;
+    $('full').textContent='Arrêté la présente facture à la somme de : '+words;
+  }
+
+  function copy(text,btn){
+    var d=T[loc], old=btn.textContent;
+    var done=function(){ btn.textContent=d.copied; setTimeout(function(){btn.textContent=old;},1200); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done,function(){fallback(text);done();});
+    } else { fallback(text); done(); }
+  }
+  function fallback(text){
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  $('amount').addEventListener('input',render);
+  $('copy').addEventListener('click',function(){ if($('result').textContent!=='—') copy($('result').textContent,this); });
+  $('copyFull').addEventListener('click',function(){ if($('full').textContent) copy($('full').textContent,this); });
+  $('lang').addEventListener('click',function(){
+    loc=(loc==='fr')?'ar':'fr';
+    try{localStorage.setItem('fp_locale',loc);}catch(e){}
+    apply();
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>

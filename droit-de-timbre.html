@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Calcul du droit de timbre en Algérie — calculatrice gratuite | حاسبة رسم الطابع</title>
+<meta name="description" content="Calculez gratuitement le droit de timbre sur une facture réglée en espèces en Algérie : 1 %, 1,5 % ou 2 % du montant TTC selon la tranche, minimum 5 DA (art. 100 du Code du timbre, LF 2025). حاسبة رسم الطابع مجانًا." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://facture-pro-iota.vercel.app/droit-de-timbre.html" />
+<meta property="og:title" content="Calcul du droit de timbre en Algérie — calculatrice gratuite" />
+<meta property="og:description" content="1 %, 1,5 % ou 2 % du TTC selon la tranche, minimum 5 DA. Espèces uniquement." />
+<meta property="og:type" content="website" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .num{direction:ltr;unicode-bidi:isolate}
+  input[type=number]{direction:ltr;text-align:start}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+    th,td{border-color:#1e293b}
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <span class="w-9 h-9 rounded-xl grid place-items-center text-white font-bold shrink-0" style="background:var(--brand)">F</span>
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 pb-16">
+
+  <h1 id="h1" class="text-2xl sm:text-3xl font-bold mb-2">Calcul du droit de timbre</h1>
+  <p id="sub" class="text-slate-500 mb-6">Sur une facture réglée en espèces, en Algérie.</p>
+
+  <div class="card p-5 sm:p-6">
+    <label id="lbl" class="block text-sm font-medium mb-2" for="amount">Montant TTC de la facture (DA)</label>
+    <input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="699720"
+           class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+
+    <label class="flex items-center gap-2 mt-4 text-sm">
+      <input id="useCap" type="checkbox" class="w-4 h-4" />
+      <span id="capLbl">Appliquer le plafond de 10 000 DA</span>
+    </label>
+
+    <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="rounded-xl p-3" style="background:rgba(5,150,105,.08)">
+        <p id="k1" class="text-xs text-slate-500">Taux appliqué</p>
+        <p id="rate" class="num text-xl font-bold">—</p>
+      </div>
+      <div class="rounded-xl p-3" style="background:rgba(5,150,105,.08)">
+        <p id="k2" class="text-xs text-slate-500">Droit de timbre</p>
+        <p id="duty" class="num text-xl font-bold">—</p>
+      </div>
+      <div class="rounded-xl p-3 text-white" style="background:var(--brand)">
+        <p id="k3" class="text-xs opacity-80">Net à payer</p>
+        <p id="net" class="num text-xl font-bold">—</p>
+      </div>
+    </div>
+
+    <p id="warn" class="mt-4 text-sm text-amber-700 dark:text-amber-400"></p>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5">
+    <h2 id="barT" class="font-semibold mb-3">Barème</h2>
+    <table>
+      <thead><tr><th id="cA">Montant TTC</th><th id="cB">Taux</th></tr></thead>
+      <tbody>
+        <tr><td id="r1">Jusqu’à 30 000 DA</td><td class="num">1 %</td></tr>
+        <tr><td id="r2">De 30 000 à 100 000 DA</td><td class="num">1,5 %</td></tr>
+        <tr><td id="r3">Au-delà de 100 000 DA</td><td class="num">2 %</td></tr>
+      </tbody>
+    </table>
+    <p id="barP" class="text-sm text-slate-600 dark:text-slate-400 mt-3">
+      Minimum 5 DA. Le droit n’est dû que sur les règlements en espèces : les virements,
+      versements bancaires ou postaux et les paiements par TPE en sont exonérés.
+      Article 100 du Code du timbre, barème de la loi de finances 2025.
+    </p>
+  </section>
+
+  <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">Ce calcul est appliqué automatiquement à vos factures en espèces.</p>
+    <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
+      <span id="ctaB">Créer une facture gratuitement</span>
+    </a>
+  </div>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="lib-calc.js"></script>
+<script>
+(function(){
+  var T={
+    fr:{h1:'Calcul du droit de timbre',sub:'Sur une facture réglée en espèces, en Algérie.',
+        lbl:'Montant TTC de la facture (DA)',capLbl:'Appliquer le plafond de 10 000 DA',
+        k1:'Taux appliqué',k2:'Droit de timbre',k3:'Net à payer',barT:'Barème',
+        cA:'Montant TTC',cB:'Taux',r1:'Jusqu’à 30 000 DA',r2:'De 30 000 à 100 000 DA',r3:'Au-delà de 100 000 DA',
+        barP:"Minimum 5 DA. Le droit n’est dû que sur les règlements en espèces : les virements, versements bancaires ou postaux et les paiements par TPE en sont exonérés. Article 100 du Code du timbre, barème de la loi de finances 2025.",
+        ctaT:'Ce calcul est appliqué automatiquement à vos factures en espèces.',ctaB:'Créer une facture gratuitement',
+        other:'العربية',min:'Le minimum légal de 5 DA s’applique.',
+        cap:'Le plafond de 10 000 DA s’applique. Il n’est pas retenu partout — vérifiez auprès de votre inspection.'},
+    ar:{h1:'حاسبة رسم الطابع',sub:'على فاتورة مدفوعة نقدًا، في الجزائر.',
+        lbl:'المبلغ الإجمالي TTC للفاتورة (دج)',capLbl:'تطبيق سقف 10 000 دج',
+        k1:'النسبة المطبَّقة',k2:'رسم الطابع',k3:'الصافي للدفع',barT:'السلّم',
+        cA:'المبلغ TTC',cB:'النسبة',r1:'حتى 30 000 دج',r2:'من 30 000 إلى 100 000 دج',r3:'أكثر من 100 000 دج',
+        barP:'بحد أدنى 5 دج. ولا يُستحق الرسم إلا على الدفع نقدًا: التحويلات والدفع البنكي أو البريدي والدفع بالبطاقة معفاة. المادة 100 من قانون الطابع، سلّم قانون المالية 2025.',
+        ctaT:'هذا الحساب يُطبَّق تلقائيًا على فواتيرك النقدية.',ctaB:'أنشئ فاتورة مجانًا',
+        other:'Français',min:'يُطبَّق الحد الأدنى القانوني 5 دج.',
+        cap:'يُطبَّق سقف 10 000 دج. وهو غير معتمد في كل المفتشيات — تأكّد من مفتشيتك.'}
+  };
+  var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
+  var $=function(id){return document.getElementById(id);};
+  var fmt=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' DA';};
+
+  function apply(){
+    var d=T[loc];
+    document.documentElement.lang=loc==='ar'?'ar':'fr';
+    document.documentElement.dir=loc==='ar'?'rtl':'ltr';
+    document.body.classList.toggle('ar',loc==='ar');
+    ['h1','sub','lbl','capLbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB']
+      .forEach(function(k){$(k).textContent=d[k];});
+    $('lang').textContent=d.other;
+    render();
+  }
+
+  function render(){
+    var d=T[loc];
+    var v=parseFloat($('amount').value);
+    if(!isFinite(v)||v<=0){ $('rate').textContent='—'; $('duty').textContent='—'; $('net').textContent='—'; $('warn').textContent=''; return; }
+    var cap=$('useCap').checked?10000:0;
+    var duty=timbreFor(v,cap);
+    var pct=timbreRate(Math.round(v));
+    $('rate').textContent=String(pct).replace('.',',')+' %';
+    $('duty').textContent=fmt(duty);
+    $('net').textContent=fmt(v+duty);
+    var notes=[];
+    if(duty===5&&v*pct/100<5) notes.push(d.min);
+    if(cap&&duty===cap) notes.push(d.cap);
+    $('warn').textContent=notes.join(' ');
+  }
+
+  $('amount').addEventListener('input',render);
+  $('useCap').addEventListener('change',render);
+  $('lang').addEventListener('click',function(){
+    loc=(loc==='fr')?'ar':'fr';
+    try{localStorage.setItem('fp_locale',loc);}catch(e){}
+    apply();
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>

@@ -35,15 +35,11 @@ function formatDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateSt
    effectivement encaissee.
    Seul l'ancien plafond de 10 000 DA reste interprete differemment d'un
    service a l'autre : il est donc parametrable (0 = aucun plafond). */
-function timbreRate(a){return a<=30000?1:(a<=100000?1.5:2);}
+/* The only part that depends on the user's settings; the arithmetic itself
+   lives in lib-calc.js so the public tool page shares it. */
 function calcTimbre(amount){
-  var a=Math.round(Number(amount)||0);
-  if(a<=0)return 0;
-  var d=a*timbreRate(a)/100;
-  if(d<5)d=5;
   var cap=0;try{cap=Number(state.company&&state.company.timbreCap)||0;}catch(e){}
-  if(cap>0&&d>cap)d=cap;
-  return Math.round(d*100)/100;
+  return timbreFor(amount,cap);
 }
 function isCash(inv){return !!(inv&&inv.paymentMode==='especes');}
 function calcInvoiceTotals(inv){let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=l*((it.tva||0)/100);});const ttc=ht+tva;const timbre=isCash(inv)?calcTimbre(ttc):0;return{ht,tva,ttc,timbre,net:ttc+timbre};}
@@ -65,8 +61,6 @@ function clearDemoData(){
 }
 function getClient(id){return state.clients.find(c=>c.id===id)||{name:'Client inconnu',address:'',nif:'',nin:'',nis:'',rc:'',ai:'',email:''};}
 function updateOverdue(){const t=new Date().toISOString().slice(0,10);let ch=false;state.invoices.forEach(i=>{if(i.status==='envoyee'&&i.dueDate&&i.dueDate<t){i.status='enretard';ch=true;}});if(ch)saveData();}
-function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];const tens=['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];function under1000(num){if(num<20)return units[num];if(num<100){const t=Math.floor(num/10),u=num%10;if(t===7||t===9)return tens[t]+(u===1&&t===7?' et ':'-')+under1000(10+u);return tens[t]+(u===1&&t!==8?' et ':(u?'-':''))+(t===8&&u===0?'s':units[u]);}const h=Math.floor(num/100),r=num%100;return(h>1?units[h]+' ':'')+'cent'+(h>1&&r===0?'s':'')+(r?' '+under1000(r):'');}if(n<1000)return under1000(n);if(n<1000000){const th=Math.floor(n/1000),r=n%1000;return(th>1?under1000(th)+' ':'')+'mille'+(r?' '+under1000(r):'');}if(n<1e9){const m=Math.floor(n/1e6),r=n%1e6;return under1000(m)+' million'+(m>1?'s':'')+(r?' '+numberToWords(r):'');}return String(n);}
-function amountInWords(amount){const n=Math.round(amount||0);if(n===0)return'Zéro dinar';const w=numberToWords(n);return w.charAt(0).toUpperCase()+w.slice(1)+' dinars';}
 function toast(msg,type='ok'){const e=document.querySelector('.toast-msg');if(e)e.remove();const el=document.createElement('div');el.className=`fixed bottom-6 right-6 z-[100] px-5 py-3 rounded-xl shadow-lg text-sm font-medium text-white ${type==='ok'?'bg-emerald-600':'bg-red-600'}`;el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2800);}
 function navigate(page){state.currentPage=page;state.search='';state.sidebarOpen=false;document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));setPageTitle();const sidebar=document.getElementById('sidebar');if(sidebar){sidebar.classList.add('-translate-x-full');sidebar.classList.remove('translate-x-0');}const overlay=document.getElementById('sidebar-overlay');if(overlay)overlay.classList.add('hidden');renderPage();try{lucide.createIcons();}catch(e){}animateCounters();}
 function toggleDark(){state.dark=!state.dark;document.documentElement.classList.toggle('dark',state.dark);localStorage.setItem('facturepro_dark',state.dark?'1':'0');}

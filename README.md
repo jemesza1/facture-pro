@@ -7,6 +7,18 @@ Static SPA — **Created by CheMs SoUu**
 - Build Command: `npm run build` (or leave default)
 - Output Directory: **public**
 
+## Public tools
+
+Two standalone pages, linked from Aide and listed in the sitemap:
+
+- `montant-en-lettres.html` — an amount converted to the wording a facture needs
+- `droit-de-timbre.html` — the stamp duty on a cash-settled invoice
+
+They load `lib-calc.js`, which `app.js` also loads first, so the page a stranger
+finds through a search runs exactly the code the application runs. Put shared
+arithmetic there and nowhere else — it must stay free of `state`, the DOM and
+the translations.
+
 ## Features
 - Dashboard, invoices, devis, produits, paiements, créances, clients (DA, NIF, NIN, NIS, RC, AI)
 - Droit de timbre (art. 100, barème LF 2025) sur les règlements en espèces
@@ -17,7 +29,7 @@ Static SPA — **Created by CheMs SoUu**
 
 ## Tests
 
-`cd tests && npm install && npm test` — 55 checks against a real headless
+`cd tests && npm install && npm test` — 64 checks against a real headless
 browser. Run them before every deploy; the suite prints `Safe to deploy.` or
 lists what broke. The first group verifies that data written by the *previous*
 version survives the update, which is what lets us ship without losing anyone's
