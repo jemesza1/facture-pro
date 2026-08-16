@@ -34,7 +34,10 @@ The suite prints `Safe to deploy.` or lists the failing checks and exits 1.
 8. **Public tool pages** — `montant-en-lettres.html` and `droit-de-timbre.html`
    load `lib-calc.js`, the same file the app loads first, so the calculator
    someone finds through a search cannot drift from the one inside the app.
-9. **Data loss paths** — a draft is not a debt; a malformed backup is refused
+9. **Excel export** — the file is a real zip container, carries the company NIN,
+   breaks the VAT out per line, excludes drafts from the monthly register, and
+   an empty month says so rather than producing a blank workbook.
+10. **Data loss paths** — a draft is not a debt; a malformed backup is refused
    before it can replace anything; the previous data is copied aside first;
    numbering is reconciled so no invoice number repeats; the seeded examples are
    marked and removable; unreadable storage is put aside rather than overwritten

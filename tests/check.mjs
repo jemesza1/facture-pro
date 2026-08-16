@@ -38,7 +38,8 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
 const browser = await chromium.launch();
-const page = await browser.newPage();
+const context = await browser.newContext({acceptDownloads: true});
+const page = await context.newPage();
 const consoleErrors = [];
 page.on('pageerror', e => { if (!/tailwind|lucide/i.test(String(e))) consoleErrors.push(String(e)); });
 
@@ -374,6 +375,64 @@ console.log('\nPublic tool pages');
 
   check('no script error on the tool pages', toolErrors.length === 0, toolErrors.join(' | '));
   await tools.close();
+}
+
+/* ---------------------------------------------------------------- *
+ * 10. Excel exports — a real workbook, and the right figures in it.
+ * ---------------------------------------------------------------- */
+console.log('\nExcel export');
+{
+  await page.evaluate(() => {
+    state.company = {name:'SARL Atlas', nif:'000916012345678', nin:'109912340056781234', rib:'007 1234'};
+    state.clients = [{id:'c1', name:'SPA Numidia', nif:'000925098765432'}];
+    state.invoices = [
+      {id:'i1', number:'FAC-2026-004', clientId:'c1', date:'2026-08-12', status:'envoyee',
+       paymentMode:'especes', items:[{description:'Poste', qty:6, unitPrice:78000, tva:19},
+                                     {description:'Pose', qty:1, unitPrice:45000, tva:9}]},
+      {id:'i2', number:'FAC-2026-005', clientId:'c1', date:'2026-08-20', status:'payee',
+       paymentMode:'virement', items:[{description:'Maintenance', qty:1, unitPrice:200000, tva:19}]},
+      {id:'i3', number:'FAC-2026-006', clientId:'c1', date:'2026-08-25', status:'brouillon',
+       paymentMode:'virement', items:[{description:'Brouillon', qty:1, unitPrice:999999, tva:19}]},
+    ];
+    saveData();
+  });
+
+  async function grab(fn) {
+    const wait = page.waitForEvent('download');
+    await page.evaluate(fn);
+    const dl = await wait;
+    const path = await dl.path();
+    const buf = await readFile(path);
+    return {name: dl.suggestedFilename(), buf};
+  }
+
+  const facture = await grab(() => exportInvoiceXlsx('i1'));
+  check('the invoice export is named after the invoice',
+        facture.name === 'facture-FAC-2026-004.xlsx', facture.name);
+  check('and is a real zip container (what .xlsx is)',
+        facture.buf[0] === 0x50 && facture.buf[1] === 0x4b, facture.buf.slice(0, 2).toString('hex'));
+  const fText = facture.buf.toString('latin1');
+  check('it declares a worksheet part', fText.includes('xl/worksheets/sheet1.xml'));
+  check('it carries the company NIN', fText.includes('109912340056781234'));
+  check('the VAT amount is broken out per line', fText.includes('>88920<'));
+
+  const journal = await grab(() => exportJournalXlsx('2026-08'));
+  const jText = journal.buf.toString('latin1');
+  check('the journal is named after the month',
+        journal.name === 'journal-ventes-2026-08.xlsx', journal.name);
+  check('it holds two sheets', jText.includes('xl/worksheets/sheet2.xml'));
+  check('drafts are left out of the register', !jText.includes('999999'));
+  /* 6x78 000 @19 % + 45 000 @9 % + 200 000 @19 %  ->  713 000 HT */
+  check('the month total is the sum of the two real invoices', jText.includes('>713000<'));
+  check('and the VAT is split by rate', jText.includes('>4050<') && jText.includes('>126920<'));
+
+  const emptyMonth = await page.evaluate(() => {
+    let said = ''; const real = window.toast; window.toast = m => { said = m; };
+    exportJournalXlsx('2020-01');
+    window.toast = real; return said;
+  });
+  check('an empty month says so instead of producing a blank file',
+        /Aucune facture|لا توجد/.test(emptyMonth), emptyMonth);
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
