@@ -15,6 +15,17 @@ Static SPA — **Created by CheMs SoUu**
 - FR / العربية + RTL
 - localStorage only (privacy)
 
+## Tests
+
+`cd tests && npm install && npm test` — 43 checks against a real headless
+browser. Run them before every deploy; the suite prints `Safe to deploy.` or
+lists what broke. The first group verifies that data written by the *previous*
+version survives the update, which is what lets us ship without losing anyone's
+work. When you fix a bug, add the check that would have caught it.
+
+Playwright lives in `tests/package.json`, not the root one, so the Vercel build
+never installs it.
+
 ## Notes for contributors
 
 Four rules that have each caused a production outage before. Please keep them.
