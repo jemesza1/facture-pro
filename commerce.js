@@ -244,6 +244,17 @@
           b.innerHTML='<i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel';
           b.onclick=function(){ exportExcel('invoices'); };
           bar.parentNode.insertBefore(b, bar);
+          /* The monthly register is what an accountant actually opens: it is the
+             sheet the declaration is filled from, not a dump of every invoice. */
+          if(typeof exportJournalXlsx==='function'){
+            var j=document.createElement('button');
+            j.id='journal-inv-btn';
+            j.className='btn-secondary';
+            j.innerHTML='<i data-lucide="calendar-range" class="w-4 h-4"></i> '+
+              (ar()?'\u0633\u062c\u0644\u0651 \u0627\u0644\u0634\u0647\u0631':'Journal du mois');
+            j.onclick=function(){ exportJournalXlsx(); };
+            bar.parentNode.insertBefore(j, bar);
+          }
           try{lucide.createIcons();}catch(e){}
         }
       }

@@ -7,6 +7,21 @@ Static SPA — **Created by CheMs SoUu**
 - Build Command: `npm run build` (or leave default)
 - Output Directory: **public**
 
+## Excel export
+
+`lib-xlsx.js` writes real `.xlsx` files — a zip of XML parts, stored
+uncompressed so no deflate implementation is needed. A few kilobytes instead of
+a megabyte of library, and it keeps working offline, which a CDN would not.
+
+`excel.js` builds two workbooks. The invoice sheet is the lesser one. The
+**Journal du mois** is the point: every invoice of a month with the base and VAT
+split per rate, the stamp duty, and a Récapitulatif TVA sheet holding the
+figures a G50 asks for. Drafts and cancelled invoices are excluded.
+
+Both workbooks are French whatever the interface language: they are fiscal
+documents, and two users must not produce two different-looking declarations
+from the same figures.
+
 ## Public tools
 
 Two standalone pages, linked from Aide and listed in the sitemap:
@@ -29,7 +44,7 @@ the translations.
 
 ## Tests
 
-`cd tests && npm install && npm test` — 64 checks against a real headless
+`cd tests && npm install && npm test` — 76 checks against a real headless
 browser. Run them before every deploy; the suite prints `Safe to deploy.` or
 lists what broke. The first group verifies that data written by the *previous*
 version survives the update, which is what lets us ship without losing anyone's
