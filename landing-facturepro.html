@@ -247,16 +247,16 @@ footer h4{color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-tr
 .f-links{display:flex;flex-direction:column;gap:10px}
 .f-links a:hover{color:#fff}
 .f-brand p{margin:14px 0 20px;max-width:30rem;font-size:14px}
-.news{display:flex;gap:8px;max-width:380px}
-.news input{flex:1;min-width:0;height:44px;padding:0 14px;border-radius:11px;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:14px}
-.news input::placeholder{color:#64748b}
-.news input:focus{border-color:var(--blue);background:rgba(255,255,255,.1);outline:none}
-.news button{height:44px;padding:0 20px;border-radius:11px;background:var(--blue-600);color:#fff;
-  font-weight:600;font-size:14px;white-space:nowrap;transition:.18s}
-.news button:hover{background:#1d4ed8}
-.news-ok{color:#34d399;font-size:13px;margin-top:10px;display:none;align-items:center;gap:7px}
-.news-ok svg{width:15px;height:15px}
+.social{display:flex;flex-wrap:wrap;gap:10px}
+.soc{display:inline-flex;align-items:center;gap:9px;height:44px;padding:0 18px;
+  border-radius:11px;font-size:14px;font-weight:600;text-decoration:none;
+  transition:background .16s,transform .12s}
+.soc svg{width:18px;height:18px;flex:none}
+.soc:active{transform:translateY(1px)}
+.soc-fb{background:#1877f2;color:#fff}
+.soc-fb:hover{background:#0f62d6;color:#fff}
+.soc-mail{background:rgba(255,255,255,.09);color:#e2e8f0;border:1px solid rgba(255,255,255,.16)}
+.soc-mail:hover{background:rgba(255,255,255,.15);color:#fff}
 .f-bot{border-top:1px solid rgba(255,255,255,.09);padding-top:24px;display:flex;
   justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px}
 
@@ -565,7 +565,7 @@ footer h4{color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-tr
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Accès API</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Accompagnement dédié</li>
         </ul>
-        <a href="mailto:contact@facturepro.dz" class="btn btn-sm btn-soft">Nous contacter</a>
+        <a href="mailto:mrkorichi.a@gmail.com" class="btn btn-sm btn-soft">Nous contacter</a>
       </article>
     </div>
   </div>
@@ -631,14 +631,16 @@ footer h4{color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-tr
           FacturePro
         </a>
         <p>Le logiciel de facturation pensé pour les PME et indépendants algériens. Conforme, bilingue, et simple à prendre en main.</p>
-        <h4>Newsletter</h4>
-        <form class="news" onsubmit="return subscribe(event)">
-          <input type="email" required placeholder="votre@email.dz" aria-label="Votre adresse email"/>
-          <button type="submit">S'inscrire</button>
-        </form>
-        <div class="news-ok" id="newsOk">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-          Merci ! Vous êtes inscrit.
+        <h4>Suivez-nous</h4>
+        <div class="social">
+          <a class="soc soc-fb" href="https://www.facebook.com/share/18MFPVTn2V/" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.96h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+            Facebook
+          </a>
+          <a class="soc soc-mail" href="mailto:mrkorichi.a@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+            Email
+          </a>
         </div>
       </div>
 
@@ -652,20 +654,21 @@ footer h4{color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-tr
       <div>
         <h4>Ressources</h4>
         <div class="f-links">
-          <a href="#faq">FAQ</a><a href="/montant-en-lettres.html">Montant en lettres</a>
-          <a href="/droit-de-timbre.html">Droit de timbre</a><a href="mailto:contact@facturepro.dz">Support</a>
+          <a href="/guide.html">Guide d'utilisation</a><a href="#faq">FAQ</a>
+          <a href="/montant-en-lettres.html">Montant en lettres</a>
+          <a href="/droit-de-timbre.html">Droit de timbre</a><a href="mailto:mrkorichi.a@gmail.com">Support</a>
         </div>
       </div>
       <div>
         <h4>Entreprise</h4>
         <div class="f-links">
-          <a href="mailto:contact@facturepro.dz">Contact</a><a href="/">Conditions d'utilisation</a>
+          <a href="mailto:mrkorichi.a@gmail.com">Contact</a><a href="/">Conditions d'utilisation</a>
         </div>
       </div>
     </div>
     <div class="f-bot">
       <span>© 2026 FacturePro — Created by CheMs SoUu</span>
-      <span>Alger, Algérie · contact@facturepro.dz</span>
+      <span>Alger, Algérie · mrkorichi.a@gmail.com</span>
     </div>
   </div>
 </footer>
@@ -723,12 +726,7 @@ function move(d){ go(cur+d); clearInterval(timer); timer = setInterval(()=>go(cu
 let timer = setInterval(()=>go(cur+1), 7000);
 
 /* ---------- newsletter (demo only — no network, no storage) ---------- */
-function subscribe(e){
-  e.preventDefault();
-  e.target.reset();
-  document.getElementById('newsOk').style.display = 'flex';
-  return false;
-}
 </script>
+<script src="/install.js?v=20260816f"></script>
 </body>
 </html>

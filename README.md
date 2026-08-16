@@ -80,6 +80,20 @@ Both workbooks are French whatever the interface language: they are fiscal
 documents, and two users must not produce two different-looking declarations
 from the same figures.
 
+## Guide
+
+`guide.html` is the manual: eight steps from the fiscal identifiers to the
+backup habit, in French and Arabic, switched by the same `fp_locale` key the
+application uses so a visitor keeps the language they already chose.
+
+It is written against what the code actually does — the three VAT rates, the
+five statuses, the stamp-duty bands, the 29 templates. When one of those
+changes, the guide is wrong until it is edited too.
+
+Section 7 is the one that matters. Everything lives in `localStorage`, and a
+cleared cache is an emptied ledger; the guide asks for a monthly export in the
+plainest words available.
+
 ## Public tools
 
 Two standalone pages, linked from Aide and listed in the sitemap:

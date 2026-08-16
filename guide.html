@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Guide d'utilisation — FacturePro Algérie | دليل الاستخدام</title>
+<meta name="description" content="Guide pas à pas de FacturePro : régler les identifiants fiscaux (NIF, NIS, RC, AI), créer une facture conforme, TVA 19 %, droit de timbre en espèces, export PDF et Excel, sauvegarde des données. Français et arabe." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://facture-pro-iota.vercel.app/guide.html" />
+<meta property="og:title" content="Guide d'utilisation — FacturePro Algérie" />
+<meta property="og:description" content="De la première facture à la sauvegarde de vos données, en français et en arabe." />
+<meta property="og:type" content="article" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .num{direction:ltr;unicode-bidi:isolate}
+  /* The step number sits in the margin so the eye can run down the sequence.
+     Qualified with the tag name on purpose: tailwind.css loads after this
+     block, and a bare .step loses to .p-5, which puts the badge back on top
+     of the heading. */
+  section.step{position:relative;padding-inline-start:68px}
+  section.step > .n{position:absolute;inset-inline-start:20px;top:20px;width:36px;height:36px;
+    border-radius:11px;background:var(--brand);color:#fff;display:grid;place-items:center;
+    font-weight:700;font-size:15px}
+  @media (min-width:640px){
+    section.step{padding-inline-start:72px}
+    section.step > .n{inset-inline-start:24px;top:24px}
+  }
+  .kbd{display:inline-block;padding:1px 8px;border-radius:7px;background:#ecfdf5;
+    color:#065f46;border:1px solid #a7f3d0;font-weight:600;font-size:.86em;white-space:nowrap}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:.6rem .5rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
+  th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b}
+  .toc a{display:block;padding:.45rem .1rem;border-bottom:1px solid #f1f5f9;
+    font-size:.9rem;text-decoration:none;color:#334155}
+  .toc a:hover{color:var(--brand2)}
+  .toc a:last-child{border-bottom:0}
+  html{scroll-behavior:smooth}
+  h2{scroll-margin-top:1.5rem}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+    th,td{border-color:#1e293b}
+    .kbd{background:rgba(5,150,105,.15);color:#6ee7b7;border-color:rgba(5,150,105,.35)}
+    .toc a{color:#cbd5e1;border-color:#1e293b}
+  }
+  @media print{.noprint{display:none!important}body{background:#fff}}
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260816f" />
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-3xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3 noprint">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <span class="w-9 h-9 rounded-xl grid place-items-center text-white font-bold shrink-0" style="background:var(--brand)">F</span>
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-3xl mx-auto px-4 pb-16">
+
+<!-- ===================== FRANÇAIS ===================== -->
+<div id="fr">
+  <h1 class="text-2xl sm:text-3xl font-bold mb-2">Guide d'utilisation</h1>
+  <p class="text-slate-500 mb-6">De la première facture à la sauvegarde de vos données. Comptez dix minutes.</p>
+
+  <nav class="card p-5 mb-6 toc noprint">
+    <p class="font-semibold mb-2">Sommaire</p>
+    <a href="#fr1">1. Régler votre entreprise</a>
+    <a href="#fr2">2. Enregistrer un client</a>
+    <a href="#fr3">3. Créer une facture</a>
+    <a href="#fr4">4. Le droit de timbre</a>
+    <a href="#fr5">5. Aperçu, PDF et Excel</a>
+    <a href="#fr6">6. Suivre les paiements</a>
+    <a href="#fr7">7. Sauvegarder vos données</a>
+    <a href="#fr8">8. Installer l'application</a>
+  </nav>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr1">
+    <span class="n">1</span>
+    <h2 class="font-semibold text-lg mb-2">Régler votre entreprise</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      À faire une seule fois, avant tout le reste. Ouvrez <span class="kbd">Paramètres</span>
+      et renseignez la raison sociale, l'adresse et vos identifiants fiscaux :
+      <b>NIF</b>, <b>NIS</b>, <b>RC</b>, <b>AI</b> et, s'il y a lieu, le <b>NIN</b>.
+      Ajoutez le RIB et la banque si vous êtes réglé par virement.
+    </p>
+    <p class="text-sm leading-relaxed">
+      Ces informations sont reprises telles quelles sur chaque facture. Une erreur ici
+      se répète sur tous vos documents — relisez-les une fois, vous n'y reviendrez plus.
+      Le bouton <span class="kbd">Ajouter un logo</span> accepte une image jusqu'à 1,5 Mo.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr2">
+    <span class="n">2</span>
+    <h2 class="font-semibold text-lg mb-2">Enregistrer un client</h2>
+    <p class="text-sm leading-relaxed">
+      Dans <span class="kbd">Clients</span>, bouton <span class="kbd">Nouveau client</span>.
+      Le nom suffit pour commencer, mais un client professionnel doit porter son NIF sur
+      la facture : saisissez-le maintenant plutôt qu'au moment d'imprimer.
+      Le client enregistré est ensuite proposé dans chaque nouvelle facture.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr3">
+    <span class="n">3</span>
+    <h2 class="font-semibold text-lg mb-2">Créer une facture</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      Bouton <span class="kbd">Nouvelle facture</span>, en bas du menu. Choisissez le client,
+      la date et l'échéance, puis ajoutez vos lignes : désignation, quantité, prix unitaire HT
+      et taux de TVA. Trois taux sont disponibles :
+    </p>
+    <table class="mb-3">
+      <thead><tr><th>Taux</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td class="num">19 %</td><td>Taux normal</td></tr>
+        <tr><td class="num">9 %</td><td>Taux réduit</td></tr>
+        <tr><td class="num">0 %</td><td>Exonéré</td></tr>
+      </tbody>
+    </table>
+    <p class="text-sm leading-relaxed">
+      Les totaux HT, TVA et TTC se calculent seuls. Le numéro de facture est généré
+      automatiquement et ne se répète jamais. Choisissez enfin le mode de règlement —
+      <b>espèces</b>, <b>virement</b>, <b>chèque</b> ou <b>CCP</b> — car il change le total,
+      comme expliqué juste après.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr4">
+    <span class="n">4</span>
+    <h2 class="font-semibold text-lg mb-2">Le droit de timbre</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      Il n'est dû que sur les factures <b>réglées en espèces</b>. Virement, versement
+      bancaire ou postal et paiement par TPE en sont exonérés. L'application l'applique
+      toute seule dès que vous choisissez « espèces » :
+    </p>
+    <table class="mb-3">
+      <thead><tr><th>Montant TTC</th><th>Taux</th></tr></thead>
+      <tbody>
+        <tr><td>Jusqu'à 30 000 DA</td><td class="num">1 %</td></tr>
+        <tr><td>De 30 000 à 100 000 DA</td><td class="num">1,5 %</td></tr>
+        <tr><td>Au-delà de 100 000 DA</td><td class="num">2 %</td></tr>
+      </tbody>
+    </table>
+    <p class="text-sm leading-relaxed">
+      Minimum 5 DA, <b>sans plafond</b>. Article 100 du Code du timbre, barème de la loi
+      de finances 2025. Pour vérifier un montant seul, la
+      <a href="/droit-de-timbre.html" class="text-emerald-700 dark:text-emerald-400 underline font-medium">calculatrice du droit de timbre</a>
+      fait le calcul avec le même code que l'application.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr5">
+    <span class="n">5</span>
+    <h2 class="font-semibold text-lg mb-2">Aperçu, PDF et Excel</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      L'icône <span class="kbd">œil</span> ouvre l'aperçu : la facture exactement telle
+      qu'elle sera imprimée, avec le montant arrêté en toutes lettres. Trois boutons en haut :
+    </p>
+    <ul class="text-sm leading-relaxed space-y-2 mb-3">
+      <li><b>PDF</b> — le fichier à envoyer au client.</li>
+      <li><b>Excel</b> — la facture en <span class="num">.xlsx</span>, TVA détaillée par ligne.</li>
+      <li><b>Imprimer</b> — sortie papier directe.</li>
+    </ul>
+    <p class="text-sm leading-relaxed">
+      <b>29 modèles</b> sont disponibles dans <span class="kbd">Modèles de facture</span> ;
+      le choix s'applique à l'aperçu et au PDF. Depuis <span class="kbd">Factures</span>,
+      l'export Excel produit aussi le <b>journal du mois</b> : toutes les factures avec la
+      base et la TVA ventilées par taux, plus un récapitulatif TVA reprenant les chiffres
+      que demande un G50. Les brouillons et les factures annulées en sont exclus.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr6">
+    <span class="n">6</span>
+    <h2 class="font-semibold text-lg mb-2">Suivre les paiements</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      Chaque facture porte un statut, modifiable directement depuis la liste :
+    </p>
+    <table class="mb-3">
+      <thead><tr><th>Statut</th><th>Signification</th></tr></thead>
+      <tbody>
+        <tr><td>Brouillon</td><td>En préparation, hors de tout total</td></tr>
+        <tr><td>Envoyée</td><td>Remise au client, en attente de règlement</td></tr>
+        <tr><td>Payée</td><td>Réglée</td></tr>
+        <tr><td>En retard</td><td>Échéance dépassée — appliqué automatiquement</td></tr>
+        <tr><td>Annulée</td><td>Sans effet, exclue des totaux</td></tr>
+      </tbody>
+    </table>
+    <p class="text-sm leading-relaxed">
+      <span class="kbd">Créances</span> réunit ce qui reste dû, et
+      <span class="kbd">Paiements</span> ce qui est encaissé. Le tableau de bord en donne
+      le résumé : payé, en attente, en retard, et le chiffre du mois.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr7" style="border-color:#f59e0b">
+    <span class="n" style="background:#d97706">7</span>
+    <h2 class="font-semibold text-lg mb-2">Sauvegarder vos données</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      <b>La section la plus importante de ce guide.</b> Vos factures ne sont pas sur un
+      serveur : elles vivent dans ce navigateur, sur cet appareil. Personne d'autre ne les
+      voit — et personne d'autre n'en garde de copie.
+    </p>
+    <p class="text-sm leading-relaxed mb-3">
+      Vider le cache du navigateur, changer de téléphone ou réinstaller le système
+      efface tout. Une seule habitude vous en protège :
+      <span class="kbd">Paramètres</span> → <span class="kbd">Exporter</span> télécharge un
+      fichier <span class="num">.json</span> contenant l'ensemble de vos données.
+      Faites-le <b>une fois par mois</b>, et gardez le fichier ailleurs que sur l'appareil.
+    </p>
+    <p class="text-sm leading-relaxed">
+      Pour restaurer, ou pour passer sur un nouvel appareil :
+      <span class="kbd">Paramètres</span> → <span class="kbd">Importer</span>, puis choisissez
+      votre fichier. La numérotation est réconciliée à l'import, aucun numéro ne se répète.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="fr8">
+    <span class="n">8</span>
+    <h2 class="font-semibold text-lg mb-2">Installer l'application</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      FacturePro s'installe sur l'écran d'accueil et fonctionne ensuite
+      <b>sans connexion</b> : vous pouvez écrire une facture et l'exporter en PDF dans une
+      boutique sans réseau.
+    </p>
+    <ul class="text-sm leading-relaxed space-y-2 mb-4">
+      <li><b>Android / Chrome</b> — le bouton ci-dessous, ou le menu ⋮ puis « Installer l'application ».</li>
+      <li><b>iPhone / Safari</b> — bouton Partager, puis « Sur l'écran d'accueil ».</li>
+      <li><b>Ordinateur</b> — l'icône d'installation dans la barre d'adresse.</li>
+    </ul>
+    <button type="button" onclick="fpInstall()" class="noprint px-4 py-2.5 rounded-xl text-white font-medium" style="background:var(--brand)">
+      Installer FacturePro
+    </button>
+  </section>
+
+  <div class="card p-5 sm:p-6 mb-5">
+    <h2 class="font-semibold mb-2">Outils gratuits</h2>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Utilisables sans compte, même hors de l'application.</p>
+    <div class="flex flex-wrap gap-2">
+      <a href="/montant-en-lettres.html" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Montant en lettres</a>
+      <a href="/droit-de-timbre.html" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Droit de timbre</a>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-slate-600 dark:text-slate-400">Une question, un problème ?</p>
+    <div class="flex flex-wrap gap-2">
+      <a href="https://www.facebook.com/share/18MFPVTn2V/" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl text-white text-sm font-medium" style="background:#1877f2">Facebook</a>
+      <a href="mailto:mrkorichi.a@gmail.com" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Email</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== العربية ===================== -->
+<div id="ar" hidden>
+  <h1 class="text-2xl sm:text-3xl font-bold mb-2">دليل الاستخدام</h1>
+  <p class="text-slate-500 mb-6">من أول فاتورة إلى حفظ بياناتك. عشر دقائق تكفي.</p>
+
+  <nav class="card p-5 mb-6 toc noprint">
+    <p class="font-semibold mb-2">المحتويات</p>
+    <a href="#ar1">١. إعداد بيانات مؤسستك</a>
+    <a href="#ar2">٢. تسجيل زبون</a>
+    <a href="#ar3">٣. إنشاء فاتورة</a>
+    <a href="#ar4">٤. رسم الطابع</a>
+    <a href="#ar5">٥. المعاينة وPDF وExcel</a>
+    <a href="#ar6">٦. متابعة الدفعات</a>
+    <a href="#ar7">٧. حفظ بياناتك</a>
+    <a href="#ar8">٨. تثبيت التطبيق</a>
+  </nav>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar1">
+    <span class="n">١</span>
+    <h2 class="font-semibold text-lg mb-2">إعداد بيانات مؤسستك</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      خطوة تُنجز مرة واحدة قبل كل شيء. افتح <span class="kbd">الإعدادات</span> واكتب اسم
+      المؤسسة والعنوان وأرقامك الجبائية: <b>NIF</b> و<b>NIS</b> و<b>RC</b> و<b>AI</b>،
+      و<b>NIN</b> إن وُجد. أضف الحساب البنكي RIB واسم البنك إن كنت تُدفع بالتحويل.
+    </p>
+    <p class="text-sm leading-relaxed">
+      هذه البيانات تظهر كما هي على كل فاتورة، وأي خطأ فيها يتكرّر على جميع مستنداتك —
+      راجعها مرة واحدة بعناية ولن تعود إليها. زر <span class="kbd">إضافة شعار</span>
+      يقبل صورة حتى ١٫٥ ميغابايت.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar2">
+    <span class="n">٢</span>
+    <h2 class="font-semibold text-lg mb-2">تسجيل زبون</h2>
+    <p class="text-sm leading-relaxed">
+      من <span class="kbd">الزبائن</span>، اضغط <span class="kbd">زبون جديد</span>.
+      الاسم وحده يكفي للبدء، لكن الزبون المهني يجب أن يحمل رقمه الجبائي NIF على الفاتورة:
+      اكتبه الآن بدل أن تبحث عنه لحظة الطباعة. الزبون المسجَّل يظهر تلقائياً في كل فاتورة جديدة.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar3">
+    <span class="n">٣</span>
+    <h2 class="font-semibold text-lg mb-2">إنشاء فاتورة</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      اضغط <span class="kbd">فاتورة جديدة</span> أسفل القائمة. اختر الزبون والتاريخ وأجل
+      الدفع، ثم أضف البنود: التسمية والكمية والسعر الوحدوي دون رسم ونسبة الرسم على القيمة
+      المضافة. النسب المتاحة ثلاث:
+    </p>
+    <table class="mb-3">
+      <thead><tr><th>النسبة</th><th>الاستعمال</th></tr></thead>
+      <tbody>
+        <tr><td class="num">19 %</td><td>النسبة العادية</td></tr>
+        <tr><td class="num">9 %</td><td>النسبة المخفَّضة</td></tr>
+        <tr><td class="num">0 %</td><td>معفى</td></tr>
+      </tbody>
+    </table>
+    <p class="text-sm leading-relaxed">
+      المجاميع HT وTVA وTTC تُحسب وحدها، ورقم الفاتورة يُولَّد تلقائياً ولا يتكرّر أبداً.
+      وأخيراً اختر طريقة الدفع — <b>نقداً</b> أو <b>تحويل</b> أو <b>شيك</b> أو <b>CCP</b> —
+      فهي تغيّر المجموع كما يوضّح القسم التالي.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar4">
+    <span class="n">٤</span>
+    <h2 class="font-semibold text-lg mb-2">رسم الطابع</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      لا يُستحق إلا على الفواتير <b>المدفوعة نقداً</b>. أما التحويل والدفع البنكي أو البريدي
+      والدفع بالبطاقة فمعفاة. التطبيق يطبّقه وحده بمجرد اختيارك «نقداً»:
+    </p>
+    <table class="mb-3">
+      <thead><tr><th>المبلغ TTC</th><th>النسبة</th></tr></thead>
+      <tbody>
+        <tr><td>حتى 30 000 دج</td><td class="num">1 %</td></tr>
+        <tr><td>من 30 000 إلى 100 000 دج</td><td class="num">1,5 %</td></tr>
+        <tr><td>أكثر من 100 000 دج</td><td class="num">2 %</td></tr>
+      </tbody>
+    </table>
+    <p class="text-sm leading-relaxed">
+      بحد أدنى 5 دج و<b>بلا سقف</b>. المادة 100 من قانون الطابع، سلّم قانون المالية 2025.
+      وللتحقق من مبلغ منفرد، تقوم
+      <a href="/droit-de-timbre.html" class="text-emerald-700 dark:text-emerald-400 underline font-medium">حاسبة رسم الطابع</a>
+      بالحساب بنفس الكود الذي يستعمله التطبيق.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar5">
+    <span class="n">٥</span>
+    <h2 class="font-semibold text-lg mb-2">المعاينة وPDF وExcel</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      أيقونة <span class="kbd">العين</span> تفتح المعاينة: الفاتورة تماماً كما ستُطبع، مع
+      المبلغ محرَّراً بالحروف. وفي الأعلى ثلاثة أزرار:
+    </p>
+    <ul class="text-sm leading-relaxed space-y-2 mb-3">
+      <li><b>PDF</b> — الملف الذي تُرسله إلى الزبون.</li>
+      <li><b>Excel</b> — الفاتورة بصيغة <span class="num">.xlsx</span> مع تفصيل الرسم لكل بند.</li>
+      <li><b>طباعة</b> — إخراج ورقي مباشر.</li>
+    </ul>
+    <p class="text-sm leading-relaxed">
+      يتوفّر <b>٢٩ نموذجاً</b> في <span class="kbd">نماذج الفاتورة</span>، والاختيار ينطبق
+      على المعاينة وعلى PDF. ومن <span class="kbd">الفواتير</span> يُنتج تصدير Excel أيضاً
+      <b>سجلّ الشهر</b>: كل فواتير الشهر مع الأساس والرسم موزَّعَين حسب النسبة، وورقة تلخيص
+      للرسم تحمل الأرقام التي يطلبها تصريح G50. المسوّدات والفواتير الملغاة مستثناة.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar6">
+    <span class="n">٦</span>
+    <h2 class="font-semibold text-lg mb-2">متابعة الدفعات</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      لكل فاتورة حالة يمكن تغييرها مباشرة من القائمة:
+    </p>
+    <table class="mb-3">
+      <thead><tr><th>الحالة</th><th>المعنى</th></tr></thead>
+      <tbody>
+        <tr><td>مسوّدة</td><td>قيد التحضير، خارج كل المجاميع</td></tr>
+        <tr><td>مُرسَلة</td><td>سُلّمت للزبون وتنتظر الدفع</td></tr>
+        <tr><td>مدفوعة</td><td>خالصة</td></tr>
+        <tr><td>متأخرة</td><td>تجاوزت أجل الدفع — تُطبَّق تلقائياً</td></tr>
+        <tr><td>ملغاة</td><td>بلا أثر، خارج المجاميع</td></tr>
+      </tbody>
+    </table>
+    <p class="text-sm leading-relaxed">
+      <span class="kbd">الديون</span> تجمع ما بقي مستحقاً، و<span class="kbd">المدفوعات</span>
+      ما تم تحصيله. ولوحة التحكّم تعرض الخلاصة: المدفوع، وقيد الانتظار، والمتأخر، ورقم الشهر.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar7" style="border-color:#f59e0b">
+    <span class="n" style="background:#d97706">٧</span>
+    <h2 class="font-semibold text-lg mb-2">حفظ بياناتك</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      <b>أهم قسم في هذا الدليل.</b> فواتيرك ليست على خادم، بل تعيش داخل هذا المتصفح على هذا
+      الجهاز. لا أحد غيرك يراها — ولا أحد غيرك يحتفظ بنسخة منها.
+    </p>
+    <p class="text-sm leading-relaxed mb-3">
+      مسح ذاكرة المتصفح أو تغيير الهاتف أو إعادة تثبيت النظام يمحو كل شيء. وعادة واحدة تحميك:
+      <span class="kbd">الإعدادات</span> ← <span class="kbd">تصدير</span> تنزّل ملف
+      <span class="num">.json</span> يحوي بياناتك كاملة. افعلها <b>مرة كل شهر</b>، واحفظ
+      الملف في مكان غير هذا الجهاز.
+    </p>
+    <p class="text-sm leading-relaxed">
+      وللاستعادة أو للانتقال إلى جهاز جديد: <span class="kbd">الإعدادات</span> ←
+      <span class="kbd">استيراد</span>، ثم اختر ملفك. يُعاد ضبط الترقيم عند الاستيراد فلا
+      يتكرّر أي رقم.
+    </p>
+  </section>
+
+  <section class="card p-5 sm:p-6 mb-5 step" id="ar8">
+    <span class="n">٨</span>
+    <h2 class="font-semibold text-lg mb-2">تثبيت التطبيق</h2>
+    <p class="text-sm leading-relaxed mb-3">
+      يمكن تثبيت FacturePro على الشاشة الرئيسية، وبعدها يعمل <b>بدون إنترنت</b>: تحرّر
+      فاتورة وتصدّرها PDF في محلّك ولو انقطعت الشبكة.
+    </p>
+    <ul class="text-sm leading-relaxed space-y-2 mb-4">
+      <li><b>أندرويد / Chrome</b> — الزر أسفله، أو قائمة ⋮ ثم «تثبيت التطبيق».</li>
+      <li><b>آيفون / Safari</b> — زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية».</li>
+      <li><b>حاسوب</b> — أيقونة التثبيت في شريط العنوان.</li>
+    </ul>
+    <button type="button" onclick="fpInstall()" class="noprint px-4 py-2.5 rounded-xl text-white font-medium" style="background:var(--brand)">
+      ثبّت FacturePro
+    </button>
+  </section>
+
+  <div class="card p-5 sm:p-6 mb-5">
+    <h2 class="font-semibold mb-2">أدوات مجانية</h2>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">تُستعمل بلا حساب، وحتى خارج التطبيق.</p>
+    <div class="flex flex-wrap gap-2">
+      <a href="/montant-en-lettres.html" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">المبلغ بالحروف</a>
+      <a href="/droit-de-timbre.html" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">رسم الطابع</a>
+    </div>
+  </div>
+
+  <div class="card p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-slate-600 dark:text-slate-400">سؤال أو مشكلة؟</p>
+    <div class="flex flex-wrap gap-2">
+      <a href="https://www.facebook.com/share/18MFPVTn2V/" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl text-white text-sm font-medium" style="background:#1877f2">فايسبوك</a>
+      <a href="mailto:mrkorichi.a@gmail.com" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">البريد</a>
+    </div>
+  </div>
+</div>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="install.js?v=20260816f"></script>
+<script>
+(function(){
+  /* Same key the application uses, so the guide opens in the language the
+     visitor already chose there. */
+  var loc = (localStorage.getItem('fp_locale') === 'ar') ? 'ar' : 'fr';
+  var $ = function(id){ return document.getElementById(id); };
+
+  function apply(){
+    var ar = loc === 'ar';
+    document.documentElement.lang = ar ? 'ar' : 'fr';
+    document.documentElement.dir  = ar ? 'rtl' : 'ltr';
+    document.body.classList.toggle('ar', ar);
+    $('fr').hidden = ar;
+    $('ar').hidden = !ar;
+    $('lang').textContent = ar ? 'Français' : 'العربية';
+    document.title = ar
+      ? 'دليل الاستخدام — FacturePro الجزائر'
+      : "Guide d'utilisation — FacturePro Algérie";
+  }
+
+  $('lang').addEventListener('click', function(){
+    loc = (loc === 'ar') ? 'fr' : 'ar';
+    try{ localStorage.setItem('fp_locale', loc); }catch(e){}
+    apply();
+    scrollTo(0, 0);
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>
