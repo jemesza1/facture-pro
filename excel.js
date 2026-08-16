@@ -59,26 +59,29 @@
 
     push([{v: co.name || '', s: 'title'}]);
     merges.push('A1:F1');
-    push([{v: [co.address, co.email, co.phone].filter(Boolean).join(' · ').replace(/\n/g, ' '), s: 'subtitle'}]);
+    push([{v: String(co.address || '').replace(/\n/g, ', '), s: 'subtitle'}]);
     merges.push('A2:F2');
-    var ids = [];
-    ['nif','nin','nis','rc','ai'].forEach(function(k){ if (co[k]) ids.push(k.toUpperCase() + ' : ' + co[k]); });
-    push([{v: ids.join('   '), s: 'subtitle'}]);
+    push([{v: [co.email, co.phone].filter(Boolean).join('   ·   '), s: 'subtitle'}]);
     merges.push('A3:F3');
+
+    /* One identifier per column rather than a single crammed line: an
+       accountant reads down a column, not along a sentence. */
+    var IDS = ['nif', 'nin', 'nis', 'rc', 'ai'];
+    push(IDS.map(function(k){ return {v: k.toUpperCase(), s: 'label'}; }));
+    push(IDS.map(function(k){ return {v: co[k] || '—', s: 'value'}; }));
     blank();
 
     push([{v: 'FACTURE ' + (inv.number || ''), s: 'sectionTitle'}]);
     push([{v: 'Date', s: 'label'}, {v: inv.date ? XLSX.excelDate(inv.date) : '', s: 'date'},
           null, {v: 'Échéance', s: 'label'}, {v: inv.dueDate ? XLSX.excelDate(inv.dueDate) : '', s: 'date'}]);
-    push([{v: 'Mode de règlement', s: 'label'}, {v: payLabelFr(inv), s: 'value'}]);
+    push([{v: 'Règlement', s: 'label'}, {v: payLabelFr(inv), s: 'value'}]);
     blank();
 
-    push([{v: 'Client', s: 'sectionTitle'}]);
+    push([{v: 'CLIENT', s: 'sectionTitle'}]);
     push([{v: cl.name || '', s: 'value'}]);
-    if (cl.address) push([{v: String(cl.address).replace(/\n/g, ' '), s: 'subtitle'}]);
-    var cids = [];
-    ['nif','nin','nis','rc','ai'].forEach(function(k){ if (cl[k]) cids.push(k.toUpperCase() + ' : ' + cl[k]); });
-    if (cids.length) push([{v: cids.join('   '), s: 'subtitle'}]);
+    if (cl.address) push([{v: String(cl.address).replace(/\n/g, ', '), s: 'subtitle'}]);
+    push(IDS.map(function(k){ return {v: k.toUpperCase(), s: 'label'}; }));
+    push(IDS.map(function(k){ return {v: cl[k] || '—', s: 'value'}; }));
     blank();
 
     push([{v: 'Désignation', s: 'thead'}, {v: 'Qté', s: 'thead'}, {v: 'P.U. HT', s: 'thead'},
@@ -112,7 +115,12 @@
     if (co.rib) push([{v: 'RIB : ' + co.rib + (co.banque ? ' — ' + co.banque : ''), s: 'subtitle'}]);
 
     void totalsAt;
-    XLSX.build([{name: 'Facture', cols: [42, 8, 14, 8, 14, 14], rows: rows, merges: merges}],
+    /* Merged cells do not grow to fit their text, so the wrapped lines get an
+       explicit height. Without this the wording looked cut off. */
+    var heights = {1: 26};
+    heights[rows.length] = 30;
+    XLSX.build([{name: 'Facture', cols: [40, 16, 16, 16, 16, 16], rows: rows,
+                 merges: merges, heights: heights}],
                'facture-' + safeName(inv.number || 'sans-numero') + '.xlsx');
     toast(say('Export Excel OK', 'تم تصدير Excel'));
   };
@@ -189,8 +197,11 @@
     recMerges.push('A' + rec.length + ':C' + rec.length);
 
     XLSX.build([
-      {name: 'Journal des ventes', cols: [16, 12, 30, 18, 14, 13, 14, 14, 14, 18], rows: rows, merges: merges},
-      {name: 'Récapitulatif TVA',  cols: [26, 16, 16], rows: rec, merges: recMerges}
+      {name: 'Journal des ventes', cols: [16, 12, 30, 20, 14, 13, 14, 15, 14, 18],
+       rows: rows, merges: merges, freeze: 4, autofilter: 'A4:J' + rows.length,
+       heights: {1: 26, 4: 30}},
+      {name: 'Récapitulatif TVA',  cols: [26, 16, 16], rows: rec, merges: recMerges,
+       heights: {1: 26}}
     ], 'journal-ventes-' + ym + '.xlsx');
 
     toast(say('Journal exporté', 'تم تصدير السجلّ'));

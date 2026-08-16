@@ -111,9 +111,11 @@
   var STYLES_XML =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-      '<numFmts count="2">' +
+      '<numFmts count="3">' +
         '<numFmt numFmtId="164" formatCode="#,##0.00"/>' +
         '<numFmt numFmtId="165" formatCode="0.0&quot; %&quot;"/>' +
+        /* numFmtId 14 renders as mm-dd-yy on an English Excel. Spell it out. */
+        '<numFmt numFmtId="166" formatCode="dd/mm/yyyy"/>' +
       '</numFmts>' +
       '<fonts count="7">' +
         '<font><sz val="11"/><name val="Calibri"/></font>' +
@@ -155,7 +157,7 @@
         '<xf numFmtId="164" fontId="5" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>' + // totalNum
         '<xf numFmtId="164" fontId="4" fillId="2" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>' + // grand
         '<xf numFmtId="0" fontId="6" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1"/></xf>' + // note
-        '<xf numFmtId="14" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' + // date
+        '<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' + // date
         '<xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +                                    // sectionTitle
       '</cellXfs>' +
       '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
@@ -199,7 +201,9 @@
         else
           cs.push('<c r="' + ref + '" s="' + st + '" t="inlineStr"><is><t xml:space="preserve">' + esc(v) + '</t></is></c>');
       }
-      if (cs.length) out.push('<row r="' + (r + 1) + '">' + cs.join('') + '</row>');
+      var h = sheet.heights && sheet.heights[r + 1];
+      var attrs = h ? ' ht="' + h + '" customHeight="1"' : '';
+      if (cs.length) out.push('<row r="' + (r + 1) + '"' + attrs + '>' + cs.join('') + '</row>');
     }
     var cols = '';
     if (sheet.cols && sheet.cols.length) {
@@ -212,10 +216,20 @@
       merges = '<mergeCells count="' + sheet.merges.length + '">' +
         sheet.merges.map(function(m){ return '<mergeCell ref="' + m + '"/>'; }).join('') + '</mergeCells>';
     }
+    var views = '';
+    if (sheet.freeze) {
+      views = '<sheetViews><sheetView workbookViewId="0" showGridLines="0">' +
+        '<pane ySplit="' + sheet.freeze + '" topLeftCell="A' + (sheet.freeze + 1) + '" activePane="bottomLeft" state="frozen"/>' +
+        '<selection pane="bottomLeft" activeCell="A' + (sheet.freeze + 1) + '" sqref="A' + (sheet.freeze + 1) + '"/>' +
+        '</sheetView></sheetViews>';
+    } else {
+      views = '<sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>';
+    }
+    var filter = sheet.autofilter ? '<autoFilter ref="' + sheet.autofilter + '"/>' : '';
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + views +
       '<sheetFormatPr defaultRowHeight="15"/>' + cols +
-      '<sheetData>' + out.join('') + '</sheetData>' + merges +
+      '<sheetData>' + out.join('') + '</sheetData>' + merges + filter +
       '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>' +
       '</worksheet>';
   }
