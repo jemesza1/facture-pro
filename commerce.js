@@ -11,7 +11,8 @@
 
   window.getClientDebt=function(clientId){
     var invs=(state.invoices||[]).filter(function(i){
-      return i.clientId===clientId && i.status!=='annulee' && i.status!=='payee';
+      /* A draft was never sent, so nobody owes it yet. */
+      return i.clientId===clientId && i.status!=='annulee' && i.status!=='payee' && i.status!=='brouillon';
     });
     var due=invs.reduce(function(s,i){return s+calcInvoiceTotals(i).net;},0);
     var unpaidIds={};
@@ -26,7 +27,7 @@
     var rows=(state.clients||[]).map(function(c){
       var debt=getClientDebt(c.id);
       var unpaid=(state.invoices||[]).filter(function(i){
-        return i.clientId===c.id && i.status!=='payee' && i.status!=='annulee';
+        return i.clientId===c.id && i.status!=='payee' && i.status!=='annulee' && i.status!=='brouillon';
       }).length;
       return {c:c, debt:debt, unpaid:unpaid};
     }).filter(function(r){return r.debt>0.5 || r.unpaid>0;})

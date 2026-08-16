@@ -1,5 +1,17 @@
-function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annulee');const paid=invs.filter(i=>i.status==='payee');const unpaid=invs.filter(i=>['envoyee','enretard','brouillon'].includes(i.status));const overdue=invs.filter(i=>i.status==='enretard');const totalPaid=paid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalUnpaid=unpaid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalOverdue=overdue.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const thisMonth=invs.filter(i=>i.date&&i.date.startsWith(new Date().toISOString().slice(0,7))).reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const recent=[...state.invoices].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);return `
+function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annulee');const paid=invs.filter(i=>i.status==='payee');const unpaid=invs.filter(i=>['envoyee','enretard','brouillon'].includes(i.status));const overdue=invs.filter(i=>i.status==='enretard');const totalPaid=paid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalUnpaid=unpaid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalOverdue=overdue.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const thisMonth=invs.filter(i=>i.date&&i.date.startsWith(new Date().toISOString().slice(0,7))).reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const isDemo=(typeof hasDemoData==='function')&&hasDemoData();const empty=!state.invoices.length;const recent=[...state.invoices].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);return `
 <div class="space-y-6">
+  ${empty?`<div class="card p-8 text-center">
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center mb-4">
+      <i data-lucide="file-plus" class="w-7 h-7 text-emerald-600"></i></div>
+    <h2 class="text-lg font-bold mb-1">${t('start.title')}</h2>
+    <p class="text-sm text-slate-500 mb-5">${t('start.sub')}</p>
+    <button onclick="openNewInvoice()" class="btn-primary mx-auto"><i data-lucide="plus" class="w-4 h-4"></i> ${t('start.cta')}</button>
+  </div>`:''}
+  ${isDemo?`<div class="card p-4 flex flex-wrap items-center justify-between gap-3 border-s-4 border-amber-400">
+    <div class="min-w-0"><p class="font-semibold text-sm">${t('demo.title')}</p>
+    <p class="text-xs text-slate-500">${t('demo.sub')}</p></div>
+    <button onclick="clearDemoData()" class="btn-secondary shrink-0"><i data-lucide="eraser" class="w-4 h-4"></i> ${t('demo.clear')}</button>
+  </div>`:''}
   <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
     <div class="stat-card">
       <div class="flex items-center justify-between gap-2">

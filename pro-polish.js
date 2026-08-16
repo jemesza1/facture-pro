@@ -28,30 +28,75 @@
     }
   };
 
+  /* This override had replaced the validating version in b2b.js. A file with
+     "clients": [] wiped every client and reported success; one with a string
+     where items should be broke the app on every boot with a blank screen.
+     Now the file is checked first, the user is told what will be replaced, and
+     the current data is copied aside before anything is touched. */
+  function validBackup(d){
+    if(!d||typeof d!=='object'||Array.isArray(d))return 'format';
+    var lists=['clients','invoices','products','devis','payments'],i,k,r;
+    for(i=0;i<lists.length;i++){k=lists[i];
+      if(d[k]!==undefined&&!Array.isArray(d[k]))return k;}
+    if(Array.isArray(d.invoices)){
+      for(i=0;i<d.invoices.length;i++){r=d.invoices[i];
+        if(!r||typeof r!=='object')return 'invoices';
+        if(r.items!==undefined&&!Array.isArray(r.items))return 'invoices';}}
+    if(Array.isArray(d.clients)){
+      for(i=0;i<d.clients.length;i++){if(!d.clients[i]||typeof d.clients[i]!=='object')return 'clients';}}
+    return '';
+  }
+
   window.importData = function(ev){
     var f=ev&&ev.target&&ev.target.files&&ev.target.files[0];
     if(!f) return;
+    var input=ev.target;
     var reader=new FileReader();
     reader.onload=function(){
+      var d;
+      try{ d=JSON.parse(reader.result); }
+      catch(err){ toast(t('toast.badFile'),'err'); input.value=''; return; }
+
+      var bad=validBackup(d);
+      if(bad){ toast(t('toast.badFile'),'err'); input.value=''; return; }
+
+      var n=function(x){return Array.isArray(x)?x.length:0;};
+      var msg=t('confirm.import')
+        .replace('{cli}',n(d.clients)).replace('{inv}',n(d.invoices))
+        .replace('{oldCli}',n(state.clients)).replace('{oldInv}',n(state.invoices));
+      if(!confirm(msg)){ input.value=''; return; }
+
+      /* keep a copy of what is about to be replaced */
+      try{ localStorage.setItem(STORAGE_KEY+'_avant_import',
+             localStorage.getItem(STORAGE_KEY)||''); }catch(e){}
+
       try{
-        var d=JSON.parse(reader.result);
-        if(!d || typeof d!=='object') throw new Error('bad');
         if(d.company) state.company=Object.assign({},state.company,d.company);
-        if(Array.isArray(d.clients)) state.clients=d.clients;
-        if(Array.isArray(d.invoices)) state.invoices=d.invoices;
-        if(d.nextInvoiceNumber) state.nextInvoiceNumber=d.nextInvoiceNumber;
+        if(Array.isArray(d.clients)) state.clients=d.clients.map(function(c){
+          return Object.assign({},c,{id:c.id||uid()});});
+        if(Array.isArray(d.invoices)) state.invoices=d.invoices.map(function(i){
+          return Object.assign({},i,{id:i.id||uid(),items:Array.isArray(i.items)?i.items:[],
+                                     paymentMode:i.paymentMode||'virement'});});
         if(Array.isArray(d.products)) state.products=d.products;
         if(Array.isArray(d.devis)) state.devis=d.devis;
         if(Array.isArray(d.payments)) state.payments=d.payments;
         if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
+
+        /* an imported set must never hand out a number that already exists */
+        var maxNo=0;
+        (state.invoices||[]).forEach(function(i){
+          var m=/(\d+)\s*$/.exec(i.number||''); if(m) maxNo=Math.max(maxNo,parseInt(m[1],10)||0);});
+        state.nextInvoiceNumber=Math.max(Number(d.nextInvoiceNumber)||1,maxNo+1);
+
         saveData();
-        toast(t('toast.exportOk'));
+        toast(t('toast.importOk'));
         renderPage();
       }catch(err){
         toast(t('toast.badFile'),'err');
       }
+      input.value='';
     };
-    reader.onerror=function(){ toast(t('toast.unreadable'),'err'); };
+    reader.onerror=function(){ toast(t('toast.unreadable'),'err'); input.value=''; };
     reader.readAsText(f);
   };
 

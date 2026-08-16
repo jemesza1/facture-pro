@@ -22,7 +22,17 @@
         payments:state.payments,
         nextDevisNumber:state.nextDevisNumber
       }));
-    }catch(e){ if(typeof _save==='function') _save(); }
+      window.__saveWarned=false;
+    }catch(e){
+      /* The fallback used to write the same oversized payload through the a.js
+         version, throw again, and let the error escape — the user saw nothing
+         and kept working on data that was no longer being stored. */
+      try{ if(typeof _save==='function') _save(); window.__saveWarned=false; return; }catch(e2){}
+      if(!window.__saveWarned){
+        window.__saveWarned=true;
+        try{toast(t('toast.saveFailed'),'err');}catch(e3){}
+      }
+    }
   };
 
   var _load=window.loadData;
