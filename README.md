@@ -80,6 +80,18 @@ Both workbooks are French whatever the interface language: they are fiscal
 documents, and two users must not produce two different-looking declarations
 from the same figures.
 
+## Backups
+
+`backup.js` stamps `fp_last_export` when an export actually runs, and asks
+again after 30 days. It stays quiet while the only invoices are the seeded
+examples, and "Plus tard" buys a week.
+
+The stamp is set by **wrapping** `window.exportData`, not by editing it:
+`b2a.js` declares one and `pro-polish.js` replaces it wholesale at load, so a
+hook written into `b2a.js` is dead code. `backup.js` is last in the `core`
+list in `app.js`, which is what makes the wrapper land on the function the
+button really calls. Keep it last.
+
 ## Guide
 
 `guide.html` is the manual: eight steps from the fiscal identifiers to the
