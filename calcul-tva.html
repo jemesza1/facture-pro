@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Calcul de la TVA en Algérie — 19 % et 9 % | حساب الرسم على القيمة المضافة</title>
+<meta name="description" content="Calculez la TVA algérienne gratuitement : 19 % (taux normal) ou 9 % (taux réduit). Du HT vers le TTC, ou l'inverse — retrouvez le montant hors taxe à partir d'un prix TTC. Sans inscription. حساب الرسم على القيمة المضافة مجانًا." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://facture-pro-iota.vercel.app/calcul-tva.html" />
+<meta property="og:title" content="Calcul de la TVA en Algérie — 19 % et 9 %" />
+<meta property="og:description" content="Du HT au TTC et du TTC au HT, aux taux algériens. Gratuit, sans inscription." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .num{direction:ltr;unicode-bidi:isolate}
+  input[type=number]{direction:ltr;text-align:start}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
+  /* Segmented controls. Qualified with the tag: tailwind.css loads after this
+     block and a bare class would lose the padding to .px-3. */
+  button.seg{border:1px solid #cbd5e1;background:transparent;color:inherit;
+    padding:.55rem .9rem;border-radius:11px;font-size:.875rem;font-weight:600;
+    cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+  button.seg[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+    th,td{border-color:#1e293b}
+    button.seg{border-color:#334155}
+  }
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260816i" />
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <span class="w-9 h-9 rounded-xl grid place-items-center text-white font-bold shrink-0" style="background:var(--brand)">F</span>
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 pb-16">
+
+  <h1 id="h1" class="text-2xl sm:text-3xl font-bold mb-2">Calcul de la TVA</h1>
+  <p id="sub" class="text-slate-500 mb-6">Aux taux algériens, dans les deux sens.</p>
+
+  <div class="card p-5 sm:p-6">
+    <p id="dirlbl" class="text-sm font-medium mb-2">Je connais le montant</p>
+    <div class="flex flex-wrap gap-2 mb-5">
+      <button type="button" class="seg" id="dir-ht" data-dir="ht" aria-pressed="true">Hors taxe (HT)</button>
+      <button type="button" class="seg" id="dir-ttc" data-dir="ttc" aria-pressed="false">Toutes taxes (TTC)</button>
+    </div>
+
+    <label id="lbl" class="block text-sm font-medium mb-2" for="amount">Montant HT (DA)</label>
+    <input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="100000"
+           class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+
+    <p id="ratelbl" class="text-sm font-medium mt-5 mb-2">Taux de TVA</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="seg" data-rate="19" aria-pressed="true">19 %</button>
+      <button type="button" class="seg" data-rate="9" aria-pressed="false">9 %</button>
+      <button type="button" class="seg" data-rate="0" aria-pressed="false">0 %</button>
+    </div>
+
+    <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="rounded-xl p-3" style="background:rgba(5,150,105,.08)">
+        <p id="k1" class="text-xs text-slate-500">Montant HT</p>
+        <p id="out-ht" class="num text-xl font-bold">—</p>
+      </div>
+      <div class="rounded-xl p-3" style="background:rgba(5,150,105,.08)">
+        <p id="k2" class="text-xs text-slate-500">TVA</p>
+        <p id="out-tva" class="num text-xl font-bold">—</p>
+      </div>
+      <div class="rounded-xl p-3 text-white" style="background:var(--brand)">
+        <p id="k3" class="text-xs opacity-80">Montant TTC</p>
+        <p id="out-ttc" class="num text-xl font-bold">—</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5">
+    <h2 id="barT" class="font-semibold mb-3">Les taux</h2>
+    <table>
+      <thead><tr><th id="cA">Taux</th><th id="cB">Application</th></tr></thead>
+      <tbody>
+        <tr><td class="num">19 %</td><td id="r1">Taux normal — la majorité des biens et services</td></tr>
+        <tr><td class="num">9 %</td><td id="r2">Taux réduit — produits et services désignés par le Code des taxes</td></tr>
+        <tr><td class="num">0 %</td><td id="r3">Opérations exonérées et exportations</td></tr>
+      </tbody>
+    </table>
+    <p id="barP" class="text-sm text-slate-600 dark:text-slate-400 mt-3">
+      La TVA se calcule sur le montant hors taxe. Sur une facture réglée en espèces,
+      le droit de timbre s’ajoute ensuite au TTC — il ne fait pas partie de l’assiette
+      de la TVA.
+    </p>
+  </section>
+
+  <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">Ce calcul est appliqué automatiquement à chaque ligne de vos factures.</p>
+    <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
+      <span id="ctaB">Créer une facture gratuitement</span>
+    </a>
+  </div>
+
+  <div class="card p-5 sm:p-6 mt-5">
+    <h2 id="moreT" class="font-semibold mb-3">Autres outils</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="/droit-de-timbre.html" id="m1" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Droit de timbre</a>
+      <a href="/montant-en-lettres.html" id="m2" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Montant en lettres</a>
+      <a href="/guide.html" id="m3" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Guide d'utilisation</a>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="lib-calc.js?v=20260816i"></script>
+<script src="install.js?v=20260816i"></script>
+<script>
+(function(){
+  var T={
+    fr:{h1:'Calcul de la TVA',sub:'Aux taux algériens, dans les deux sens.',
+        dirlbl:'Je connais le montant',dirHt:'Hors taxe (HT)',dirTtc:'Toutes taxes (TTC)',
+        lblHt:'Montant HT (DA)',lblTtc:'Montant TTC (DA)',ratelbl:'Taux de TVA',
+        k1:'Montant HT',k2:'TVA',k3:'Montant TTC',barT:'Les taux',
+        cA:'Taux',cB:'Application',
+        r1:'Taux normal — la majorité des biens et services',
+        r2:'Taux réduit — produits et services désignés par le Code des taxes',
+        r3:'Opérations exonérées et exportations',
+        barP:"La TVA se calcule sur le montant hors taxe. Sur une facture réglée en espèces, le droit de timbre s’ajoute ensuite au TTC — il ne fait pas partie de l’assiette de la TVA.",
+        ctaT:'Ce calcul est appliqué automatiquement à chaque ligne de vos factures.',
+        ctaB:'Créer une facture gratuitement',
+        moreT:'Autres outils',m1:'Droit de timbre',m2:'Montant en lettres',m3:"Guide d'utilisation",
+        other:'العربية',title:'Calcul de la TVA en Algérie — 19 % et 9 %'},
+    ar:{h1:'حساب الرسم على القيمة المضافة',sub:'بالنسب الجزائرية، في الاتجاهين.',
+        dirlbl:'المبلغ الذي أعرفه',dirHt:'خارج الرسم (HT)',dirTtc:'شامل الرسم (TTC)',
+        lblHt:'المبلغ خارج الرسم (دج)',lblTtc:'المبلغ شامل الرسم (دج)',ratelbl:'نسبة الرسم',
+        k1:'خارج الرسم',k2:'الرسم',k3:'شامل الرسم',barT:'النسب',
+        cA:'النسبة',cB:'التطبيق',
+        r1:'النسبة العادية — أغلب السلع والخدمات',
+        r2:'النسبة المخفَّضة — سلع وخدمات يحدّدها قانون الضرائب',
+        r3:'العمليات المعفاة والتصدير',
+        barP:'يُحسب الرسم على المبلغ خارج الرسم. وفي الفاتورة المدفوعة نقداً يُضاف رسم الطابع بعد ذلك على المبلغ شامل الرسم — وهو ليس جزءاً من وعاء الرسم على القيمة المضافة.',
+        ctaT:'هذا الحساب يُطبَّق تلقائياً على كل بند من بنود فواتيرك.',
+        ctaB:'أنشئ فاتورة مجاناً',
+        moreT:'أدوات أخرى',m1:'رسم الطابع',m2:'المبلغ بالحروف',m3:'دليل الاستخدام',
+        other:'Français',title:'حساب الرسم على القيمة المضافة — الجزائر'}
+  };
+  var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
+  var dir='ht', rate=19;
+  var $=function(id){return document.getElementById(id);};
+  var fmt=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' DA';};
+
+  function apply(){
+    var d=T[loc];
+    document.documentElement.lang=loc==='ar'?'ar':'fr';
+    document.documentElement.dir=loc==='ar'?'rtl':'ltr';
+    document.body.classList.toggle('ar',loc==='ar');
+    ['h1','sub','dirlbl','ratelbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB','moreT','m1','m2','m3']
+      .forEach(function(k){ $(k).textContent=d[k]; });
+    $('dir-ht').textContent=d.dirHt;
+    $('dir-ttc').textContent=d.dirTtc;
+    $('lang').textContent=d.other;
+    document.title=d.title;
+    paintLabel();
+    render();
+  }
+
+  function paintLabel(){ $('lbl').textContent = T[loc][dir==='ht'?'lblHt':'lblTtc']; }
+
+  function render(){
+    var v=parseFloat($('amount').value);
+    if(!isFinite(v)||v<0){ $('out-ht').textContent='—'; $('out-tva').textContent='—'; $('out-ttc').textContent='—'; return; }
+    /* Both directions go through lib-calc, the same file the application
+       loads first — so this page and an invoice line cannot disagree. */
+    var ht = dir==='ht' ? v : htFromTtc(v, rate);
+    var tva = vatAmount(ht, rate);
+    $('out-ht').textContent=fmt(ht);
+    $('out-tva').textContent=fmt(tva);
+    $('out-ttc').textContent=fmt(ht+tva);
+  }
+
+  [].forEach.call(document.querySelectorAll('button.seg[data-dir]'),function(b){
+    b.addEventListener('click',function(){
+      dir=b.dataset.dir;
+      [].forEach.call(document.querySelectorAll('button.seg[data-dir]'),function(o){
+        o.setAttribute('aria-pressed', String(o===b));
+      });
+      paintLabel(); render();
+    });
+  });
+
+  [].forEach.call(document.querySelectorAll('button.seg[data-rate]'),function(b){
+    b.addEventListener('click',function(){
+      rate=parseFloat(b.dataset.rate);
+      [].forEach.call(document.querySelectorAll('button.seg[data-rate]'),function(o){
+        o.setAttribute('aria-pressed', String(o===b));
+      });
+      render();
+    });
+  });
+
+  $('amount').addEventListener('input',render);
+  $('lang').addEventListener('click',function(){
+    loc=(loc==='ar')?'fr':'ar';
+    try{ localStorage.setItem('fp_locale',loc); }catch(e){}
+    apply();
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>

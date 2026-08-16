@@ -39,7 +39,7 @@ function formatDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateSt
    lib-calc.js so the public tool page shares it. */
 function calcTimbre(amount){return timbreFor(amount);}
 function isCash(inv){return !!(inv&&inv.paymentMode==='especes');}
-function calcInvoiceTotals(inv){let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=l*((it.tva||0)/100);});const ttc=ht+tva;const timbre=isCash(inv)?calcTimbre(ttc):0;return{ht,tva,ttc,timbre,net:ttc+timbre};}
+function calcInvoiceTotals(inv){let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=vatAmount(l,it.tva||0);});const ttc=ht+tva;const timbre=isCash(inv)?calcTimbre(ttc):0;return{ht,tva,ttc,timbre,net:ttc+timbre};}
 
 /* The dashboard opened on invoices that were not the user's. Some people
    assumed the app was broken, others that it held someone else's books.
