@@ -5,7 +5,7 @@
   "scripts": {
     "css": "tailwindcss -c tailwind/config.js -i tailwind/input.css -o public/vendor/tailwind.css --minify",
     "vendor": "mkdir -p public/vendor && cp -f node_modules/lucide/dist/umd/lucide.min.js node_modules/jspdf/dist/jspdf.umd.min.js node_modules/html2canvas/dist/html2canvas.min.js public/vendor/",
-    "build": "npm run vendor && npm run css && (cp -f *.html *.css *.js *.txt *.xml public/ 2>/dev/null || true)"
+    "build": "npm run vendor && npm run css && (cp -f *.html *.css *.js *.txt *.xml public/ 2>/dev/null || true) && cp -f static/manifest.webmanifest static/*.png public/"
   },
   "devDependencies": {
     "html2canvas": "1.4.1",

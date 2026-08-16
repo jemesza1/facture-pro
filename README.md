@@ -45,6 +45,26 @@ Google Fonts is still loaded from Google. It is the one dependency that fails
 softly — a missing font falls back to the system sans-serif and everything
 stays readable.
 
+## Offline
+
+`sw.js` and `static/manifest.webmanifest` make the site installable and let it
+run with no signal — a merchant can write and export an invoice in a shop with
+no coverage. This only became possible once the libraries stopped coming from
+foreign CDNs; a service worker cannot cache what it is not allowed to fetch.
+
+The strategy is **network-first, cache as fallback**. The usual service-worker
+disaster is a cache-first shell that pins an old build on people's phones for
+weeks with no way to push a fix. Network-first cannot do that: online, the
+visitor always gets what was just deployed.
+
+**Bump `CACHE` in `sw.js` when the shell changes**, in step with `V` in
+`app.js`. A new file belongs in that file's `SHELL` list too, or it will be
+missing offline.
+
+Verified with the network switched off in a real browser: the dashboard
+renders, all 69 icons draw, the PDF export produces a valid file, and the
+stamp-duty page still computes.
+
 ## Excel export
 
 `lib-xlsx.js` writes real `.xlsx` files — a zip of XML parts, stored
