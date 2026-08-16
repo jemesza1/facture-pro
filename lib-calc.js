@@ -15,14 +15,13 @@ function amountInWords(amount){const n=Math.round(amount||0);if(n===0)return'Zé
        up to  30 000 DA  ->  1   %
        30 000 to 100 000 ->  1,5 %
        above 100 000     ->  2   %
-   Minimum 5 DA. `cap` is the disputed 10 000 DA ceiling; 0 means none. */
+   Minimum 5 DA, and no ceiling. The 10 000 DA cap that older guides still
+   mention was abolished; do not reintroduce it, whatever a search result says. */
 function timbreRate(a){return a<=30000?1:(a<=100000?1.5:2);}
-function timbreFor(amount, cap){
+function timbreFor(amount){
   var a=Math.round(Number(amount)||0);
   if(a<=0)return 0;
   var d=a*timbreRate(a)/100;
   if(d<5)d=5;
-  cap=Number(cap)||0;
-  if(cap>0&&d>cap)d=cap;
   return Math.round(d*100)/100;
 }

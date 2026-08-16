@@ -50,11 +50,6 @@
     <input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="699720"
            class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
 
-    <label class="flex items-center gap-2 mt-4 text-sm">
-      <input id="useCap" type="checkbox" class="w-4 h-4" />
-      <span id="capLbl">Appliquer le plafond de 10 000 DA</span>
-    </label>
-
     <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div class="rounded-xl p-3" style="background:rgba(5,150,105,.08)">
         <p id="k1" class="text-xs text-slate-500">Taux appliqué</p>
@@ -84,9 +79,9 @@
       </tbody>
     </table>
     <p id="barP" class="text-sm text-slate-600 dark:text-slate-400 mt-3">
-      Minimum 5 DA. Le droit n’est dû que sur les règlements en espèces : les virements,
-      versements bancaires ou postaux et les paiements par TPE en sont exonérés.
-      Article 100 du Code du timbre, barème de la loi de finances 2025.
+      Minimum 5 DA, sans plafond. Le droit n’est dû que sur les règlements en espèces :
+      les virements, versements bancaires ou postaux et les paiements par TPE en sont
+      exonérés. Article 100 du Code du timbre, barème de la loi de finances 2025.
     </p>
   </section>
 
@@ -105,21 +100,19 @@
 (function(){
   var T={
     fr:{h1:'Calcul du droit de timbre',sub:'Sur une facture réglée en espèces, en Algérie.',
-        lbl:'Montant TTC de la facture (DA)',capLbl:'Appliquer le plafond de 10 000 DA',
+        lbl:'Montant TTC de la facture (DA)',
         k1:'Taux appliqué',k2:'Droit de timbre',k3:'Net à payer',barT:'Barème',
         cA:'Montant TTC',cB:'Taux',r1:'Jusqu’à 30 000 DA',r2:'De 30 000 à 100 000 DA',r3:'Au-delà de 100 000 DA',
-        barP:"Minimum 5 DA. Le droit n’est dû que sur les règlements en espèces : les virements, versements bancaires ou postaux et les paiements par TPE en sont exonérés. Article 100 du Code du timbre, barème de la loi de finances 2025.",
+        barP:"Minimum 5 DA, sans plafond. Le droit n’est dû que sur les règlements en espèces : les virements, versements bancaires ou postaux et les paiements par TPE en sont exonérés. Article 100 du Code du timbre, barème de la loi de finances 2025.",
         ctaT:'Ce calcul est appliqué automatiquement à vos factures en espèces.',ctaB:'Créer une facture gratuitement',
-        other:'العربية',min:'Le minimum légal de 5 DA s’applique.',
-        cap:'Le plafond de 10 000 DA s’applique. Il n’est pas retenu partout — vérifiez auprès de votre inspection.'},
+        other:'العربية',min:'Le minimum légal de 5 DA s’applique.'},
     ar:{h1:'حاسبة رسم الطابع',sub:'على فاتورة مدفوعة نقدًا، في الجزائر.',
-        lbl:'المبلغ الإجمالي TTC للفاتورة (دج)',capLbl:'تطبيق سقف 10 000 دج',
+        lbl:'المبلغ الإجمالي TTC للفاتورة (دج)',
         k1:'النسبة المطبَّقة',k2:'رسم الطابع',k3:'الصافي للدفع',barT:'السلّم',
         cA:'المبلغ TTC',cB:'النسبة',r1:'حتى 30 000 دج',r2:'من 30 000 إلى 100 000 دج',r3:'أكثر من 100 000 دج',
-        barP:'بحد أدنى 5 دج. ولا يُستحق الرسم إلا على الدفع نقدًا: التحويلات والدفع البنكي أو البريدي والدفع بالبطاقة معفاة. المادة 100 من قانون الطابع، سلّم قانون المالية 2025.',
+        barP:'بحد أدنى 5 دج وبلا سقف. ولا يُستحق الرسم إلا على الدفع نقدًا: التحويلات والدفع البنكي أو البريدي والدفع بالبطاقة معفاة. المادة 100 من قانون الطابع، سلّم قانون المالية 2025.',
         ctaT:'هذا الحساب يُطبَّق تلقائيًا على فواتيرك النقدية.',ctaB:'أنشئ فاتورة مجانًا',
-        other:'Français',min:'يُطبَّق الحد الأدنى القانوني 5 دج.',
-        cap:'يُطبَّق سقف 10 000 دج. وهو غير معتمد في كل المفتشيات — تأكّد من مفتشيتك.'}
+        other:'Français',min:'يُطبَّق الحد الأدنى القانوني 5 دج.'}
   };
   var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
   var $=function(id){return document.getElementById(id);};
@@ -130,7 +123,7 @@
     document.documentElement.lang=loc==='ar'?'ar':'fr';
     document.documentElement.dir=loc==='ar'?'rtl':'ltr';
     document.body.classList.toggle('ar',loc==='ar');
-    ['h1','sub','lbl','capLbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB']
+    ['h1','sub','lbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB']
       .forEach(function(k){$(k).textContent=d[k];});
     $('lang').textContent=d.other;
     render();
@@ -140,20 +133,15 @@
     var d=T[loc];
     var v=parseFloat($('amount').value);
     if(!isFinite(v)||v<=0){ $('rate').textContent='—'; $('duty').textContent='—'; $('net').textContent='—'; $('warn').textContent=''; return; }
-    var cap=$('useCap').checked?10000:0;
-    var duty=timbreFor(v,cap);
+    var duty=timbreFor(v);
     var pct=timbreRate(Math.round(v));
     $('rate').textContent=String(pct).replace('.',',')+' %';
     $('duty').textContent=fmt(duty);
     $('net').textContent=fmt(v+duty);
-    var notes=[];
-    if(duty===5&&v*pct/100<5) notes.push(d.min);
-    if(cap&&duty===cap) notes.push(d.cap);
-    $('warn').textContent=notes.join(' ');
+    $('warn').textContent=(duty===5&&v*pct/100<5)?d.min:'';
   }
 
   $('amount').addEventListener('input',render);
-  $('useCap').addEventListener('change',render);
   $('lang').addEventListener('click',function(){
     loc=(loc==='fr')?'ar':'fr';
     try{localStorage.setItem('fp_locale',loc);}catch(e){}
