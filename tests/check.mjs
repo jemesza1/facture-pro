@@ -125,11 +125,12 @@ check('transfer is exempt', modes.virement === 0);
 check('cheque is exempt', modes.cheque === 0);
 check('card / TPE is exempt', modes.carte === 0);
 
-const cap = await page.evaluate(() => {
-  state.company.timbreCap = 10000; const v = calcTimbre(699720);
-  state.company.timbreCap = 0; return v;
-});
-check('the optional 10 000 DA ceiling is honoured', cap === 10000, String(cap));
+/* There is no ceiling: a large cash invoice must not stop at 10 000 DA. */
+const big = await page.evaluate(() => [calcTimbre(699720), calcTimbre(5000000),
+                                       typeof state.company.timbreCap]);
+check('no ceiling caps a large invoice', near(big[0], 13994.4) && near(big[1], 100000),
+      big.join(', '));
+check('and the setting no longer exists', big[2] === 'undefined', String(big[2]));
 
 /* ---------------------------------------------------------------- *
  * 4. Every template must carry the legal identifiers and the duty.
@@ -362,15 +363,14 @@ console.log('\nPublic tool pages');
   check('and computes the duty', clean(duty) === '13994,40DA', duty);
   check('and the net', clean(net) === '713714,40DA', net);
 
-  await tools.check('#useCap');
-  const capped = await tools.textContent('#duty');
-  check('the optional ceiling is offered', clean(capped) === '10000,00DA', capped);
+  const noCap = await tools.evaluate(() => !document.getElementById('useCap'));
+  check('the page offers no ceiling option', noCap);
 
   await tools.click('#lang');
   const arDir = await tools.evaluate(() => document.documentElement.dir);
   const arDuty = await tools.textContent('#duty');
   check('the page switches to Arabic', arDir === 'rtl', arDir);
-  check('and the figure is not reordered by the switch', clean(arDuty) === '10000,00DA', arDuty);
+  check('and the figure is not reordered by the switch', clean(arDuty) === '13994,40DA', arDuty);
 
   check('no script error on the tool pages', toolErrors.length === 0, toolErrors.join(' | '));
   await tools.close();
