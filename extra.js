@@ -139,10 +139,10 @@
             '<td class="p-3">'+esc(cl.name||'\u2014')+'</td>'+
             '<td class="p-3">'+esc(d.date||'')+'</td>'+
             '<td class="p-3 font-semibold">'+moneyUI(tot.ttc)+'</td>'+
-            '<td class="p-3"><span class="badge '+(d.status==='accepte'?'badge-payee':d.status==='refuse'?'badge-enretard':'badge-brouillon')+'">'+(d.status||'brouillon')+'</span></td>'+
+            '<td class="p-3"><span class="badge '+(d.status==='accepte'?'badge-payee':d.status==='refuse'?'badge-enretard':'badge-brouillon')+'">'+esc(t('devis.status.'+(d.status||'brouillon')))+'</span></td>'+
             '<td class="p-3 text-end whitespace-nowrap">'+
               '<button onclick="openDevisModal(\''+d.id+'\')" class="btn-ghost p-2"><i data-lucide="pencil" class="w-4 h-4"></i></button>'+
-              '<button onclick="convertDevisToInvoice(\''+d.id+'\')" class="btn-ghost p-2 text-emerald-600" title="Facture"><i data-lucide="file-input" class="w-4 h-4"></i></button>'+
+              '<button onclick="convertDevisToInvoice(\''+d.id+'\')" class="btn-ghost p-2 text-emerald-600" title="'+esc(t('devis.toInvoice'))+'"><i data-lucide="file-input" class="w-4 h-4"></i></button>'+
               '<button onclick="deleteDevis(\''+d.id+'\')" class="btn-ghost p-2 text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>'+
             '</td></tr>';
         }).join('')+'</tbody></table></div>'
@@ -175,13 +175,15 @@
     try{lucide.createIcons();}catch(e){}
   };
 
+  /* The three number fields carried no label and no placeholder at all, so
+     which one was the price and which one the rate was anybody's guess. */
   function devisItemRow(it){
     it=it||{description:'',qty:1,unitPrice:0,tva:19};
     return '<div class="grid grid-cols-12 gap-2 items-end devis-row">'+
-      '<div class="col-span-5"><input class="form-input di-desc" placeholder="D\u00e9signation" value="'+esc(it.description||'')+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-qty" value="'+(it.qty||1)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-price" value="'+(it.unitPrice||0)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code di-tva" value="'+(it.tva!=null?it.tva:19)+'"/></div>'+
+      '<div class="col-span-5"><input class="form-input di-desc" placeholder="'+esc(t('inv.desc'))+'" value="'+esc(it.description||'')+'"/></div>'+
+      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-qty" title="'+esc(t('inv.qty'))+'" placeholder="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
+      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-price" title="'+esc(t('inv.unit'))+'" placeholder="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
+      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code di-tva" title="'+esc(t('inv.vat'))+'" placeholder="'+esc(t('inv.vat'))+'" value="'+(it.tva!=null?it.tva:19)+'"/></div>'+
       '<div class="col-span-1"><button type="button" onclick="this.closest(\'.devis-row\').remove()" class="btn-ghost p-2 text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>';
   }
 
@@ -278,7 +280,7 @@
             '<td class="p-3 ltr-code">'+esc(inv.number||'\u2014')+'</td>'+
             '<td class="p-3">'+esc(cl.name||'\u2014')+'</td>'+
             '<td class="p-3 font-semibold text-emerald-600">'+moneyUI(Number(p.amount)||0)+'</td>'+
-            '<td class="p-3">'+esc(p.method||'\u2014')+'</td>'+
+            '<td class="p-3">'+(p.method?esc(t('payment.method.'+p.method)):'\u2014')+'</td>'+
             '<td class="p-3 text-end"><button onclick="deletePayment(\''+p.id+'\')" class="btn-ghost p-2 text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>';
         }).join('')+'</tbody></table></div>'
         : '<div class="empty-state"><p class="font-medium">'+(ar?'\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u0641\u0639\u0627\u062a':'Aucun paiement')+'</p></div>');
@@ -298,7 +300,7 @@
         '<div><label class="form-label">'+(ar?'\u0627\u0644\u0645\u0628\u0644\u063a *':'Montant *')+'</label><input id="pay-amount" type="number" min="0" step="0.01" class="form-input ltr-code"/></div>'+
         '<div><label class="form-label">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input id="pay-date" type="date" class="form-input" value="'+new Date().toISOString().slice(0,10)+'"/></div>'+
         '<div><label class="form-label">'+(ar?'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062f\u0641\u0639':'Mode')+'</label><select id="pay-method" class="form-select">'+
-          '<option value="virement">Virement</option><option value="especes">Esp\u00e8ces</option><option value="cheque">Ch\u00e8que</option><option value="ccp">CCP</option><option value="autre">Autre</option>'+
+          ['virement','especes','cheque','ccp','autre'].map(function(m){return '<option value="'+m+'">'+esc(t('payment.method.'+m))+'</option>';}).join('')+
         '</select></div>'+
         '<div><label class="form-label">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0629':'Note')+'</label><input id="pay-note" class="form-input"/></div>'+
       '</div>'+

@@ -21,7 +21,7 @@ function openNewInvoice(editId){
         <div><label class="form-label">${t('inv.status')}</label><select id="inv-status" class="form-select">
           ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${inv&&inv.status===k?'selected':''}>${v.label}</option>`).join('')}
         </select></div>
-        <div><label class="form-label">${t('inv.payMode')}</label><select id="inv-paymode" class="form-select" onchange="renderTimbreHint()">
+        <div><label class="form-label">${t('inv.payMode')}</label><select id="inv-paymode" class="form-select" onchange="renderTimbreHint();syncPayNote()">
           ${['virement','especes','cheque','carte'].map(m=>`<option value="${m}" ${((inv&&inv.paymentMode)||'virement')===m?'selected':''}>${t('inv.pay.'+m)}</option>`).join('')}
         </select></div>
       </div>
@@ -32,7 +32,7 @@ function openNewInvoice(editId){
         <div id="items-container" class="space-y-2">${items.map(item=>itemRowHtml(item)).join('')}</div>
       </div>
       <div><label class="form-label">${t('inv.notes')}</label>
-        <textarea id="inv-notes" class="form-input" rows="2">${esc(inv&&inv.notes||'Paiement par virement bancaire.')}</textarea></div>
+        <textarea id="inv-notes" class="form-input" rows="2">${esc(inv&&inv.notes||payNote((inv&&inv.paymentMode)||'virement'))}</textarea></div>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal()" class="btn-secondary">${t('actions.back')}</button>
@@ -94,4 +94,11 @@ function renderTimbreHint(){
   var el=document.getElementById('timbre-hint');if(!el)return;
   var sel=document.getElementById('inv-paymode');
   el.textContent=(sel&&sel.value==='especes')?t('inv.timbreHint'):'';
+}
+/* Keeps the note in step with the payment mode, and stops the moment the user
+   has written their own sentence. */
+function syncPayNote(){
+  var sel=document.getElementById('inv-paymode'), ta=document.getElementById('inv-notes');
+  if(!sel||!ta)return;
+  if(isDefaultPayNote(ta.value))ta.value=payNote(sel.value);
 }

@@ -100,17 +100,38 @@
     reader.readAsText(f);
   };
 
+  /* WhatsApp carries plain text and nothing else. moneyUI wraps its result in
+     <bdi> so the interface can mirror it, and those tags were arriving at the
+     client as literal characters in the middle of the total. formatMoney is the
+     plain-text formatter, and that is the one that belongs in a message.
+
+     The line read `qty = unitPrice`, which is the unit price standing where the
+     line total belongs: five days at 45 000 announced 45 000 and the total
+     underneath said 225 000. Accountants read that as an invoice that does not
+     add up. The line now carries its own total, signed with the document so an
+     avoir does not list positive lines under a negative total. */
   window.shareInvoiceWhatsApp=function(id){
     var inv=state.invoices.find(function(i){return i.id===id;});
     if(!inv) return;
     var cl=getClient(inv.clientId)||{};
     var tot=calcInvoiceTotals(inv);
+    var sign=isAvoir(inv)?-1:1;
     var lines=(inv.items||[]).map(function(it,i){
-      return (i+1)+'. '+(it.description||'')+' \u00d7 '+(it.qty||1)+' = '+(Number(it.unitPrice)||0);
+      var qty=Number(it.qty)||0;
+      var line=qty*(Number(it.unitPrice)||0)*sign;
+      return (i+1)+'. '+(it.description||'')+' \u00d7 '+qty+' = '+formatMoney(line);
     }).join('\n');
+    /* An avoir gives money back: calling its total "net to pay" would be a
+       second wrong figure on the same message. */
+    var head=ar()
+      ? (isAvoir(inv)?'\u0625\u0634\u0639\u0627\u0631 \u062f\u0627\u0626\u0646 ':'\u0641\u0627\u062a\u0648\u0631\u0629 ')
+      : (isAvoir(inv)?"Facture d'avoir ":'Facture ');
+    var totalLabel=ar()
+      ? (isAvoir(inv)?'\u0627\u0644\u0645\u0628\u0644\u063a':'\u0627\u0644\u0635\u0627\u0641\u064a \u0644\u0644\u062f\u0641\u0639')
+      : (isAvoir(inv)?'Montant':'Net a payer');
     var msg=(ar()
-      ? '\u0641\u0627\u062a\u0648\u0631\u0629 '+(inv.number||'')+'\n\u0627\u0644\u0639\u0645\u064a\u0644: '+(cl.name||'')+'\n\u0627\u0644\u062a\u0627\u0631\u064a\u062e: '+(inv.date||'')+'\n\n'+lines+'\n\n\u0627\u0644\u0635\u0627\u0641\u064a \u0644\u0644\u062f\u0641\u0639: '+moneyUI(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:'')
-      : 'Facture '+(inv.number||'')+'\nClient: '+(cl.name||'')+'\nDate: '+(inv.date||'')+'\n\n'+lines+'\n\nNet a payer: '+moneyUI(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:''));
+      ? head+(inv.number||'')+'\n\u0627\u0644\u0639\u0645\u064a\u0644: '+(cl.name||'')+'\n\u0627\u0644\u062a\u0627\u0631\u064a\u062e: '+(inv.date||'')+'\n\n'+lines+'\n\n'+totalLabel+': '+formatMoney(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:'')
+      : head+(inv.number||'')+'\nClient: '+(cl.name||'')+'\nDate: '+(inv.date||'')+'\n\n'+lines+'\n\n'+totalLabel+': '+formatMoney(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:''));
     window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
   };
 

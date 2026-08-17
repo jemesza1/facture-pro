@@ -17,6 +17,7 @@ function renderInvoiceClassic(inv,tpl){
       <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.qty}</td>
       <td style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:12px">${formatMoney(it.unitPrice)}</td>
       <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.tva}%</td>
+      <td style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:12px">${formatMoney(vatAmount(line,it.tva))}</td>
       <td style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:12px">${formatMoney(line)}</td>
     </tr>`;
   }).join('');
@@ -45,8 +46,9 @@ function renderInvoiceClassic(inv,tpl){
         <th style="padding:8px;text-align:left;font-size:11px">Désignation</th>
         <th style="padding:8px;text-align:center;font-size:11px">Qté</th>
         <th style="padding:8px;text-align:right;font-size:11px">P.U. HT</th>
-        <th style="padding:8px;text-align:center;font-size:11px">TVA</th>
-        <th style="padding:8px;text-align:right;font-size:11px">Total</th>
+        <th style="padding:8px;text-align:center;font-size:11px">TVA&nbsp;%</th>
+        <th style="padding:8px;text-align:right;font-size:11px">Montant TVA</th>
+        <th style="padding:8px;text-align:right;font-size:11px">Total HT</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -68,6 +70,22 @@ function renderInvoiceClassic(inv,tpl){
 function payLabel(inv){
   var m=(inv&&inv.paymentMode)||'virement';
   return {virement:'Virement bancaire',especes:'Espèces',cheque:'Chèque',carte:'Carte / TPE'}[m]||'Virement bancaire';
+}
+/* The note is the sentence the client actually reads at the bottom of the
+   paper. It announced a bank transfer whatever the mode field said, so an
+   invoice settled in cash still instructed the client to wire the money. */
+function payNote(mode){
+  return {virement:'Paiement par virement bancaire.',
+          especes:'Paiement en espèces.',
+          cheque:'Paiement par chèque.',
+          carte:'Paiement par carte / TPE.'}[mode||'virement']||'Paiement par virement bancaire.';
+}
+/* True while the note is still one we wrote. Anything the user typed is theirs
+   and must survive a change of payment mode. */
+function isDefaultPayNote(s){
+  s=(s||'').trim();
+  if(!s)return true;
+  return ['virement','especes','cheque','carte'].some(function(m){return payNote(m)===s;});
 }
 function legalLines(e,inline){
   const L=[];
@@ -95,6 +113,7 @@ function renderInvoiceDZ(inv,tpl){
       <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.qty}</td>
       <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #eef2f7">${formatMoney(it.unitPrice)}</td>
       <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.tva}%</td>
+      <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #eef2f7">${formatMoney(vatAmount(line,it.tva))}</td>
       <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;border-bottom:1px solid #eef2f7">${formatMoney(line)}</td>
     </tr>`;
   }).join('');
@@ -131,8 +150,9 @@ function renderInvoiceDZ(inv,tpl){
           <th style="padding:11px 12px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Désignation</th>
           <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Qté</th>
           <th style="padding:11px 8px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">P.U. HT</th>
-          <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">TVA</th>
-          <th style="padding:11px 12px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Total</th>
+          <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">TVA&nbsp;%</th>
+          <th style="padding:11px 8px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Montant TVA</th>
+          <th style="padding:11px 12px;text-align:right;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Total HT</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -176,6 +196,7 @@ function renderInvoiceStudio(inv,tpl){
       <td style="padding:9px 8px;text-align:center;font-size:12px">${it.qty}</td>
       <td style="padding:9px 8px;text-align:right;font-size:12px">${formatMoney(it.unitPrice)}</td>
       <td style="padding:9px 8px;text-align:center;font-size:12px">${it.tva}%</td>
+      <td style="padding:9px 8px;text-align:right;font-size:12px">${formatMoney(vatAmount(line,it.tva))}</td>
       <td style="padding:9px 8px;text-align:right;font-size:12px;font-weight:600">${formatMoney(line)}</td>
     </tr>`;
   }).join('');
@@ -208,8 +229,9 @@ function renderInvoiceStudio(inv,tpl){
         <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600">Désignation</th>
         <th style="padding:9px 8px;text-align:center;font-size:11px;font-weight:600">Qté</th>
         <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600">P.U. HT</th>
-        <th style="padding:9px 8px;text-align:center;font-size:11px;font-weight:600">TVA</th>
-        <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600">Total</th>
+        <th style="padding:9px 8px;text-align:center;font-size:11px;font-weight:600">TVA&nbsp;%</th>
+        <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600">Montant TVA</th>
+        <th style="padding:9px 8px;text-align:right;font-size:11px;font-weight:600">Total HT</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
