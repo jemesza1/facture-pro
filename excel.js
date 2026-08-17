@@ -99,8 +99,11 @@
     push([null, null, null, null, {v: 'Sous-total HT', s: 'totalLabel'}, {v: tot.ht, s: 'totalNum'}]);
     push([null, null, null, null, {v: 'TVA', s: 'totalLabel'}, {v: tot.tva, s: 'totalNum'}]);
     push([null, null, null, null, {v: 'Total TTC', s: 'totalLabel'}, {v: tot.ttc, s: 'totalNum'}]);
-    if (tot.timbre) {
-      push([null, null, null, null, {v: 'Droit de timbre', s: 'totalLabel'}, {v: tot.timbre, s: 'totalNum'}]);
+    if (tot.port) {
+      push([null, null, null, null, {v: 'Frais de port', s: 'totalLabel'}, {v: tot.port, s: 'totalNum'}]);
+    }
+    if (tot.timbre || tot.port) {
+      if (tot.timbre) push([null, null, null, null, {v: 'Droit de timbre', s: 'totalLabel'}, {v: tot.timbre, s: 'totalNum'}]);
       push([null, null, null, null, {v: 'Net à payer', s: 'totalLabel'}, {v: tot.net, s: 'grand'}]);
     } else {
       push([null, null, null, null, {v: 'Net à payer', s: 'totalLabel'}, {v: tot.net, s: 'grand'}]);
@@ -142,34 +145,34 @@
     /* --- sheet 1: the register --- */
     var rows = [], merges = [];
     rows.push([{v: 'Journal des ventes — ' + MONTHS[m] + ' ' + y, s: 'title'}]);
-    merges.push('A1:J1');
+    merges.push('A1:K1');
     rows.push([{v: (co.name || '') + (co.nif ? '   NIF : ' + co.nif : '') + (co.nin ? '   NIN : ' + co.nin : ''), s: 'subtitle'}]);
-    merges.push('A2:J2');
+    merges.push('A2:K2');
     rows.push([]);
 
     rows.push([{v: 'N° facture', s: 'thead'}, {v: 'Date', s: 'thead'}, {v: 'Client', s: 'thead'},
                {v: 'NIF client', s: 'thead'}, {v: 'Base HT', s: 'thead'}, {v: 'TVA', s: 'thead'},
-               {v: 'Total TTC', s: 'thead'}, {v: 'Droit de timbre', s: 'thead'},
+               {v: 'Total TTC', s: 'thead'}, {v: 'Frais de port', s: 'thead'}, {v: 'Droit de timbre', s: 'thead'},
                {v: 'Net à payer', s: 'thead'}, {v: 'Règlement', s: 'thead'}]);
 
-    var sum = {ht: 0, tva: 0, ttc: 0, timbre: 0, net: 0};
+    var sum = {ht: 0, tva: 0, ttc: 0, port: 0, timbre: 0, net: 0};
     all.forEach(function(inv){
       var cl = getClient(inv.clientId) || {}, tt = calcInvoiceTotals(inv);
-      sum.ht += tt.ht; sum.tva += tt.tva; sum.ttc += tt.ttc; sum.timbre += tt.timbre; sum.net += tt.net;
+      sum.ht += tt.ht; sum.tva += tt.tva; sum.ttc += tt.ttc; sum.port += tt.port; sum.timbre += tt.timbre; sum.net += tt.net;
       rows.push([
         {v: inv.number || '', s: 'cell'},
         {v: inv.date ? XLSX.excelDate(inv.date) : '', s: 'date'},
         {v: cl.name || '', s: 'cell'},
         {v: cl.nif || '', s: 'cell'},
         {v: tt.ht, s: 'cellNum'}, {v: tt.tva, s: 'cellNum'}, {v: tt.ttc, s: 'cellNum'},
-        {v: tt.timbre, s: 'cellNum'}, {v: tt.net, s: 'cellNum'},
+        {v: tt.port, s: 'cellNum'}, {v: tt.timbre, s: 'cellNum'}, {v: tt.net, s: 'cellNum'},
         {v: payLabelFr(inv), s: 'cell'}
       ]);
     });
 
     rows.push([{v: 'TOTAL', s: 'grand'}, {v: '', s: 'grand'}, {v: '', s: 'grand'}, {v: '', s: 'grand'},
                {v: sum.ht, s: 'grand'}, {v: sum.tva, s: 'grand'}, {v: sum.ttc, s: 'grand'},
-               {v: sum.timbre, s: 'grand'}, {v: sum.net, s: 'grand'}, {v: '', s: 'grand'}]);
+               {v: sum.port, s: 'grand'}, {v: sum.timbre, s: 'grand'}, {v: sum.net, s: 'grand'}, {v: '', s: 'grand'}]);
 
     /* --- sheet 2: the figures a G50 asks for --- */
     var rec = [], recMerges = [];
@@ -197,7 +200,7 @@
     recMerges.push('A' + rec.length + ':C' + rec.length);
 
     XLSX.build([
-      {name: 'Journal des ventes', cols: [16, 12, 30, 20, 14, 13, 14, 15, 14, 18],
+      {name: 'Journal des ventes', cols: [16, 12, 30, 20, 14, 13, 14, 14, 15, 14, 18],
        rows: rows, merges: merges, freeze: 4, autofilter: 'A4:J' + rows.length,
        heights: {1: 26, 4: 30}},
       {name: 'Récapitulatif TVA',  cols: [26, 16, 16], rows: rec, merges: recMerges,

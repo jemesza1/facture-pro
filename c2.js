@@ -14,7 +14,7 @@ function renderInvoiceClassic(inv,tpl){
     const line=(it.qty||0)*(it.unitPrice||0)*(isAvoir(inv)?-1:1);
     return `<tr>
       <td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px">${esc(it.description)}</td>
-      <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.qty}</td>
+      <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.qty}${it.unite?" "+esc(it.unite):""}</td>
       <td style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:12px">${formatMoney(it.unitPrice)}</td>
       <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.tva}%</td>
       <td style="padding:8px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:12px">${formatMoney(vatAmount(line,it.tva))}</td>
@@ -57,8 +57,9 @@ function renderInvoiceClassic(inv,tpl){
         <div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">TVA</span><span>${formatMoney(totals.tva)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:3px;border-top:2px solid ${color};font-size:14px;font-weight:700"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
-        ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid ${color};font-size:14px;font-weight:700"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
+        ${totals.port?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">Frais de port</span><span>${formatMoney(totals.port)}</span></div>`:''}
+        ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#64748b">Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>`:''}
+        ${(totals.timbre||totals.port)?`<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid ${color};font-size:14px;font-weight:700"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
       </div>
     </div>
 <div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
@@ -110,7 +111,7 @@ function renderInvoiceDZ(inv,tpl){
     const bg=i%2?'#f8fafc':'#ffffff';
     return `<tr style="background:${bg}">
       <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #eef2f7">${esc(it.description)}</td>
-      <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.qty}</td>
+      <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.qty}${it.unite?" "+esc(it.unite):""}</td>
       <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #eef2f7">${formatMoney(it.unitPrice)}</td>
       <td style="padding:10px 8px;text-align:center;font-size:12px;border-bottom:1px solid #eef2f7">${it.tva}%</td>
       <td style="padding:10px 8px;text-align:right;font-size:12px;border-bottom:1px solid #eef2f7">${formatMoney(vatAmount(line,it.tva))}</td>
@@ -161,8 +162,9 @@ function renderInvoiceDZ(inv,tpl){
           <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f1f5f9;color:#475569"><span>Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
           <div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f8fafc;color:#475569"><span>TVA</span><span>${formatMoney(totals.tva)}</span></div>
           <div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:14.5px;font-weight:800;background:${g};color:#fff"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
-          ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f8fafc;color:#475569"><span>Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:14.5px;font-weight:800;background:${g2};color:#fff"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
+          ${totals.port?`<div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f1f5f9;color:#475569"><span>Frais de port</span><span>${formatMoney(totals.port)}</span></div>`:''}
+          ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:8px 14px;font-size:12px;background:#f8fafc;color:#475569"><span>Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>`:''}
+          ${(totals.timbre||totals.port)?`<div style="display:flex;justify-content:space-between;padding:11px 14px;font-size:14.5px;font-weight:800;background:${g2};color:#fff"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
         </div>
       </div>
 <div style="margin-top:12px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
@@ -193,7 +195,7 @@ function renderInvoiceStudio(inv,tpl){
     const line=(it.qty||0)*(it.unitPrice||0)*(isAvoir(inv)?-1:1);
     return `<tr style="border-bottom:1px solid #f1f5f9">
       <td style="padding:9px 12px;font-size:12px">${esc(it.description)}</td>
-      <td style="padding:9px 8px;text-align:center;font-size:12px">${it.qty}</td>
+      <td style="padding:9px 8px;text-align:center;font-size:12px">${it.qty}${it.unite?" "+esc(it.unite):""}</td>
       <td style="padding:9px 8px;text-align:right;font-size:12px">${formatMoney(it.unitPrice)}</td>
       <td style="padding:9px 8px;text-align:center;font-size:12px">${it.tva}%</td>
       <td style="padding:9px 8px;text-align:right;font-size:12px">${formatMoney(vatAmount(line,it.tva))}</td>
@@ -240,8 +242,9 @@ function renderInvoiceStudio(inv,tpl){
         <div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>Sous-total HT</span><span>${formatMoney(totals.ht)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>TVA</span><span>${formatMoney(totals.tva)}</span></div>
         <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:4px;border-top:2px solid #0f172a;font-size:14px;font-weight:700"><span>Total TTC</span><span>${formatMoney(totals.ttc)}</span></div>
-        ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #0f172a;font-size:14px;font-weight:700"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
+        ${totals.port?`<div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>Frais de port</span><span>${formatMoney(totals.port)}</span></div>`:''}
+        ${totals.timbre?`<div style="display:flex;justify-content:space-between;padding:3px 0;color:#64748b"><span>Droit de timbre</span><span>${formatMoney(totals.timbre)}</span></div>`:''}
+        ${(totals.timbre||totals.port)?`<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #0f172a;font-size:14px;font-weight:700"><span>Net à payer</span><span>${formatMoney(totals.net)}</span></div>`:''}
       </div>
     </div>
 <div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>

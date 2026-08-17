@@ -31,6 +31,10 @@ function openNewInvoice(editId){
           <button type="button" onclick="addInvoiceItem()" class="text-sm text-sky-600 font-medium">${t('actions.add')}</button></div>
         <div id="items-container" class="space-y-2">${items.map(item=>itemRowHtml(item)).join('')}</div>
       </div>
+      <div><label class="form-label">${t('inv.port')}</label>
+        <input type="number" min="0" step="0.01" id="inv-port" class="form-input ltr-code"
+               placeholder="0" value="${inv&&inv.fraisPort||''}"/>
+        <p class="text-xs text-slate-500 mt-1">${t('inv.portHint')}</p></div>
       <div><label class="form-label">${t('inv.notes')}</label>
         <textarea id="inv-notes" class="form-input" rows="2">${esc(inv&&inv.notes||payNote((inv&&inv.paymentMode)||'virement'))}</textarea></div>
     </div>
@@ -48,7 +52,11 @@ function itemRowHtml(item){
     <div class="col-span-12 sm:col-span-5"><label class="form-label text-xs">${t('inv.desc')}</label>
       <input class="form-input item-desc" value="${esc(item.description)}"/></div>
     <div class="col-span-3 sm:col-span-2"><label class="form-label text-xs">${t('inv.qty')}</label>
-      <input type="number" min="0" class="form-input item-qty" value="${item.qty!=null?item.qty:1}"/></div>
+      <div class="flex gap-1">
+        <input type="number" min="0" class="form-input item-qty min-w-0" value="${item.qty!=null?item.qty:1}"/>
+        <input class="form-input item-unit min-w-0 w-16" list="fp-units" placeholder="${t('inv.unit2')}"
+               title="${t('inv.unit2')}" value="${esc(item.unite||'')}"/>
+      </div></div>
     <div class="col-span-4 sm:col-span-2"><label class="form-label text-xs">${t('inv.unit')}</label>
       <input type="number" min="0" class="form-input item-price" value="${item.unitPrice!=null?item.unitPrice:0}"/></div>
     <div class="col-span-3 sm:col-span-2"><label class="form-label text-xs">${t('inv.vat')}</label>
@@ -76,10 +84,10 @@ function saveInvoice(editId){
   document.querySelectorAll('.item-row').forEach(row=>{
     const desc=row.querySelector('.item-desc').value.trim();
     if(!desc)return;
-    items.push({description:desc,qty:parseFloat(row.querySelector('.item-qty').value)||0,unitPrice:parseFloat(row.querySelector('.item-price').value)||0,tva:parseFloat(row.querySelector('.item-tva').value)||0});
+    items.push({description:desc,qty:parseFloat(row.querySelector('.item-qty').value)||0,unite:(row.querySelector('.item-unit').value||'').trim(),unitPrice:parseFloat(row.querySelector('.item-price').value)||0,tva:parseFloat(row.querySelector('.item-tva').value)||0});
   });
   if(!items.length)return toast(t('toast.addLine'),'err');
-  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',items,notes:document.getElementById('inv-notes').value.trim()};
+  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',fraisPort:parseFloat((document.getElementById('inv-port')||{}).value)||0,items,notes:document.getElementById('inv-notes').value.trim()};
   if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);
     if(idx<0)return toast(t('toast.invoiceNotFound'),'err');
     state.invoices[idx]={...state.invoices[idx],...data};toast(t('toast.updated'));}

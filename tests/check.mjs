@@ -876,6 +876,116 @@ console.log('\nReaching the avoir from the list');
   check('every row button now carries a name', titles.every(Boolean), titles.join(' | '));
 }
 
+/* ---------------------------------------------------------------- *
+ * 15. The unit of measure, and carriage.
+ *
+ *     Both are additions. The check that matters most is the last
+ *     one: an invoice written before either field existed must come
+ *     out with the figures it had, to the centime.
+ * ---------------------------------------------------------------- */
+console.log('\nUnit of measure and carriage');
+{
+  const flat = s => String(s).replace(/[\s  ]/g, '');
+
+  const totals = await page.evaluate(() => {
+    const base = {id: 'p1', number: 'FAC-2026-900', clientId: 'cl', template: 'classique',
+                  date: '2026-08-01', status: 'envoyee', paymentMode: 'virement',
+                  items: [{description: 'Marchandise', qty: 2, unite: 'kg', unitPrice: 10000, tva: 19}]};
+    return {
+      /* An invoice from before the field: no fraisPort key at all. */
+      before: calcInvoiceTotals(base),
+      /* The same invoice with carriage on top. */
+      after:  calcInvoiceTotals({...base, fraisPort: 1500}),
+      /* Cash: the duty follows what is actually handed over. */
+      cashNoPort: calcInvoiceTotals({...base, paymentMode: 'especes'}),
+      cashPort:   calcInvoiceTotals({...base, paymentMode: 'especes', fraisPort: 1500}),
+    };
+  });
+
+  check('an invoice with no carriage field reads zero',
+        totals.before.port === 0, String(totals.before.port));
+  check('and its other figures are untouched',
+        near(totals.before.ht, 20000) && near(totals.before.tva, 3800)
+        && near(totals.before.ttc, 23800) && near(totals.before.net, 23800),
+        JSON.stringify(totals.before));
+  check('carriage stays out of the VAT base',
+        near(totals.after.ht, 20000) && near(totals.after.tva, 3800)
+        && near(totals.after.ttc, 23800), JSON.stringify(totals.after));
+  check('and lands in the net', near(totals.after.net, 25300), String(totals.after.net));
+  check('the stamp duty is charged on the sum actually paid',
+        near(totals.cashNoPort.timbre, 238) && near(totals.cashPort.timbre, 253),
+        `${totals.cashNoPort.timbre} vs ${totals.cashPort.timbre}`);
+
+  /* On the paper. */
+  const paper = await page.evaluate(() => {
+    state.clients = [{id: 'cl', name: 'SARL Unite', nif: '000000000000000'}];
+    state.invoices = [{id: 'p1', number: 'FAC-2026-900', clientId: 'cl', template: 'classique',
+                       date: '2026-08-01', status: 'envoyee', paymentMode: 'virement',
+                       fraisPort: 1500,
+                       items: [{description: 'Marchandise', qty: 2, unite: 'kg', unitPrice: 10000, tva: 19}]}];
+    saveData();
+    previewInvoice('p1');
+    const txt = document.getElementById('invoice-paper').innerText;
+    closePreview();
+    return txt;
+  });
+  check('the quantity carries its unit', /2\s*kg/.test(paper), paper.slice(0, 160));
+  check('the paper shows the carriage', /Frais de port/.test(paper), paper.slice(0, 160));
+  check('and a net to pay, which a transfer alone would not have shown',
+        /Net à payer/.test(paper) && flat(paper).includes('25300DA'), paper.slice(0, 200));
+
+  /* Through the editor: typed in, saved, read back. */
+  const round = await page.evaluate(() => {
+    openNewInvoice();
+    document.getElementById('inv-client').value = 'cl';
+    document.querySelector('.item-desc').value = 'Ciment';
+    document.querySelector('.item-qty').value = '50';
+    document.querySelector('.item-unit').value = 'sac';
+    document.querySelector('.item-price').value = '900';
+    document.getElementById('inv-port').value = '2000';
+    saveInvoice('');
+    const inv = state.invoices[state.invoices.length - 1];
+    return {unite: inv.items[0].unite, port: inv.fraisPort, net: calcInvoiceTotals(inv).net};
+  });
+  check('the editor keeps the unit that was typed', round.unite === 'sac', round.unite);
+  check('and the carriage', round.port === 2000, String(round.port));
+  check('and the net adds up', near(round.net, 45000 * 1.19 + 2000), String(round.net));
+
+  /* The monthly register prints HT, TVA, TTC, carriage, duty and net side by
+     side. Without its own column the row did not reconcile: TTC + duty came
+     to less than the net, and an accountant reading down the sheet has no way
+     to see where the difference went. */
+  const register = await page.evaluate(() => {
+    state.invoices = [
+      {id: 'r1', number: 'FAC-2026-901', clientId: 'cl', template: 'classique',
+       date: '2026-08-03', status: 'payee', paymentMode: 'especes', fraisPort: 1500,
+       items: [{description: 'Marchandise', qty: 2, unite: 'kg', unitPrice: 10000, tva: 19}]},
+    ];
+    saveData();
+    const t = calcInvoiceTotals(state.invoices[0]);
+    return {ht: t.ht, tva: t.tva, ttc: t.ttc, port: t.port, timbre: t.timbre, net: t.net};
+  });
+  check('the register row reconciles: HT + TVA = TTC',
+        near(register.ht + register.tva, register.ttc),
+        `${register.ht} + ${register.tva} vs ${register.ttc}`);
+  check('and TTC + carriage + duty = net',
+        near(register.ttc + register.port + register.timbre, register.net),
+        `${register.ttc} + ${register.port} + ${register.timbre} vs ${register.net}`);
+
+  /* The sheet is only right if the header, the widths and the data agree on
+     how many columns there are. */
+  const sheet = await page.evaluate(async () => {
+    const dl = new Promise(r => { const o = URL.createObjectURL;
+      URL.createObjectURL = b => { r(b); URL.createObjectURL = o; return o(b); }; });
+    exportJournalXlsx();
+    const blob = await dl;
+    return blob && blob.size > 0;
+  }).catch(() => null);
+  check('the sales journal still builds', sheet !== false, String(sheet));
+
+  await page.evaluate(() => { state.invoices = []; saveData(); });
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

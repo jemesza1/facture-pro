@@ -62,7 +62,17 @@ function refLine(inv){
   if(!isAvoir(inv) || !inv.refNumber) return '';
   return '<div style="font-size:11px;color:#64748b">Avoir sur facture '+esc(inv.refNumber)+'</div>';
 }
-function calcInvoiceTotals(inv){let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=vatAmount(l,it.tva||0);});const ttc=ht+tva;const timbre=isCash(inv)?calcTimbre(ttc):0;const sign=isAvoir(inv)?-1:1;return{ht:ht*sign,tva:tva*sign,ttc:ttc*sign,timbre:timbre*sign,net:(ttc+timbre)*sign};}
+/* Carriage sits outside the VAT base and on top of the TTC — the layout every
+   supplier invoice uses. It is still part of what the client actually hands
+   over, so the stamp duty is charged on the sum including it.
+
+   ttc keeps its old meaning, goods and their VAT and nothing else, because the
+   Excel journal and the VAT breakdown read it. The carriage appears as its own
+   figure and lands in net.
+
+   An invoice written before the field existed has no fraisPort, reads 0, and
+   comes out with exactly the numbers it had. */
+function calcInvoiceTotals(inv){let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=vatAmount(l,it.tva||0);});const ttc=ht+tva;const port=Number(inv.fraisPort)||0;const timbre=isCash(inv)?calcTimbre(ttc+port):0;const sign=isAvoir(inv)?-1:1;return{ht:ht*sign,tva:tva*sign,ttc:ttc*sign,port:port*sign,timbre:timbre*sign,net:(ttc+port+timbre)*sign};}
 
 /* The dashboard opened on invoices that were not the user's. Some people
    assumed the app was broken, others that it held someone else's books.
