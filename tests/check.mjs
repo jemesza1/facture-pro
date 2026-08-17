@@ -37,7 +37,10 @@ const server = createServer(async (req, res) => {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}`;
 
-const browser = await chromium.launch();
+/* CI images often ship one Chromium that does not match the build number this
+   Playwright would download. CHROMIUM_PATH points at the one that is there. */
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? {executablePath: process.env.CHROMIUM_PATH} : {});
 const context = await browser.newContext({acceptDownloads: true});
 const page = await context.newPage();
 const consoleErrors = [];
@@ -538,6 +541,141 @@ console.log("\nFacture d'avoir");
         words[1] === 'Vingt-quatre mille trente-huit dinars', words[1]);
 
   await page.evaluate(() => closePreview());
+}
+
+/* ---------------------------------------------------------------- *
+ * 12. What the accountants asked for. Every check here stands for a
+ *     figure somebody had to correct by hand before shipping.
+ * ---------------------------------------------------------------- */
+console.log('\nWhat the accountants asked for');
+{
+  /* Money is formatted with a narrow no-break space, which no regex written by
+     hand ever gets right. Flatten it and compare digits. */
+  const flat = s => String(s).replace(/[\s  ]/g, '');
+
+  await page.evaluate(() => {
+    if (locale !== 'fr') toggleLocale();
+    state.clients = [{id:'cw', name:'SARL Whats', nif:'000000000000000'}];
+    state.invoices = [{id:'iw', number:'FAC-2026-950', clientId:'cw', template:'classique',
+                       date:'2026-08-05', dueDate:'2026-09-05', status:'envoyee',
+                       paymentMode:'virement',
+                       items:[{description:'Accompagnement', qty:5, unitPrice:45000, tva:19}]}];
+    state.payments = []; state.devis = [];
+    window.confirm = () => true;
+    saveData();
+  });
+
+  /* --- the WhatsApp message --- */
+  const wa = await page.evaluate(() => {
+    let url = ''; const open = window.open;
+    window.open = u => { url = u; return null; };
+    shareInvoiceWhatsApp('iw');
+    window.open = open;
+    return decodeURIComponent(String(url).replace('https://wa.me/?text=', ''));
+  });
+  check('the WhatsApp message carries no markup', !/<\/?[a-z]/i.test(wa), wa);
+  check('five days at 45 000 announce the line total, not the unit price',
+        flat(wa).includes('225000DA'), wa);
+  check('the unit price no longer stands where the line total belongs',
+        !flat(wa).includes('=45000DA'), wa);
+  check('and the net to pay is the figure on the invoice',
+        flat(wa).includes('267750DA'), wa);
+
+  const waAvoir = await page.evaluate(() => {
+    createAvoir('iw');
+    const a = state.invoices.find(i => i.type === 'avoir');
+    let url = ''; const open = window.open;
+    window.open = u => { url = u; return null; };
+    shareInvoiceWhatsApp(a.id);
+    window.open = open;
+    return decodeURIComponent(String(url).replace('https://wa.me/?text=', ''));
+  });
+  check('an avoir does not announce itself as a facture', /avoir/i.test(waAvoir), waAvoir);
+  check('its lines are negative, like its total', flat(waAvoir).includes('-225000DA'), waAvoir);
+  check('and it is not called a net to pay', !/Net a payer/.test(waAvoir), waAvoir);
+
+  /* --- the VAT amount column --- */
+  /* 5 x 45 000 at 19 % is 42 750 of VAT on the one line. Before this column the
+     paper showed "19 %" and left the accountant to work it out. */
+  for (const tplId of ['classique', 'studio']) {
+    const paper = await page.evaluate(id => {
+      state.invoices.find(i => i.id === 'iw').template = id;
+      previewInvoice('iw');
+      const txt = document.getElementById('invoice-paper').innerText;
+      closePreview();
+      return txt;
+    }, tplId);
+    /* The DZ header is uppercased in CSS, so innerText hands back MONTANT TVA
+       while Studio hands back Montant TVA. Compare on the letters only. */
+    check(`the ${tplId} paper has a VAT amount column`,
+          flat(paper).toLowerCase().includes('montanttva'), paper.slice(0, 200));
+    check(`the ${tplId} paper carries the VAT of the line`,
+          flat(paper).includes('42750DA'), paper.slice(0, 200));
+    check(`the ${tplId} paper still shows the rate as well`,
+          /19\s*%/.test(paper), paper.slice(0, 200));
+  }
+  await page.evaluate(() => { state.invoices.find(i => i.id === 'iw').template = 'classique'; });
+
+  /* --- the note follows the payment mode --- */
+  const notes = await page.evaluate(() => ({
+    modes: ['virement', 'especes', 'cheque', 'carte'].map(m => payNote(m)),
+    typed: isDefaultPayNote('Payable a la livraison, merci.'),
+    ours:  isDefaultPayNote(payNote('cheque')),
+    blank: isDefaultPayNote('   '),
+  }));
+  check('each payment mode has its own sentence',
+        new Set(notes.modes).size === 4, notes.modes.join(' | '));
+  check('cash no longer tells the client to wire the money',
+        /esp/i.test(notes.modes[1]) && !/virement/i.test(notes.modes[1]), notes.modes[1]);
+  check('a sentence the user typed is recognised as theirs', notes.typed === false);
+  check('and one of ours is recognised as ours', notes.ours === true);
+  check('an empty note counts as ours to fill', notes.blank === true);
+
+  const editor = await page.evaluate(() => {
+    openNewInvoice();
+    const sel = document.getElementById('inv-paymode');
+    const ta  = document.getElementById('inv-notes');
+    const opened = ta.value;
+    sel.value = 'especes'; syncPayNote();
+    const afterMode = ta.value;
+    ta.value = 'Payable a la livraison, merci.';
+    sel.value = 'cheque'; syncPayNote();
+    const afterTyping = ta.value;
+    closeModal();
+    return {opened, afterMode, afterTyping};
+  });
+  check('a new invoice opens on the bank-transfer sentence',
+        /virement/i.test(editor.opened), editor.opened);
+  check('switching to cash rewrites the note',
+        /esp/i.test(editor.afterMode), editor.afterMode);
+  check('but switching mode never destroys what the user wrote',
+        editor.afterTyping === 'Payable a la livraison, merci.', editor.afterTyping);
+
+  /* --- the devis and payments pages in both languages --- */
+  const labels = await page.evaluate(() => {
+    state.devis = [{id:'d1', number:'DEV-2026-001', clientId:'cw', date:'2026-08-01',
+                    status:'accepte', items:[{description:'Etude', qty:1, unitPrice:1000, tva:19}]}];
+    state.payments = [{id:'p1', invoiceId:'iw', amount:1000, date:'2026-08-02', method:'ccp'}];
+    saveData();
+    const out = {};
+    out.frDevis = renderDevis(); out.frPay = renderPayments();
+    toggleLocale();
+    out.arDevis = renderDevis(); out.arPay = renderPayments();
+    toggleLocale();
+    return out;
+  });
+  check('a devis status reads as a word in French',
+        labels.frDevis.includes('Accepté') && !labels.frDevis.includes('>accepte<'));
+  check('and as a word in Arabic', labels.arDevis.includes('مقبول'));
+  check('the convert button says what it does',
+        labels.frDevis.includes('Convertir en facture'));
+  check('a payment method reads as a word in French',
+        labels.frPay.includes('CCP') && !labels.frPay.includes('>ccp<'));
+  check('and as a word in Arabic', labels.arPay.includes('ح.ج.ب'));
+  check('the payment mode list is translated too, not only its label',
+        labels.arPay !== labels.frPay);
+
+  await page.evaluate(() => { state.devis = []; state.payments = []; saveData(); });
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
