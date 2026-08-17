@@ -1,0 +1,36 @@
+# The repository rule is "run npm test in tests/ before every deploy — it must
+# say Safe to deploy". Until now the only thing enforcing that was somebody
+# remembering. This runs the same suite on every push and every pull request.
+#
+# It installs Chromium through Playwright rather than relying on one being
+# present: tests/package-lock.json pins the Playwright version, so the browser
+# build it downloads is the one it expects.
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the test runner
+        working-directory: tests
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: tests
+        run: npx playwright install --with-deps chromium
+
+      # The suite serves the repository root itself and drives a real browser.
+      # It exits non-zero on the first failing check, which fails the job.
+      - name: Run the regression suite
+        working-directory: tests
+        run: npm test
