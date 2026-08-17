@@ -376,6 +376,68 @@ console.log('\nPublic tool pages');
   check('the page switches to Arabic', arDir === 'rtl', arDir);
   check('and the figure is not reordered by the switch', clean(arDuty) === '13994,40DA', arDuty);
 
+  /* The salary page is the one that shows its working. Somebody checking a
+     payslip needs every intermediate line, so the checks read them all. */
+  await tools.goto(`${BASE}/calcul-salaire.html`);
+  await tools.waitForFunction(() => typeof irgFor === 'function', {timeout: 20000});
+
+  await tools.fill('#brut', '60000');
+  const pay = await tools.evaluate(() => ({
+    cnas: document.getElementById('v-cnas').textContent,
+    imp:  document.getElementById('v-imp').textContent,
+    irg:  document.getElementById('v-irg').textContent,
+    net:  document.getElementById('v-net').textContent,
+    primesRow: getComputedStyle(document.getElementById('row-primes')).display,
+  }));
+  check('the salary page takes 9 % off the gross', clean(pay.cnas).includes('5400,00DA'), pay.cnas);
+  check('and taxes what is left, not the gross', clean(pay.imp) === '54600,00DA', pay.imp);
+  check('and applies the barème to it', clean(pay.irg).includes('7042,00DA'), pay.irg);
+  check('and lands on the net', clean(pay.net) === '47558,00DA', pay.net);
+  check('the primes rows stay hidden while there are none',
+        pay.primesRow === 'none', pay.primesRow);
+
+  await tools.fill('#brut', '25000');
+  const exempt = await tools.textContent('#v-irg');
+  check('a small salary is exempt', clean(exempt).includes('0,00DA'), exempt);
+
+  /* 44 000 gross lands at 40 040 taxable — inside the band that only a
+     disabled or retired worker gets, so the toggle must move the figure. */
+  await tools.fill('#brut', '44000');
+  const normal = await tools.textContent('#v-irg');
+  await tools.click('#st-reduced');
+  const lowered = await tools.textContent('#v-irg');
+  const num = t => parseFloat(clean(t).replace(/[^\d,]/g, '').replace(',', '.'));
+  check('the reduced track lowers the tax inside its own band',
+        num(lowered) < num(normal) && num(lowered) > 0, `${normal} -> ${lowered}`);
+  await tools.click('#st-normal');
+
+  await tools.fill('#primes', '10000');
+  const bonus = await tools.evaluate(() => ({
+    tax: document.getElementById('v-irgp').textContent,
+    net: document.getElementById('v-primesnet').textContent,
+    row: getComputedStyle(document.getElementById('row-primes')).display,
+  }));
+  check('a bonus appears once it is entered', bonus.row !== 'none', bonus.row);
+  check('and is withheld flat at 10 %', clean(bonus.tax).includes('1000,00DA'), bonus.tax);
+  check('leaving the rest of it', clean(bonus.net) === '9000,00DA', bonus.net);
+
+  /* The duty page above was left in Arabic, and the tool pages share
+     fp_locale — so this one must already have opened in Arabic without being
+     asked. Somebody who picked their language once should not pick it again on
+     every page. */
+  const opened = await tools.evaluate(() => ({
+    dir: document.documentElement.dir,
+    net: document.getElementById('v-net').textContent,
+  }));
+  check('the salary page opens in the language chosen on the previous page',
+        opened.dir === 'rtl', opened.dir);
+  check('and its figures are not reordered by Arabic',
+        /\d/.test(opened.net) && clean(opened.net).endsWith('DA'), opened.net);
+
+  await tools.click('#lang');
+  const flipped = await tools.evaluate(() => document.documentElement.dir);
+  check('and the switch still turns it back', flipped === 'ltr', flipped);
+
   check('no script error on the tool pages', toolErrors.length === 0, toolErrors.join(' | '));
   await tools.close();
 }

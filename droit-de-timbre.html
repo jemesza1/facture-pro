@@ -32,7 +32,7 @@
 </style>
 <!-- Last in the head: the Play CDN appended its <style> here, after the
      block above, and these pages were drawn against that cascade. -->
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260817b" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260817c" />
 </head>
 <body class="min-h-screen">
 
@@ -96,10 +96,20 @@
     </a>
   </div>
 
+  <div class="card p-5 sm:p-6 mt-5">
+    <h2 id="moreT" class="font-semibold mb-3">Autres outils</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="/calcul-salaire.html" id="m1" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul du salaire net</a>
+      <a href="/calcul-tva.html" id="m2" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul de la TVA</a>
+      <a href="/montant-en-lettres.html" id="m3" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Montant en lettres</a>
+      <a href="/guide.html" id="m4" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Guide d'utilisation</a>
+    </div>
+  </div>
+
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js"></script>
+<script src="lib-calc.js?v=20260817c"></script>
 <script>
 (function(){
   var T={
@@ -109,6 +119,7 @@
         cA:'Montant TTC',cB:'Taux',r1:'Jusqu’à 30 000 DA',r2:'De 30 000 à 100 000 DA',r3:'Au-delà de 100 000 DA',
         barP:"Minimum 5 DA, sans plafond. Le droit n’est dû que sur les règlements en espèces : les virements, versements bancaires ou postaux et les paiements par TPE en sont exonérés. Article 100 du Code du timbre, barème de la loi de finances 2025.",
         ctaT:'Ce calcul est appliqué automatiquement à vos factures en espèces.',ctaB:'Créer une facture gratuitement',
+        moreT:'Autres outils',m1:'Calcul du salaire net',m2:'Calcul de la TVA',m3:'Montant en lettres',m4:"Guide d'utilisation",
         other:'العربية',min:'Le minimum légal de 5 DA s’applique.'},
     ar:{h1:'حاسبة رسم الطابع',sub:'على فاتورة مدفوعة نقدًا، في الجزائر.',
         lbl:'المبلغ الإجمالي TTC للفاتورة (دج)',
@@ -116,6 +127,7 @@
         cA:'المبلغ TTC',cB:'النسبة',r1:'حتى 30 000 دج',r2:'من 30 000 إلى 100 000 دج',r3:'أكثر من 100 000 دج',
         barP:'بحد أدنى 5 دج وبلا سقف. ولا يُستحق الرسم إلا على الدفع نقدًا: التحويلات والدفع البنكي أو البريدي والدفع بالبطاقة معفاة. المادة 100 من قانون الطابع، سلّم قانون المالية 2025.',
         ctaT:'هذا الحساب يُطبَّق تلقائيًا على فواتيرك النقدية.',ctaB:'أنشئ فاتورة مجانًا',
+        moreT:'أدوات أخرى',m1:'حساب الراتب الصافي',m2:'حساب الرسم على القيمة المضافة',m3:'المبلغ بالحروف',m4:'دليل الاستخدام',
         other:'Français',min:'يُطبَّق الحد الأدنى القانوني 5 دج.'}
   };
   var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
@@ -127,7 +139,8 @@
     document.documentElement.lang=loc==='ar'?'ar':'fr';
     document.documentElement.dir=loc==='ar'?'rtl':'ltr';
     document.body.classList.toggle('ar',loc==='ar');
-    ['h1','sub','lbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB']
+    ['h1','sub','lbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB',
+     'moreT','m1','m2','m3','m4']
       .forEach(function(k){$(k).textContent=d[k];});
     $('lang').textContent=d.other;
     render();

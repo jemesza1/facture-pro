@@ -12,7 +12,7 @@
    cache only answers when the network does not.
 
    Bump CACHE whenever the shell changes — keep it in step with V in app.js. */
-var CACHE = 'facturepro-20260817b';
+var CACHE = 'facturepro-20260817c';
 
 /* Cached without their ?v= query, and read back with ignoreSearch, so bumping
    an asset version does not orphan every entry. */
@@ -23,7 +23,7 @@ var SHELL = [
   '/extra.js', '/pro-polish.js', '/commerce.js', '/lib-xlsx.js', '/excel.js', '/backup.js', '/avoir.js',
   '/vendor/tailwind.css', '/vendor/lucide.min.js',
   '/vendor/jspdf.umd.min.js', '/vendor/html2canvas.min.js',
-  '/droit-de-timbre.html', '/montant-en-lettres.html', '/calcul-tva.html',
+  '/droit-de-timbre.html', '/montant-en-lettres.html', '/calcul-tva.html', '/calcul-salaire.html',
   '/guide.html', '/install.js',
   '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'
 ];

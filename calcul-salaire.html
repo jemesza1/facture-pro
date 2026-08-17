@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Calcul du salaire net en Algérie — IRG et CNAS | حساب الراتب الصافي</title>
+<meta name="description" content="Calculez votre salaire net à partir du brut : retenue CNAS 9 %, IRG selon le barème de la Direction Générale des Impôts (art. 104 du CIDTA), et le net à percevoir. Chaque étape est affichée. Gratuit, sans inscription. حساب الراتب الصافي مجانًا." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://facture-pro-iota.vercel.app/calcul-salaire.html" />
+<meta property="og:title" content="Calcul du salaire net en Algérie — IRG et CNAS" />
+<meta property="og:description" content="Du brut au net, étape par étape : CNAS 9 %, barème IRG, net à percevoir. Gratuit, sans inscription." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .num{direction:ltr;unicode-bidi:isolate}
+  input[type=number]{direction:ltr;text-align:start}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
+  /* Segmented controls. Qualified with the tag: tailwind.css loads after this
+     block and a bare class would lose the padding to .px-3. */
+  button.seg{border:1px solid #cbd5e1;background:transparent;color:inherit;
+    padding:.55rem .9rem;border-radius:11px;font-size:.875rem;font-weight:600;
+    cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+  button.seg[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  /* The steps are the point of the page: somebody checking a payslip needs to
+     see where each dinar went, not just the final figure. */
+  .step{display:flex;justify-content:space-between;gap:1rem;padding:.6rem 0;
+    border-bottom:1px solid #e2e8f0;font-size:.9rem}
+  .step:last-child{border-bottom:0}
+  .step .v{font-weight:600;white-space:nowrap}
+  .minus .v{color:#dc2626}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+    th,td,.step{border-color:#1e293b}
+    button.seg{border-color:#334155}
+    .minus .v{color:#f87171}
+  }
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260817c" />
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <span class="w-9 h-9 rounded-xl grid place-items-center text-white font-bold shrink-0" style="background:var(--brand)">F</span>
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 pb-16">
+
+  <h1 id="h1" class="text-2xl sm:text-3xl font-bold mb-2">Calcul du salaire net</h1>
+  <p id="sub" class="text-slate-500 mb-6">Du brut au net, étape par étape.</p>
+
+  <div class="card p-5 sm:p-6">
+    <label id="lbl" class="block text-sm font-medium mb-2" for="brut">Salaire brut mensuel (DA)</label>
+    <input id="brut" type="number" inputmode="decimal" min="0" step="0.01" placeholder="60000"
+           class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+
+    <label id="plbl" class="block text-sm font-medium mt-5 mb-2" for="primes">Primes et rappels du mois (DA)</label>
+    <input id="primes" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"
+           class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+    <p id="phint" class="text-xs text-slate-500 mt-1.5">Retenues séparément à 10 %. Laissez vide si aucune.</p>
+
+    <p id="stlbl" class="text-sm font-medium mt-5 mb-2">Situation</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="seg" id="st-normal" data-reduced="0" aria-pressed="true">Salarié</button>
+      <button type="button" class="seg" id="st-reduced" data-reduced="1" aria-pressed="false">Handicapé ou retraité</button>
+    </div>
+
+    <div class="mt-6" id="steps">
+      <div class="step"><span id="s1">Salaire brut</span><span class="num v" id="v-brut">—</span></div>
+      <div class="step minus"><span id="s2">Retenue CNAS (9 %)</span><span class="num v" id="v-cnas">—</span></div>
+      <div class="step"><span id="s3">Salaire imposable</span><span class="num v" id="v-imp">—</span></div>
+      <div class="step minus"><span id="s4">IRG sur le salaire</span><span class="num v" id="v-irg">—</span></div>
+      <div class="step minus" id="row-primes"><span id="s5">IRG sur les primes (10 %)</span><span class="num v" id="v-irgp">—</span></div>
+      <div class="step"><span id="s6">Primes nettes</span><span class="num v" id="v-primesnet">—</span></div>
+    </div>
+
+    <div class="rounded-xl p-4 mt-4 text-white flex items-center justify-between gap-3" style="background:var(--brand)">
+      <span id="s7" class="text-sm opacity-90">Net à percevoir</span>
+      <span class="num text-2xl font-bold" id="v-net">—</span>
+    </div>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5">
+    <h2 id="barT" class="font-semibold mb-3">Le barème mensuel</h2>
+    <table>
+      <thead><tr><th id="cA">Salaire imposable par mois</th><th id="cB">Taux</th></tr></thead>
+      <tbody>
+        <tr><td id="b1">Jusqu’à 20 000 DA</td><td class="num">0 %</td></tr>
+        <tr><td id="b2">De 20 001 à 40 000 DA</td><td class="num">23 %</td></tr>
+        <tr><td id="b3">De 40 001 à 80 000 DA</td><td class="num">27 %</td></tr>
+        <tr><td id="b4">De 80 001 à 160 000 DA</td><td class="num">30 %</td></tr>
+        <tr><td id="b5">De 160 001 à 320 000 DA</td><td class="num">33 %</td></tr>
+        <tr><td id="b6">Au-delà de 320 000 DA</td><td class="num">35 %</td></tr>
+      </tbody>
+    </table>
+    <p id="barP" class="text-sm text-slate-600 dark:text-slate-400 mt-3">
+      Le barème s’applique au salaire imposable, c’est-à-dire après la cotisation
+      ouvrière. Un abattement de 40 % est ensuite retiré de l’impôt lui-même,
+      entre 1 000 et 1 500 DA par mois. Un salaire imposable jusqu’à 30 000 DA est
+      exonéré ; entre 30 001 et 35 000 DA un second abattement réduit encore
+      l’impôt — jusqu’à 42 500 DA pour un travailleur handicapé ou retraité.
+      Article 104 du Code des impôts directs, barème de la Direction Générale
+      des Impôts.
+    </p>
+  </section>
+
+  <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">Vous facturez vos prestations ? Créez une facture conforme en une minute.</p>
+    <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
+      <span id="ctaB">Créer une facture gratuitement</span>
+    </a>
+  </div>
+
+  <div class="card p-5 sm:p-6 mt-5">
+    <h2 id="moreT" class="font-semibold mb-3">Autres outils</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="/calcul-tva.html" id="m1" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul de la TVA</a>
+      <a href="/droit-de-timbre.html" id="m2" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Droit de timbre</a>
+      <a href="/montant-en-lettres.html" id="m3" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Montant en lettres</a>
+      <a href="/guide.html" id="m4" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Guide d'utilisation</a>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="lib-calc.js?v=20260817c"></script>
+<script src="install.js?v=20260817c"></script>
+<script>
+(function(){
+  /* Cotisation ouvrière: 1,5 sécurité sociale + 6,75 retraite + 0,5 chômage
+     + 0,25 retraite anticipée. It is what the DGI removes before the barème. */
+  var CNAS = 0.09;
+
+  var T={
+    fr:{h1:'Calcul du salaire net',sub:'Du brut au net, étape par étape.',
+        lbl:'Salaire brut mensuel (DA)',
+        plbl:'Primes et rappels du mois (DA)',
+        phint:'Retenues séparément à 10 %. Laissez vide si aucune.',
+        stlbl:'Situation',stNormal:'Salarié',stReduced:'Handicapé ou retraité',
+        s1:'Salaire brut',s2:'Retenue CNAS (9 %)',s3:'Salaire imposable',
+        s4:'IRG sur le salaire',s5:'IRG sur les primes (10 %)',s6:'Primes nettes',
+        s7:'Net à percevoir',
+        barT:'Le barème mensuel',cA:'Salaire imposable par mois',cB:'Taux',
+        b1:'Jusqu’à 20 000 DA',b2:'De 20 001 à 40 000 DA',b3:'De 40 001 à 80 000 DA',
+        b4:'De 80 001 à 160 000 DA',b5:'De 160 001 à 320 000 DA',b6:'Au-delà de 320 000 DA',
+        barP:"Le barème s’applique au salaire imposable, c’est-à-dire après la cotisation ouvrière. Un abattement de 40 % est ensuite retiré de l’impôt lui-même, entre 1 000 et 1 500 DA par mois. Un salaire imposable jusqu’à 30 000 DA est exonéré ; entre 30 001 et 35 000 DA un second abattement réduit encore l’impôt — jusqu’à 42 500 DA pour un travailleur handicapé ou retraité. Article 104 du Code des impôts directs, barème de la Direction Générale des Impôts.",
+        ctaT:'Vous facturez vos prestations ? Créez une facture conforme en une minute.',
+        ctaB:'Créer une facture gratuitement',
+        moreT:'Autres outils',m1:'Calcul de la TVA',m2:'Droit de timbre',
+        m3:'Montant en lettres',m4:"Guide d'utilisation",
+        other:'العربية',title:'Calcul du salaire net en Algérie — IRG et CNAS'},
+    ar:{h1:'حساب الراتب الصافي',sub:'من الخام إلى الصافي، خطوة بخطوة.',
+        lbl:'الراتب الخام الشهري (دج)',
+        plbl:'المنح والمستحقات هذا الشهر (دج)',
+        phint:'تُقتطع منفصلة بنسبة 10٪. اتركه فارغًا إن لم توجد.',
+        stlbl:'الحالة',stNormal:'أجير',stReduced:'معوَّق أو متقاعد',
+        s1:'الراتب الخام',s2:'اقتطاع الضمان الاجتماعي (9٪)',s3:'الراتب الخاضع للضريبة',
+        s4:'الضريبة على الراتب',s5:'الضريبة على المنح (10٪)',s6:'المنح الصافية',
+        s7:'الصافي المستحَق',
+        barT:'السلّم الشهري',cA:'الراتب الخاضع شهريًّا',cB:'النسبة',
+        b1:'إلى غاية 20 000 دج',b2:'من 20 001 إلى 40 000 دج',b3:'من 40 001 إلى 80 000 دج',
+        b4:'من 80 001 إلى 160 000 دج',b5:'من 160 001 إلى 320 000 دج',b6:'أكثر من 320 000 دج',
+        barP:'يُطبَّق السلّم على الراتب الخاضع، أي بعد اقتطاع حصّة العامل. ثمّ يُخصم تخفيض 40٪ من الضريبة نفسها، بين 1 000 و1 500 دج شهريًّا. الراتب الخاضع إلى غاية 30 000 دج معفى تمامًا؛ وبين 30 001 و35 000 دج يُخفَّض ثانيةً — وإلى غاية 42 500 دج للعامل المعوَّق أو المتقاعد. المادة 104 من قانون الضرائب المباشرة، سلّم المديرية العامة للضرائب.',
+        ctaT:'تصدر فواتير عن أعمالك؟ أنشئ فاتورة مطابقة في دقيقة.',
+        ctaB:'أنشئ فاتورة مجانًا',
+        moreT:'أدوات أخرى',m1:'حساب الرسم على القيمة المضافة',m2:'رسم الطابع',
+        m3:'المبلغ بالحروف',m4:'دليل الاستخدام',
+        other:'Français',title:'حساب الراتب الصافي — الجزائر'}
+  };
+
+  var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
+  var reduced=false;
+  var $=function(id){return document.getElementById(id);};
+  var fmt=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' DA';};
+
+  function apply(){
+    var d=T[loc];
+    document.documentElement.lang=loc==='ar'?'ar':'fr';
+    document.documentElement.dir=loc==='ar'?'rtl':'ltr';
+    document.body.classList.toggle('ar',loc==='ar');
+    ['h1','sub','lbl','plbl','phint','stlbl','s1','s2','s3','s4','s5','s6','s7',
+     'barT','cA','cB','b1','b2','b3','b4','b5','b6','barP','ctaT','ctaB',
+     'moreT','m1','m2','m3','m4']
+      .forEach(function(k){ $(k).textContent=d[k]; });
+    $('st-normal').textContent=d.stNormal;
+    $('st-reduced').textContent=d.stReduced;
+    $('lang').textContent=d.other;
+    document.title=d.title;
+    render();
+  }
+
+  function blank(){
+    ['v-brut','v-cnas','v-imp','v-irg','v-irgp','v-primesnet','v-net']
+      .forEach(function(k){ $(k).textContent='—'; });
+  }
+
+  function render(){
+    var b=parseFloat($('brut').value);
+    var p=parseFloat($('primes').value);
+    if(!isFinite(p)||p<0)p=0;
+    /* The primes rows only earn their space once there are primes. */
+    var showP=p>0;
+    $('row-primes').style.display=showP?'':'none';
+    $('s6').parentNode.style.display=showP?'':'none';
+
+    if(!isFinite(b)||b<0){ blank(); return; }
+
+    /* irgFor takes the taxable salary, never the gross one — the whole reason
+       the middle rows are on screen is so that is visible. */
+    var cnas=b*CNAS;
+    var imposable=b-cnas;
+    var irg=irgFor(imposable, reduced);
+    var irgP=irgOnBonus(p);
+
+    $('v-brut').textContent=fmt(b);
+    $('v-cnas').textContent='− '+fmt(cnas);
+    $('v-imp').textContent=fmt(imposable);
+    $('v-irg').textContent='− '+fmt(irg);
+    $('v-irgp').textContent='− '+fmt(irgP);
+    $('v-primesnet').textContent=fmt(p-irgP);
+    $('v-net').textContent=fmt(imposable-irg+p-irgP);
+  }
+
+  [].forEach.call(document.querySelectorAll('button.seg[data-reduced]'),function(btn){
+    btn.addEventListener('click',function(){
+      reduced=btn.dataset.reduced==='1';
+      [].forEach.call(document.querySelectorAll('button.seg[data-reduced]'),function(o){
+        o.setAttribute('aria-pressed', String(o===btn));
+      });
+      render();
+    });
+  });
+
+  $('brut').addEventListener('input',render);
+  $('primes').addEventListener('input',render);
+  $('lang').addEventListener('click',function(){
+    loc=(loc==='ar')?'fr':'ar';
+    try{ localStorage.setItem('fp_locale',loc); }catch(e){}
+    apply();
+  });
+
+  apply();
+})();
+</script>
+</body>
+</html>

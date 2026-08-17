@@ -37,7 +37,7 @@
     button.seg{border-color:#334155}
   }
 </style>
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260817b" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260817c" />
 </head>
 <body class="min-h-screen">
 
@@ -115,6 +115,7 @@
   <div class="card p-5 sm:p-6 mt-5">
     <h2 id="moreT" class="font-semibold mb-3">Autres outils</h2>
     <div class="flex flex-wrap gap-2">
+      <a href="/calcul-salaire.html" id="m0" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul du salaire net</a>
       <a href="/droit-de-timbre.html" id="m1" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Droit de timbre</a>
       <a href="/montant-en-lettres.html" id="m2" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Montant en lettres</a>
       <a href="/guide.html" id="m3" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Guide d'utilisation</a>
@@ -124,8 +125,8 @@
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js?v=20260817b"></script>
-<script src="install.js?v=20260817b"></script>
+<script src="lib-calc.js?v=20260817c"></script>
+<script src="install.js?v=20260817c"></script>
 <script>
 (function(){
   var T={
@@ -140,7 +141,7 @@
         barP:"La TVA se calcule sur le montant hors taxe. Sur une facture réglée en espèces, le droit de timbre s’ajoute ensuite au TTC — il ne fait pas partie de l’assiette de la TVA.",
         ctaT:'Ce calcul est appliqué automatiquement à chaque ligne de vos factures.',
         ctaB:'Créer une facture gratuitement',
-        moreT:'Autres outils',m1:'Droit de timbre',m2:'Montant en lettres',m3:"Guide d'utilisation",
+        moreT:'Autres outils',m0:'Calcul du salaire net',m1:'Droit de timbre',m2:'Montant en lettres',m3:"Guide d'utilisation",
         other:'العربية',title:'Calcul de la TVA en Algérie — 19 % et 9 %'},
     ar:{h1:'حساب الرسم على القيمة المضافة',sub:'بالنسب الجزائرية، في الاتجاهين.',
         dirlbl:'المبلغ الذي أعرفه',dirHt:'خارج الرسم (HT)',dirTtc:'شامل الرسم (TTC)',
@@ -153,7 +154,7 @@
         barP:'يُحسب الرسم على المبلغ خارج الرسم. وفي الفاتورة المدفوعة نقداً يُضاف رسم الطابع بعد ذلك على المبلغ شامل الرسم — وهو ليس جزءاً من وعاء الرسم على القيمة المضافة.',
         ctaT:'هذا الحساب يُطبَّق تلقائياً على كل بند من بنود فواتيرك.',
         ctaB:'أنشئ فاتورة مجاناً',
-        moreT:'أدوات أخرى',m1:'رسم الطابع',m2:'المبلغ بالحروف',m3:'دليل الاستخدام',
+        moreT:'أدوات أخرى',m0:'حساب الراتب الصافي',m1:'رسم الطابع',m2:'المبلغ بالحروف',m3:'دليل الاستخدام',
         other:'Français',title:'حساب الرسم على القيمة المضافة — الجزائر'}
   };
   var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
@@ -166,7 +167,7 @@
     document.documentElement.lang=loc==='ar'?'ar':'fr';
     document.documentElement.dir=loc==='ar'?'rtl':'ltr';
     document.body.classList.toggle('ar',loc==='ar');
-    ['h1','sub','dirlbl','ratelbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB','moreT','m1','m2','m3']
+    ['h1','sub','dirlbl','ratelbl','k1','k2','k3','barT','cA','cB','r1','r2','r3','barP','ctaT','ctaB','moreT','m0','m1','m2','m3']
       .forEach(function(k){ $(k).textContent=d[k]; });
     $('dir-ht').textContent=d.dirHt;
     $('dir-ttc').textContent=d.dirTtc;
