@@ -986,6 +986,89 @@ console.log('\nUnit of measure and carriage');
   await page.evaluate(() => { state.invoices = []; saveData(); });
 }
 
+/* ---------------------------------------------------------------- *
+ * 16. The devis keeps what it is, and until when.
+ *
+ *     Three of these cover bugs found by reading the file rather
+ *     than by a failing check — nothing here was covered before.
+ * ---------------------------------------------------------------- */
+console.log('\nDevis: status, conversion, validity');
+{
+  await page.evaluate(() => {
+    state.clients = [{id: 'cd', name: 'SARL Devis', nif: '000000000000000'}];
+    state.invoices = []; state.nextInvoiceNumber = 1;
+    state.devis = [{id: 'dv', number: 'DEV-2026-001', clientId: 'cd', date: '2026-08-01',
+                    status: 'accepte', validUntil: '2026-12-31',
+                    items: [{description: 'Etude', qty: 1, unitPrice: 1000, tva: 19}]}];
+    window.confirm = () => true;
+    saveData();
+  });
+
+  /* A save edits what was typed. It does not decide what the document is. */
+  const kept = await page.evaluate(() => {
+    openDevisModal('dv');
+    document.getElementById('dev-client').value = 'cd';
+    saveDevis('dv');
+    return state.devis[0].status;
+  });
+  check('editing an accepted devis leaves it accepted', kept === 'accepte', kept);
+
+  /* Converting twice used to issue two invoices for one quote. */
+  const twice = await page.evaluate(() => {
+    state.devis[0].status = 'brouillon'; delete state.devis[0].invoiceNumber;
+    state.invoices = []; state.nextInvoiceNumber = 1;
+    convertDevisToInvoice('dv');
+    const first = {n: state.invoices.length, num: state.devis[0].invoiceNumber,
+                   tpl: state.invoices[0].template};
+    /* Now refuse the second. */
+    window.confirm = () => false;
+    convertDevisToInvoice('dv');
+    const after = state.invoices.length;
+    window.confirm = () => true;
+    convertDevisToInvoice('dv');
+    return {...first, afterRefusing: after, afterAccepting: state.invoices.length};
+  });
+  check('converting a devis issues one invoice', twice.n === 1, String(twice.n));
+  check('and the devis remembers which one', twice.num === 'FAC-2026-001', String(twice.num));
+  check('a second conversion asks first, and no means no',
+        twice.afterRefusing === 1, String(twice.afterRefusing));
+  check('and yes still means yes', twice.afterAccepting === 2, String(twice.afterAccepting));
+  check('the invoice it creates carries a template id that exists',
+        twice.tpl === "classique", String(twice.tpl));
+
+  /* Validity. */
+  const validity = await page.evaluate(() => ({
+    past:   devisExpired({validUntil: '2020-01-01'}),
+    future: devisExpired({validUntil: '2999-01-01'}),
+    none:   devisExpired({}),
+  }));
+  check('a devis past its date reads as expired', validity.past === true);
+  check('one still in date does not', validity.future === false);
+  check('and one with no date never expires', validity.none === false);
+
+  const shown = await page.evaluate(() => {
+    state.devis = [{id: 'dv2', number: 'DEV-2026-002', clientId: 'cd', date: '2026-08-01',
+                    status: 'brouillon', validUntil: '2020-01-01',
+                    items: [{description: 'X', qty: 1, unitPrice: 100, tva: 19}]}];
+    saveData();
+    return renderDevis();
+  });
+  check('the list shows the validity date', shown.includes('2020-01-01'), '');
+  check('and marks the expired one', /Expir|منتهٍ/.test(shown), '');
+
+  /* The field has to survive a reload, which is where whitelisted saves bite. */
+  await page.reload();
+  await page.waitForFunction(() => typeof renderDevis === 'function', {timeout: 30000});
+  const survived = await page.evaluate(() => {
+    const d = (state.devis || [])[0] || {};
+    return {validUntil: d.validUntil, number: d.number};
+  });
+  check('and it is still there after a reload',
+        survived.validUntil === '2020-01-01', JSON.stringify(survived));
+
+  await page.evaluate(() => { state.devis = []; state.invoices = []; saveData(); });
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

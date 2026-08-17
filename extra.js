@@ -123,6 +123,12 @@
     saveData(); toast(t('toast.saved')); renderPage();
   };
 
+  /* A quote with no date stays binding for ever, which is why the field is
+     worth having at all. Compared as ISO strings — both sides are YYYY-MM-DD. */
+  window.devisExpired=function(d){
+    return !!(d && d.validUntil && d.validUntil < new Date().toISOString().slice(0,10));
+  };
+
   window.renderDevis=function(){
     var ar=locale==='ar';
     var list=(state.devis||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
@@ -137,7 +143,11 @@
           return '<tr class="border-b border-slate-100 dark:border-slate-800">'+
             '<td class="p-3 font-medium ltr-code">'+esc(d.number||'')+'</td>'+
             '<td class="p-3">'+esc(cl.name||'\u2014')+'</td>'+
-            '<td class="p-3">'+esc(d.date||'')+'</td>'+
+            '<td class="p-3">'+esc(d.date||'')+
+              (d.validUntil?'<div class="text-xs '+(devisExpired(d)?'text-red-500':'text-slate-500')+'">'
+                 +esc(t('devis.validUntil'))+' '+esc(d.validUntil)
+                 +(devisExpired(d)?' \u2014 '+esc(t('devis.expired')):'')+'</div>':'')
+            +'</td>'+
             '<td class="p-3 font-semibold">'+moneyUI(tot.ttc)+'</td>'+
             '<td class="p-3"><span class="badge '+(d.status==='accepte'?'badge-payee':d.status==='refuse'?'badge-enretard':'badge-brouillon')+'">'+esc(t('devis.status.'+(d.status||'brouillon')))+'</span></td>'+
             '<td class="p-3 text-end whitespace-nowrap">'+
@@ -158,11 +168,13 @@
       '<div class="modal-header"><h3 class="font-semibold">'+(d?(ar?'\u062a\u0639\u062f\u064a\u0644 \u0639\u0631\u0636':'Modifier devis'):(ar?'\u0639\u0631\u0636 \u0633\u0639\u0631 \u062c\u062f\u064a\u062f':'Nouveau devis'))+'</h3>'+
       '<button onclick="closeModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
       '<div class="modal-body space-y-4">'+
-        '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'+
+        '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">'+
           '<div><label class="form-label">'+(ar?'\u0627\u0644\u0639\u0645\u064a\u0644 *':'Client *')+'</label><select id="dev-client" class="form-select"><option value="">\u2014</option>'+
             state.clients.map(function(c){return '<option value="'+c.id+'" '+(d&&d.clientId===c.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+
           '</select></div>'+
           '<div><label class="form-label">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input type="date" id="dev-date" class="form-input" value="'+(d&&d.date||new Date().toISOString().slice(0,10))+'"/></div>'+
+          '<div><label class="form-label">'+esc(t('devis.validUntil'))+'</label><input type="date" id="dev-valid" class="form-input" value="'+esc(d&&d.validUntil||'')+'"/>'+
+            '<p class="text-xs text-slate-500 mt-1">'+esc(t('devis.validHint'))+'</p></div>'+
         '</div>'+
         '<div><div class="flex justify-between mb-2"><label class="form-label mb-0">'+(ar?'\u0627\u0644\u0628\u0646\u0648\u062f':'Lignes')+'</label>'+
           '<button type="button" onclick="addDevisItem()" class="text-sm text-sky-600 font-medium">+ '+(ar?'\u0625\u0636\u0627\u0641\u0629':'Ajouter')+'</button></div>'+
@@ -212,17 +224,23 @@
     });
     if(!items.length) return toast(locale==='ar'?'\u0623\u0636\u0641 \u0628\u0646\u062f\u0627\u064b':'Ajoutez une ligne','err');
     ensure();
+    /* status is deliberately absent here. It used to be set to 'brouillon' on
+       every save, so editing a devis that had already been accepted quietly
+       walked it back to draft and lost the only record that it had been
+       converted. A save edits what was typed; it does not decide what the
+       document is. */
     var data={
       clientId:clientId,
       date:document.getElementById('dev-date').value,
+      validUntil:(document.getElementById('dev-valid')||{}).value||'',
       notes:(document.getElementById('dev-notes').value||'').trim(),
-      items:items,
-      status:'brouillon'
+      items:items
     };
     if(id){
       var i=state.devis.findIndex(function(x){return x.id===id;});
       if(i>=0) state.devis[i]=Object.assign({},state.devis[i],data);
     } else {
+      data.status='brouillon';
       var year=new Date().getFullYear();
       var number='DEV-'+year+'-'+String(state.nextDevisNumber).padStart(3,'0');
       state.devis.push(Object.assign({id:uid(),number:number},data));
@@ -241,6 +259,9 @@
     ensure();
     var d=state.devis.find(function(x){return x.id===id;});
     if(!d) return;
+    /* Clicking convert twice used to issue two invoices for one quote and burn
+       two numbers, with nothing on screen to say the first one existed. */
+    if(d.invoiceNumber && !confirm(t('devis.convertAgain').replace('{n}',d.invoiceNumber))) return;
     var year=new Date().getFullYear();
     var number='FAC-'+year+'-'+String(state.nextInvoiceNumber).padStart(3,'0');
     state.invoices.push({
@@ -252,10 +273,15 @@
       status:'brouillon',
       items:JSON.parse(JSON.stringify(d.items||[])),
       notes:d.notes||'',
-      template:(state.invoices[0]&&state.invoices[0].template)||'classic'
+      paymentMode:'virement',
+      /* 'classic' is not a template id — TEMPLATES calls it 'classique'. It
+         survived only because getTpl falls back to the first entry, which
+         happens to be that one. */
+      template:(state.invoices[0]&&state.invoices[0].template)||'classique'
     });
     state.nextInvoiceNumber++;
     d.status='accepte';
+    d.invoiceNumber=number;
     saveData();
     toast(locale==='ar'?'\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629':'Facture cr\u00e9\u00e9e depuis le devis');
     navigate('invoices');
