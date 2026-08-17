@@ -51,3 +51,61 @@ function timbreFor(amount){
   if(d<5)d=5;
   return Math.round(d*100)/100;
 }
+
+/* ---- IRG sur les traitements et salaires — art. 104 du CIDTA ----
+   Source: Direction Générale des Impôts, "IRG — Traitements et salaires",
+   barème issu de l'art. 31 de la LF 2022. Consulté le 17/08/2026.
+
+   Everything here takes the MONTHLY TAXABLE salary, not the gross one. The
+   DGI lists what comes off first — retenues pour pensions ou retraites, and
+   the cotisation ouvrière aux assurances sociales (9 % CNAS) — and the barème
+   applies to what is left. Feeding this function a gross salary overstates the
+   tax by thousands of dinars, so the caller does the subtraction.
+
+   The brackets are stated annually; the retenue is "calculée par
+   mensualisation", so a month is the annual tax on twelve months, divided by
+   twelve. That is not the same as taxing one month against annual brackets.
+
+   The 40 % abattement comes off the TAX, not off the salary, and is bounded
+   at 1 000 and 1 500 DA a month.
+
+   Two bands then get a second abattement, each with its own formula. The
+   formulas look arbitrary and are not: each one is the straight line that
+   sends the bottom of its band to zero and leaves the top of its band
+   untouched. That is what makes them worth trusting, and it is what the tests
+   assert — every constant below is wrong if those four endpoints do not land.
+*/
+var IRG_BRACKETS=[[240000,0],[480000,0.23],[960000,0.27],[1920000,0.30],[3840000,0.33],[Infinity,0.35]];
+
+/* Tax on a full year of taxable income, before any abattement. */
+function irgBareme(annual){
+  var a=Number(annual)||0, tax=0, low=0, i;
+  for(i=0;i<IRG_BRACKETS.length;i++){
+    if(a<=low)break;
+    tax+=(Math.min(a,IRG_BRACKETS[i][0])-low)*IRG_BRACKETS[i][1];
+    low=IRG_BRACKETS[i][0];
+  }
+  return tax;
+}
+
+/* One month, after the 40 % abattement and nothing else. */
+function irgFirstAbattement(monthly){
+  var brut=irgBareme((Number(monthly)||0)*12)/12;
+  if(brut<=0)return 0;
+  return Math.max(0, brut-Math.min(1500, Math.max(1000, brut*0.40)));
+}
+
+/* The monthly retenue à la source.
+   `reduced` selects the track for travailleurs handicapés et retraités, whose
+   relief band runs to 42 500 instead of 35 000. */
+function irgFor(monthly, reduced){
+  var m=Number(monthly)||0;
+  if(m<=30000)return 0;                                  /* exonération totale */
+  var first=irgFirstAbattement(m);
+  if(reduced)return m<=42500 ? Math.max(0, first*(93/61)-(81213/41)) : first;
+  return m<=35000 ? Math.max(0, first*(137/51)-(27925/8)) : first;
+}
+
+/* Primes, rappels, gratifications: treated as a separate month and withheld
+   flat, so they never push the salary into a higher bracket. */
+function irgOnBonus(amount){ return (Number(amount)||0)*0.10; }

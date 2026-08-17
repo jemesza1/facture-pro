@@ -678,6 +678,82 @@ console.log('\nWhat the accountants asked for');
   await page.evaluate(() => { state.devis = []; state.payments = []; saveData(); });
 }
 
+/* ---------------------------------------------------------------- *
+ * 13. IRG on salaries — art. 104 CIDTA.
+ *
+ *     The four endpoint checks are the ones that matter. Each relief
+ *     band's formula is the line that sends the bottom of the band to
+ *     zero and leaves the top untouched, so if any constant anywhere
+ *     in the chain is wrong — a bracket, the 1 000 / 1 500 bounds, a
+ *     fraction — the endpoints stop landing. They are a test of the
+ *     whole scale, not of one function.
+ * ---------------------------------------------------------------- */
+console.log('\nIRG sur les salaires');
+{
+  const irg = await page.evaluate(() => ({
+    exempt:   [0, 20000, 30000].map(m => irgFor(m)),
+    bottom:   irgFor(30001),
+    band:     [31000, 33000].map(m => irgFor(m)),
+    at35:     irgFor(35000),
+    first35:  irgFirstAbattement(35000),
+    at30:     irgFirstAbattement(30000),
+    edge30:   irgFirstAbattement(30000) * (137/51) - (27925/8),
+    over:     [40000, 60000, 100000].map(m => irgFor(m)),
+    firstOver:[40000, 60000, 100000].map(m => irgFirstAbattement(m)),
+    /* handicapés / retraités */
+    rBottom:  irgFor(30001, true),
+    rAt425:   irgFor(42500, true),
+    rFirst425:irgFirstAbattement(42500),
+    rOver:    irgFor(50000, true),
+    over50:   irgFor(50000),
+    /* the barème itself */
+    bareme:   [240000, 480000, 960000, 1920000, 3840000].map(a => irgBareme(a)),
+    bonus:    irgOnBonus(50000),
+  }));
+
+  check('a salary at or under 30 000 pays nothing',
+        irg.exempt.every(v => v === 0), irg.exempt.join(' | '));
+
+  /* Endpoint 1: the band's formula must send its own floor to zero. */
+  check('the relief band starts from zero, not from a step',
+        Math.abs(irg.edge30) < 2, String(irg.edge30));
+  check('and a salary just over the threshold pays only a few dinars',
+        irg.bottom > 0 && irg.bottom < 10, String(irg.bottom));
+
+  /* Endpoint 2: at the top of the band the second abattement must vanish. */
+  check('at 35 000 the second abattement has faded out',
+        Math.abs(irg.at35 - irg.first35) < 1,
+        `${irg.at35} vs ${irg.first35}`);
+
+  check('inside the band the tax climbs',
+        irg.band[0] < irg.band[1] && irg.band[0] > 0, irg.band.join(' | '));
+  check('above 35 000 only the 40 % abattement applies',
+        irg.over.every((v, i) => Math.abs(v - irg.firstOver[i]) < 0.001),
+        irg.over.join(' | '));
+
+  /* The same two endpoints on the second track, whose band ends at 42 500. */
+  check('the reduced track also starts from zero',
+        irg.rBottom >= 0 && irg.rBottom < 10, String(irg.rBottom));
+  check('and fades out at 42 500, not at 35 000',
+        Math.abs(irg.rAt425 - irg.rFirst425) < 1,
+        `${irg.rAt425} vs ${irg.rFirst425}`);
+  check('a disabled or retired worker never pays more than anyone else',
+        irg.rOver <= irg.over50 + 0.001, `${irg.rOver} vs ${irg.over50}`);
+
+  /* The 40 % abattement comes off the tax, not the salary. A 100 000 DA
+     taxable salary owes 21 400 a month before relief; taking 40 % off the
+     salary instead would land nowhere near 19 900. */
+  check('the abattement is capped at 1 500 a month',
+        Math.abs(irg.over[2] - 19900) < 1, String(irg.over[2]));
+
+  check('the barème is cumulative across brackets',
+        Math.abs(irg.bareme[1] - 55200) < 1 && Math.abs(irg.bareme[2] - 184800) < 1,
+        irg.bareme.join(' | '));
+  check('and the first bracket is free', irg.bareme[0] === 0, String(irg.bareme[0]));
+
+  check('a bonus is withheld flat at 10 %', irg.bonus === 5000, String(irg.bonus));
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
