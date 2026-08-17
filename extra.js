@@ -20,7 +20,8 @@
         products:state.products,
         devis:state.devis,
         payments:state.payments,
-        nextDevisNumber:state.nextDevisNumber
+        nextDevisNumber:state.nextDevisNumber,
+        nextAvoirNumber:state.nextAvoirNumber
       }));
       window.__saveWarned=false;
     }catch(e){

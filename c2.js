@@ -9,7 +9,9 @@ function renderInvoiceClassic(inv,tpl){
   const color=tpl.color||'#0f172a', words=amountInWords(totals.net);
   const logo=company.logo?`<img src="${company.logo}" style="max-height:52px;max-width:110px;object-fit:contain;margin-bottom:8px"/>`:'';
   const rows=(inv.items||[]).map(it=>{
-    const line=(it.qty||0)*(it.unitPrice||0);
+    /* Signed with the document: a paper showing +20 000 on the line and
+       -20 000 in the subtotal is a paper nobody can file. */
+    const line=(it.qty||0)*(it.unitPrice||0)*(isAvoir(inv)?-1:1);
     return `<tr>
       <td style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px">${esc(it.description)}</td>
       <td style="padding:8px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:12px">${it.qty}</td>
@@ -25,8 +27,9 @@ function renderInvoiceClassic(inv,tpl){
         <div style="font-size:9.5px;margin-top:4px;line-height:1.6;color:#64748b">${legalLines(company,false)||'—'}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:22px;font-weight:800;color:${color}">FACTURE</div>
+        <div style="font-size:22px;font-weight:800;color:${color}">${docTitle(inv)}</div>
         <div style="font-size:13px;font-weight:600">${esc(inv.number)}</div>
+        ${refLine(inv)}
         <div style="font-size:11px;color:#64748b">Date: ${formatDate(inv.date)}</div>
         ${inv.dueDate?`<div style="font-size:11px;color:#64748b">Échéance: ${formatDate(inv.dueDate)}</div>`:''}
       </div>
@@ -57,7 +60,7 @@ function renderInvoiceClassic(inv,tpl){
       </div>
     </div>
 <div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
-    <div style="margin-top:12px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
+    <div style="margin-top:12px;font-size:11px;font-style:italic">${wordsLead(inv)} : <strong>${words}</strong></div>
     ${company.rib?`<div style="margin-top:16px;font-size:10px;color:#64748b">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
   </div>`;
 }
@@ -83,7 +86,9 @@ function renderInvoiceDZ(inv,tpl){
     ?`<img src="${company.logo}" style="max-height:46px;max-width:100px;object-fit:contain"/>`
     :`<div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:${g};font-weight:800;font-size:17px">${(company.name||'FP').slice(0,2).toUpperCase()}</div>`;
   const rows=(inv.items||[]).map((it,i)=>{
-    const line=(it.qty||0)*(it.unitPrice||0);
+    /* Signed with the document: a paper showing +20 000 on the line and
+       -20 000 in the subtotal is a paper nobody can file. */
+    const line=(it.qty||0)*(it.unitPrice||0)*(isAvoir(inv)?-1:1);
     const bg=i%2?'#f8fafc':'#ffffff';
     return `<tr style="background:${bg}">
       <td style="padding:10px 12px;font-size:12px;border-bottom:1px solid #eef2f7">${esc(it.description)}</td>
@@ -98,7 +103,7 @@ function renderInvoiceDZ(inv,tpl){
       <div style="display:flex;align-items:center;gap:14px">
         ${logo}
         <div>
-          <div style="font-size:25px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.1">FACTURE</div>
+          <div style="font-size:25px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.1">${docTitle(inv)}</div>
           <div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:2px">${company.name||''}</div>
         </div>
       </div>
@@ -142,7 +147,7 @@ function renderInvoiceDZ(inv,tpl){
       </div>
 <div style="margin-top:12px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
       <div style="margin-top:18px;padding:11px 14px;background:#f0fdf4;border-left:3px solid ${g2};border-radius:4px;font-size:11px;font-style:italic">
-        Arrêté la présente facture à la somme de : <strong>${words}</strong>
+        ${wordsLead(inv)} : <strong>${words}</strong>
       </div>
       ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:26px;padding-top:16px;border-top:1px solid #eef2f7">
@@ -163,7 +168,9 @@ function renderInvoiceStudio(inv,tpl){
   const c1=tpl.color||'#0ea5e9', c2=tpl.color2||tpl.color||'#0369a1', words=amountInWords(totals.net);
   const logo=company.logo?`<img src="${company.logo}" style="max-height:56px;max-width:120px;object-fit:contain"/>`:'';
   const rows=(inv.items||[]).map(it=>{
-    const line=(it.qty||0)*(it.unitPrice||0);
+    /* Signed with the document: a paper showing +20 000 on the line and
+       -20 000 in the subtotal is a paper nobody can file. */
+    const line=(it.qty||0)*(it.unitPrice||0)*(isAvoir(inv)?-1:1);
     return `<tr style="border-bottom:1px solid #f1f5f9">
       <td style="padding:9px 12px;font-size:12px">${esc(it.description)}</td>
       <td style="padding:9px 8px;text-align:center;font-size:12px">${it.qty}</td>
@@ -216,7 +223,7 @@ function renderInvoiceStudio(inv,tpl){
       </div>
     </div>
 <div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
-    <div style="margin-top:16px;font-size:11px;font-style:italic">Arrêté la présente facture à la somme de : <strong>${words}</strong></div>
+    <div style="margin-top:16px;font-size:11px;font-style:italic">${wordsLead(inv)} : <strong>${words}</strong></div>
     ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
     ${company.rib?`<div style="margin-top:8px;font-size:10px;color:#94a3b8">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
   </div>`;

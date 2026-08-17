@@ -8,7 +8,18 @@
 
 /* ---- Amount in words (French) ---- */
 function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];const tens=['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];function under1000(num){if(num<20)return units[num];if(num<100){const t=Math.floor(num/10),u=num%10;if(t===7||t===9)return tens[t]+(u===1&&t===7?' et ':'-')+under1000(10+u);return tens[t]+(u===1&&t!==8?' et ':(u?'-':''))+(t===8&&u===0?'s':units[u]);}const h=Math.floor(num/100),r=num%100;return(h>1?units[h]+' ':'')+'cent'+(h>1&&r===0?'s':'')+(r?' '+under1000(r):'');}if(n<1000)return under1000(n);if(n<1000000){const th=Math.floor(n/1000),r=n%1000;return(th>1?under1000(th)+' ':'')+'mille'+(r?' '+under1000(r):'');}if(n<1e9){const m=Math.floor(n/1e6),r=n%1e6;return under1000(m)+' million'+(m>1?'s':'')+(r?' '+numberToWords(r):'');}return String(n);}
-function amountInWords(amount){const n=Math.round(amount||0);if(n===0)return'Zéro dinar';const w=numberToWords(n);return w.charAt(0).toUpperCase()+w.slice(1)+' dinars';}
+/* Negative amounts arrive from a credit note. numberToWords walks the digits
+   and returns undefined below zero, which used to throw here and take the
+   whole preview down with it. The wording is spelt out rather than made
+   positive because the law asks the letters to match the figures, and the
+   figures on an avoir are negative. */
+function amountInWords(amount){
+  const v=Math.round(amount||0);
+  if(v===0)return'Zéro dinar';
+  const w=numberToWords(Math.abs(v));
+  const s=w.charAt(0).toUpperCase()+w.slice(1)+' dinars';
+  return v<0 ? 'Moins '+s.charAt(0).toLowerCase()+s.slice(1) : s;
+}
 
 /* ---- TVA ----
    Algeria applies 19 % as the standard rate and 9 % as the reduced one; 0 %

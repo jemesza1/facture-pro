@@ -435,6 +435,111 @@ console.log('\nExcel export');
         /Aucune facture|لا توجد/.test(emptyMonth), emptyMonth);
 }
 
+
+/* ---------------------------------------------------------------- *
+ * 11. Facture d'avoir — the sign, the numbering, and what it must
+ *     not touch. A credit note that does not subtract is worse than
+ *     no credit note at all.
+ * ---------------------------------------------------------------- */
+console.log("\nFacture d'avoir");
+{
+  await page.evaluate(() => {
+    state.clients = [{id:'ca', name:'SARL Avoir', nif:'000000000000000'}];
+    state.invoices = [{id:'ia', number:'FAC-2026-900', clientId:'ca', template:'classique',
+                       date:'2026-08-01', dueDate:'2026-08-31', status:'payee',
+                       paymentMode:'especes',
+                       items:[{description:'Prestation', qty:2, unitPrice:10000, tva:19}]}];
+    state.payments = []; delete state.nextAvoirNumber;
+    window.confirm = () => true;
+    saveData();
+  });
+
+  const inv = await page.evaluate(() => calcInvoiceTotals(state.invoices[0]));
+  check('the invoice is 24 038 DA in cash', near(inv.net, 24038), String(inv.net));
+
+  const made = await page.evaluate(() => {
+    createAvoir('ia');
+    const a = state.invoices.find(i => i.type === 'avoir');
+    return {number: a && a.number, ref: a && a.refNumber, status: a && a.status,
+            totals: a && calcInvoiceTotals(a), counter: state.nextAvoirNumber,
+            src: JSON.parse(JSON.stringify(state.invoices[0]))};
+  });
+
+  check('an avoir is issued on its own series', made.number === 'AV-2026-001', made.number);
+  check('and names the invoice it credits', made.ref === 'FAC-2026-900', made.ref);
+  check('its total is the exact negative of the invoice', near(made.totals.net, -24038),
+        String(made.totals.net));
+  check('the stamp duty is credited back too', near(made.totals.timbre, -238),
+        String(made.totals.timbre));
+  check('the VAT is credited back too', near(made.totals.tva, -3800), String(made.totals.tva));
+  check('the original invoice is left untouched',
+        made.src.number === 'FAC-2026-900' && made.src.status === 'payee'
+        && made.src.items[0].unitPrice === 10000);
+
+  const paid = await page.evaluate(() => state.invoices
+    .filter(i => i.status === 'payee')
+    .reduce((s, i) => s + calcInvoiceTotals(i).net, 0));
+  check('revenue falls back to zero once the credit is issued', near(paid, 0), String(paid));
+
+  const debt = await page.evaluate(() => getClientDebt('ca'));
+  check('an avoir is not a receivable', near(debt, 0), String(debt));
+
+  const guards = await page.evaluate(() => {
+    const before = state.invoices.length;
+    const av = state.invoices.find(i => i.type === 'avoir');
+    createAvoir(av.id);
+    const afterAvoir = state.invoices.length;
+    state.invoices[0].status = 'brouillon';
+    createAvoir('ia');
+    const afterDraft = state.invoices.length;
+    state.invoices[0].status = 'payee';
+    return {before, afterAvoir, afterDraft};
+  });
+  check('no avoir on an avoir', guards.afterAvoir === guards.before);
+  check('no avoir on a draft that was never issued', guards.afterDraft === guards.before);
+
+  const numbering = await page.evaluate(() => {
+    createAvoir('ia');
+    const ns = state.invoices.filter(i => i.type === 'avoir').map(a => a.number);
+    return {ns, unique: new Set(ns).size};
+  });
+  check('a second avoir takes the next number',
+        numbering.ns.join() === 'AV-2026-001,AV-2026-002', numbering.ns.join());
+  check('no number is ever reused', numbering.unique === numbering.ns.length);
+
+  const rebuilt = await page.evaluate(() => {
+    delete state.nextAvoirNumber; ensureAvoirState(); return state.nextAvoirNumber;
+  });
+  check('the counter is rebuilt from the data when a backup predates the feature',
+        rebuilt === 3, String(rebuilt));
+
+  const doc = await page.evaluate(() => {
+    const av = state.invoices.find(i => i.type === 'avoir');
+    previewInvoice(av.id);
+    return document.getElementById('invoice-paper').innerText;
+  });
+  check("the paper says AVOIR, not FACTURE", /FACTURE D'AVOIR/.test(doc));
+  check('it prints the invoice it credits', /FAC-2026-900/.test(doc));
+  check('the amount in letters matches a negative figure', /Moins/.test(doc));
+
+  const normal = await page.evaluate(() => {
+    closePreview(); previewInvoice('ia');
+    return document.getElementById('invoice-paper').innerText;
+  });
+  check('an ordinary invoice is still titled FACTURE',
+        /FACTURE/.test(normal) && !/AVOIR/.test(normal));
+
+  /* numberToWords returns undefined below zero, which used to throw here and
+     take the whole preview down with it. */
+  const words = await page.evaluate(() => [amountInWords(-24038), amountInWords(24038)]);
+  check('a negative amount can be written out',
+        words[0] === 'Moins vingt-quatre mille trente-huit dinars', words[0]);
+  check('and positives are unchanged',
+        words[1] === 'Vingt-quatre mille trente-huit dinars', words[1]);
+
+  await page.evaluate(() => closePreview());
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

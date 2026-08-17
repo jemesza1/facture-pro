@@ -80,6 +80,34 @@ Both workbooks are French whatever the interface language: they are fiscal
 documents, and two users must not produce two different-looking declarations
 from the same figures.
 
+## Facture d'avoir
+
+An issued invoice is not corrected by editing it or by flipping it to
+"Annulée". Once it has left for the client and entered a declaration, the way
+back is a second document that credits it. `avoir.js` issues one from the
+preview toolbar: its own `AV-YYYY-NNN` series, the same lines, the opposite
+sign.
+
+**The sign lives in `calcInvoiceTotals` and nowhere else.** The dashboard, the
+debts page, the client totals and the Excel journal all reach their figures by
+summing `calcInvoiceTotals(...).net` over `state.invoices`, across six files.
+Negate once at the source and every one of them subtracts correctly; negate in
+each of them and the first one anybody forgets reports revenue that was given
+back.
+
+Two consequences worth knowing before editing:
+
+- An avoir is stored with `status:'payee'`. That is deliberate — it keeps the
+  document out of Créances and away from the sweep that stamps invoices
+  "en retard".
+- `state.nextAvoirNumber` must stay in the `saveData` whitelist in `extra.js`,
+  or the counter resets on reload and two avoirs share a number.
+  `ensureAvoirState` rebuilds it from the existing documents, so a backup taken
+  before this feature still numbers correctly.
+
+Scope is a full credit. To credit part of an invoice, issue the avoir and edit
+its lines in the ordinary invoice editor.
+
 ## Backups
 
 `backup.js` stamps `fp_last_export` when an export actually runs, and asks

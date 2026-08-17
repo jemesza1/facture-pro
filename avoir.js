@@ -1,0 +1,97 @@
+/* FacturePro — facture d'avoir (credit note).
+
+   An issued invoice is not corrected by editing it or by flipping it to
+   "Annulée". Once it has gone to the client and into a declaration, the way
+   back is a second document that credits it: its own number, its own date,
+   the same lines, the opposite sign. That is what an accountant asks for and
+   what the application had no way to produce.
+
+   The sign lives in calcInvoiceTotals and nowhere else — see the note there.
+   Everything in this file is about identity and numbering, not arithmetic.
+
+   Scope: a full credit of an invoice. Crediting part of one means editing the
+   lines of the avoir afterwards, which the ordinary invoice editor already
+   does. */
+
+function ensureAvoirState(){
+  if(typeof state.nextAvoirNumber!=='number' || !isFinite(state.nextAvoirNumber)){
+    /* Recovered from the data rather than assumed: a backup restored from a
+       version that never knew about avoirs still has to keep its numbering. */
+    var used=(state.invoices||[]).filter(isAvoir).map(function(a){
+      var m=/(\d+)\s*$/.exec(a.number||''); return m?parseInt(m[1],10):0;
+    });
+    state.nextAvoirNumber=used.length?Math.max.apply(null,used)+1:1;
+  }
+}
+
+function avoirsFor(invoiceId){
+  return (state.invoices||[]).filter(function(i){
+    return isAvoir(i) && i.refInvoiceId===invoiceId;
+  });
+}
+
+function createAvoir(invoiceId){
+  ensureAvoirState();
+  var src=(state.invoices||[]).find(function(i){return i.id===invoiceId;});
+  if(!src) return toast(t('toast.invoiceNotFound'),'err');
+  if(isAvoir(src)) return toast(t('avoir.notOnAvoir'),'err');
+  /* A draft was never issued, so there is nothing to credit — delete it. */
+  if(src.status==='brouillon') return toast(t('avoir.notOnDraft'),'err');
+
+  var already=avoirsFor(invoiceId);
+  if(already.length && !confirm(t('avoir.confirmAgain').replace('{n}',already[0].number))) return;
+  if(!confirm(t('avoir.confirm').replace('{n}',src.number))) return;
+
+  var year=new Date().getFullYear();
+  var number='AV-'+year+'-'+String(state.nextAvoirNumber).padStart(3,'0');
+
+  state.invoices.push({
+    id:uid(),
+    type:'avoir',
+    number:number,
+    refInvoiceId:src.id,
+    refNumber:src.number,
+    clientId:src.clientId,
+    template:src.template,
+    date:new Date().toISOString().slice(0,10),
+    dueDate:'',
+    /* Settled on purpose. An avoir is not a receivable, and this keeps it out
+       of Créances and away from the sweep that stamps invoices "en retard". */
+    status:'payee',
+    /* Carried over so the stamp duty is credited back exactly as it was
+       charged: on a cash invoice it was part of what the client paid. */
+    paymentMode:src.paymentMode,
+    items:JSON.parse(JSON.stringify(src.items||[])),
+    notes:t('avoir.notes').replace('{n}',src.number)
+  });
+
+  state.nextAvoirNumber++;
+  saveData();
+  toast(t('avoir.created').replace('{n}',number));
+  navigate('invoices');
+}
+
+/* The button sits in the preview toolbar: you look at the invoice, then decide
+   to credit it. Hidden while the preview is showing an avoir or a draft, so it
+   never offers something createAvoir would only refuse. */
+function paintAvoirButton(){
+  var btn=document.getElementById('btn-avoir');
+  if(!btn) return;
+  var inv=(state.invoices||[]).find(function(i){return i.id===window._previewInvId;});
+  var can=!!inv && !isAvoir(inv) && inv.status!=='brouillon';
+  btn.classList.toggle('hidden', !can);
+  var label=btn.querySelector('span');
+  if(label) label.textContent=t('avoir.action');
+}
+
+(function(){
+  /* previewInvoice is defined in c2.js and reassigned nowhere else, but wrap
+     rather than edit: the same lesson the backup stamp taught. */
+  var prev=window.previewInvoice;
+  if(typeof prev!=='function') return;
+  window.previewInvoice=function(){
+    var out=prev.apply(this, arguments);
+    try{ paintAvoirButton(); }catch(e){}
+    return out;
+  };
+})();
