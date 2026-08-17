@@ -816,6 +816,66 @@ console.log('\nIRG sur les salaires');
   check('a bonus is withheld flat at 10 %', irg.bonus === 5000, String(irg.bonus));
 }
 
+/* ---------------------------------------------------------------- *
+ * 14. Reaching the avoir from the list.
+ *
+ *     Section 11 calls createAvoir() directly, so it proves the code
+ *     is right and says nothing about whether a user can get to it.
+ *     It could not: the button lived in the preview toolbar and the
+ *     row showed no sign of it. These checks click, and they check
+ *     the row, so the gap cannot reopen quietly.
+ * ---------------------------------------------------------------- */
+console.log('\nReaching the avoir from the list');
+{
+  await page.evaluate(() => {
+    state.clients = [{id: 'cl', name: 'SARL Liste', nif: '000000000000000'}];
+    state.invoices = [
+      {id: 'issued', number: 'FAC-2026-800', clientId: 'cl', template: 'classique',
+       date: '2026-08-01', dueDate: '2026-08-31', status: 'envoyee',
+       paymentMode: 'virement', items: [{description: 'Prestation', qty: 1, unitPrice: 10000, tva: 19}]},
+      {id: 'draft', number: 'FAC-2026-801', clientId: 'cl', template: 'classique',
+       date: '2026-08-02', status: 'brouillon',
+       paymentMode: 'virement', items: [{description: 'Brouillon', qty: 1, unitPrice: 5000, tva: 19}]},
+    ];
+    state.payments = []; state.devis = []; delete state.nextAvoirNumber;
+    window.confirm = () => true;
+    saveData(); navigate('invoices');
+  });
+
+  const offered = await page.evaluate(() => ({
+    issued: !!document.querySelector('[onclick="createAvoir(\'issued\')"]'),
+    draft:  !!document.querySelector('[onclick="createAvoir(\'draft\')"]'),
+    labelled: (document.querySelector('[onclick="createAvoir(\'issued\')"]') || {})
+                .getAttribute && document.querySelector('[onclick="createAvoir(\'issued\')"]').getAttribute('title'),
+  }));
+  check('the list offers an avoir on an issued invoice', offered.issued);
+  check('and never on a draft, which createAvoir would only refuse',
+        offered.draft === false);
+  check('and the button says what it is', !!offered.labelled, String(offered.labelled));
+
+  const made = await page.evaluate(() => {
+    document.querySelector('[onclick="createAvoir(\'issued\')"]').click();
+    const a = state.invoices.find(i => i.type === 'avoir');
+    return {number: a && a.number, ref: a && a.refNumber, id: a && a.id};
+  });
+  check('clicking it issues the avoir', /^AV-\d{4}-\d{3}$/.test(made.number || ''), made.number);
+  check('and it credits the invoice it sat on', made.ref === 'FAC-2026-800', made.ref);
+
+  const onAvoir = await page.evaluate(id => {
+    navigate('invoices');
+    return !!document.querySelector('[onclick="createAvoir(\'' + id + '\')"]');
+  }, made.id);
+  check('and no avoir is offered on the avoir itself', onAvoir === false);
+
+  /* The other four row buttons were icons with nothing to read. */
+  const titles = await page.evaluate(() => ['editInvoice', 'duplicateInvoice', 'deleteInvoice']
+    .map(fn => {
+      const b = document.querySelector('[onclick="' + fn + '(\'issued\')"]');
+      return b ? b.getAttribute('title') : null;
+    }));
+  check('every row button now carries a name', titles.every(Boolean), titles.join(' | '));
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

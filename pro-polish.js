@@ -135,15 +135,41 @@
     window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
   };
 
+  /* Buttons the list did not have, injected in front of the delete button.
+     Written as a replacement rather than an edit to renderInvoicesTable so the
+     two files stay independent — the same reason the backup stamp wraps
+     exportData instead of editing it.
+
+     The avoir button was reachable only from inside the preview: you had to
+     open the eye first, and nothing on the row said so. The person who asked
+     for the feature could not find it, which is the clearest possible verdict
+     on where it was. It is offered only where createAvoir would accept it —
+     never on a draft, never on an avoir — so it does not put a button on
+     screen whose only answer is no. */
+  function extraRowButtons(id, pad){
+    var inv=(state.invoices||[]).find(function(i){return i.id===id;});
+    var out='onclick="shareInvoiceWhatsApp(\''+id+'\')" class="btn-ghost '+pad
+          +' text-emerald-600" title="WhatsApp" aria-label="WhatsApp">'
+          +'<i data-lucide="message-circle" class="w-4 h-4"></i></button>';
+    if(inv && !isAvoir(inv) && inv.status!=='brouillon'){
+      var lbl=esc(t('avoir.action'));
+      out+='<button onclick="createAvoir(\''+id+'\')" class="btn-ghost '+pad
+        +' text-amber-600" title="'+lbl+'" aria-label="'+lbl+'">'
+        +'<i data-lucide="file-minus" class="w-4 h-4"></i></button>';
+    }
+    return out+'<button ';
+  }
+
   var _rit = window.renderInvoicesTable;
   if(typeof _rit==='function'){
     window.renderInvoicesTable=function(list,compact){
       var html=_rit.apply(this,arguments);
-      html=html.replace(/onclick="deleteInvoice\('([^']+)'\)" class="btn-ghost p-1\.5 text-red-500"/g, function(_,id){
-        return 'onclick="shareInvoiceWhatsApp(\''+id+'\')" class="btn-ghost p-1.5 text-emerald-600" title="WhatsApp"><i data-lucide="message-circle" class="w-4 h-4"></i></button><button onclick="deleteInvoice(\''+id+'\')" class="btn-ghost p-1.5 text-red-500"';
-      });
-      html=html.replace(/onclick="deleteInvoice\('([^']+)'\)" class="btn-ghost p-2 text-red-500"/g, function(_,id){
-        return 'onclick="shareInvoiceWhatsApp(\''+id+'\')" class="btn-ghost p-2 text-emerald-600" title="WhatsApp"><i data-lucide="message-circle" class="w-4 h-4"></i></button><button onclick="deleteInvoice(\''+id+'\')" class="btn-ghost p-2 text-red-500"';
+      [['p-1.5','p-1\\.5'],['p-2','p-2']].forEach(function(p){
+        var re=new RegExp('onclick="deleteInvoice\\(\'([^\']+)\'\\)" class="btn-ghost '+p[1]+' text-red-500"','g');
+        html=html.replace(re, function(_,id){
+          return extraRowButtons(id, p[0])
+               + 'onclick="deleteInvoice(\''+id+'\')" class="btn-ghost '+p[0]+' text-red-500"';
+        });
       });
       return html;
     };
