@@ -21,7 +21,8 @@
         devis:state.devis,
         payments:state.payments,
         nextDevisNumber:state.nextDevisNumber,
-        nextAvoirNumber:state.nextAvoirNumber
+        nextAvoirNumber:state.nextAvoirNumber,
+        nextBlNumber:state.nextBlNumber
       }));
       window.__saveWarned=false;
     }catch(e){

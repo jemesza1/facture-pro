@@ -151,11 +151,19 @@
     var out='onclick="shareInvoiceWhatsApp(\''+id+'\')" class="btn-ghost '+pad
           +' text-emerald-600" title="WhatsApp" aria-label="WhatsApp">'
           +'<i data-lucide="message-circle" class="w-4 h-4"></i></button>';
-    if(inv && !isAvoir(inv) && inv.status!=='brouillon'){
+    if(inv && !isAvoir(inv) && !isBl(inv) && inv.status!=='brouillon'){
       var lbl=esc(t('avoir.action'));
       out+='<button onclick="createAvoir(\''+id+'\')" class="btn-ghost '+pad
         +' text-amber-600" title="'+lbl+'" aria-label="'+lbl+'">'
         +'<i data-lucide="file-minus" class="w-4 h-4"></i></button>';
+    }
+    /* A delivery note is offered on a draft too: goods often leave before the
+       invoice is finalised, and the bon is what the client signs on the spot. */
+    if(inv && !isAvoir(inv) && !isBl(inv)){
+      var blb=esc(t('bl.action'));
+      out+='<button onclick="createBonLivraison(\''+id+'\')" class="btn-ghost '+pad
+        +' text-sky-600" title="'+blb+'" aria-label="'+blb+'">'
+        +'<i data-lucide="truck" class="w-4 h-4"></i></button>';
     }
     return out+'<button ';
   }

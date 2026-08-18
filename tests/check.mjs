@@ -1069,6 +1069,90 @@ console.log('\nDevis: status, conversion, validity');
   await page.evaluate(() => { state.devis = []; state.invoices = []; saveData(); });
 }
 
+/* ---------------------------------------------------------------- *
+ * 17. Bon de livraison.
+ *
+ *     The check that carries the weight is the revenue one. A
+ *     delivery note lives in state.invoices alongside the facture it
+ *     accompanies, and six files reach a figure by summing
+ *     calcInvoiceTotals over that array. If it contributed anything,
+ *     every merchant issuing one would see their takings double.
+ * ---------------------------------------------------------------- */
+console.log('\nBon de livraison');
+{
+  await page.evaluate(() => {
+    state.clients = [{id: 'cb', name: 'SARL Livraison', nif: '000000000000000'}];
+    state.invoices = [{id: 'ib', number: 'FAC-2026-950', clientId: 'cb', template: 'algerie',
+                       date: '2026-08-01', dueDate: '2026-08-31', status: 'envoyee',
+                       paymentMode: 'virement',
+                       items: [{description: 'Ciment', qty: 50, unite: 'sac', unitPrice: 900, tva: 19},
+                               {description: 'Sable', qty: 3, unite: 'm3', unitPrice: 4000, tva: 19}]}];
+    state.payments = []; state.devis = []; delete state.nextBlNumber;
+    window.confirm = () => true;
+    saveData(); navigate('invoices');
+  });
+
+  check('the list offers a bon de livraison',
+        await page.evaluate(() => !!document.querySelector('[onclick="createBonLivraison(\'ib\')"]')));
+
+  const made = await page.evaluate(() => {
+    document.querySelector('[onclick="createBonLivraison(\'ib\')"]').click();
+    const b = state.invoices.find(i => i.type === 'bl');
+    return {number: b && b.number, ref: b && b.refNumber, id: b && b.id,
+            items: b && b.items.length, counter: state.nextBlNumber};
+  });
+  check('clicking it issues one, on its own series',
+        /^BL-\d{4}-001$/.test(made.number || ''), made.number);
+  check('naming the invoice it delivers', made.ref === 'FAC-2026-950', made.ref);
+  check('and carrying the same lines', made.items === 2, String(made.items));
+
+  /* The one that matters. */
+  const books = await page.evaluate(id => {
+    const bl = state.invoices.find(i => i.id === id);
+    const t = calcInvoiceTotals(bl);
+    const revenue = state.invoices.reduce((s, i) => s + calcInvoiceTotals(i).net, 0);
+    const invoiceAlone = calcInvoiceTotals(state.invoices.find(i => i.id === 'ib')).net;
+    return {blNet: t.net, blTtc: t.ttc, revenue, invoiceAlone};
+  }, made.id);
+  check('a bon de livraison is worth nothing in the books',
+        books.blNet === 0 && books.blTtc === 0, JSON.stringify(books));
+  check('so issuing one does not double the takings',
+        near(books.revenue, books.invoiceAlone), `${books.revenue} vs ${books.invoiceAlone}`);
+
+  /* The paper. */
+  const paper = await page.evaluate(id => {
+    previewInvoice(id);
+    const txt = document.getElementById('invoice-paper').innerText;
+    closePreview();
+    return txt;
+  }, made.id);
+  check('the paper says what it is', /BON DE LIVRAISON/.test(paper), paper.slice(0, 90));
+  check('it names the invoice', /FAC-2026-950/.test(paper), '');
+  check('it lists quantities and units', /50/.test(paper) && /sac/.test(paper), '');
+  check('it shows no prices at all',
+        !/900/.test(paper) && !/DA/.test(paper), paper.slice(0, 300));
+  check('and it has both signatures', /Reçu le/.test(paper) && /Livré le/.test(paper), '');
+
+  /* Guards, and the numbering after a reload. */
+  const guards = await page.evaluate(id => {
+    const before = state.invoices.length;
+    createBonLivraison(id);                       /* on a bon: refused */
+    const onBl = state.invoices.length === before;
+    createBonLivraison('ib');                     /* second delivery: allowed */
+    return {onBl, second: (state.invoices.filter(i => i.type === 'bl').pop() || {}).number};
+  }, made.id);
+  check('no bon de livraison on a bon de livraison', guards.onBl);
+  check('but a second delivery takes the next number',
+        guards.second === 'BL-2026-002', String(guards.second));
+
+  await page.reload();
+  await page.waitForFunction(() => typeof createBonLivraison === 'function', {timeout: 30000});
+  const kept = await page.evaluate(() => state.nextBlNumber);
+  check('and the counter survives a reload', kept === 3, String(kept));
+
+  await page.evaluate(() => { state.invoices = []; saveData(); });
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

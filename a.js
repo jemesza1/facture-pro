@@ -47,7 +47,15 @@ function isCash(inv){return !!(inv&&inv.paymentMode==='especes');}
    do it in each of them and the first one anybody forgets reports revenue
    that was credited back. */
 function isAvoir(inv){return !!(inv&&inv.type==='avoir');}
-function docTitle(inv){return isAvoir(inv) ? "FACTURE D'AVOIR" : 'FACTURE';}
+/* A delivery note carries goods, not money. The invoice it accompanies has
+   already been counted, so a bon de livraison must contribute nothing to
+   revenue, to receivables or to the journal — see calcInvoiceTotals. */
+function isBl(inv){return !!(inv&&inv.type==='bl');}
+function docTitle(inv){
+  if(isAvoir(inv))return "FACTURE D'AVOIR";
+  if(isBl(inv))return 'BON DE LIVRAISON';
+  return 'FACTURE';
+}
 /* The sentence that precedes the amount in letters names the document, so it
    has to follow the document. Falls back to the French wording if a locale is
    missing the key, never to `undefined` on a printed page. */
@@ -59,8 +67,10 @@ function wordsLead(inv){
 
 /* Printed under the number, so the paper says which invoice it cancels. */
 function refLine(inv){
-  if(!isAvoir(inv) || !inv.refNumber) return '';
-  return '<div style="font-size:11px;color:#64748b">Avoir sur facture '+esc(inv.refNumber)+'</div>';
+  if(!inv || !inv.refNumber) return '';
+  if(isAvoir(inv)) return '<div style="font-size:11px;color:#64748b">Avoir sur facture '+esc(inv.refNumber)+'</div>';
+  if(isBl(inv)) return '<div style="font-size:11px;color:#64748b">Facture '+esc(inv.refNumber)+'</div>';
+  return '';
 }
 /* Carriage sits outside the VAT base and on top of the TTC — the layout every
    supplier invoice uses. It is still part of what the client actually hands
@@ -72,7 +82,7 @@ function refLine(inv){
 
    An invoice written before the field existed has no fraisPort, reads 0, and
    comes out with exactly the numbers it had. */
-function calcInvoiceTotals(inv){let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=vatAmount(l,it.tva||0);});const ttc=ht+tva;const port=Number(inv.fraisPort)||0;const timbre=isCash(inv)?calcTimbre(ttc+port):0;const sign=isAvoir(inv)?-1:1;return{ht:ht*sign,tva:tva*sign,ttc:ttc*sign,port:port*sign,timbre:timbre*sign,net:(ttc+port+timbre)*sign};}
+function calcInvoiceTotals(inv){if(isBl(inv))return{ht:0,tva:0,ttc:0,port:0,timbre:0,net:0};let ht=0,tva=0;(inv.items||[]).forEach(it=>{const l=(it.qty||0)*(it.unitPrice||0);ht+=l;tva+=vatAmount(l,it.tva||0);});const ttc=ht+tva;const port=Number(inv.fraisPort)||0;const timbre=isCash(inv)?calcTimbre(ttc+port):0;const sign=isAvoir(inv)?-1:1;return{ht:ht*sign,tva:tva*sign,ttc:ttc*sign,port:port*sign,timbre:timbre*sign,net:(ttc+port+timbre)*sign};}
 
 /* The dashboard opened on invoices that were not the user's. Some people
    assumed the app was broken, others that it held someone else's books.

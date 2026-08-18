@@ -1,8 +1,80 @@
 function renderInvoiceHTML(inv){
   const tpl=getTpl(inv.template);
+  /* A delivery note is a different document, not an invoice with the prices
+     painted out. It gets its own layout — quantities, units, two signatures —
+     and takes only the colour of whichever template was chosen, so it still
+     looks like the rest of the stationery. */
+  if(isBl(inv))return renderBonLivraison(inv,tpl);
   if(tpl.layout==='dz')return renderInvoiceDZ(inv,tpl);
   if(tpl.layout==='studio')return renderInvoiceStudio(inv,tpl);
   return renderInvoiceDZ(inv,tpl);
+}
+
+/* Nothing here reads calcInvoiceTotals: the paper shows no money at all, which
+   is what the client signs for and what keeps the books unable to count the
+   same goods twice. */
+function renderBonLivraison(inv,tpl){
+  const company=escObj(state.company), client=escObj(getClient(inv.clientId));
+  const g=tpl.color||'#006233', g2=tpl.color2||tpl.color||'#059669';
+  const logo=company.logo
+    ?`<img src="${company.logo}" style="max-height:46px;max-width:100px;object-fit:contain"/>`
+    :`<div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:${g};font-weight:800;font-size:17px">${(company.name||'FP').slice(0,2).toUpperCase()}</div>`;
+  const rows=(inv.items||[]).map((it,i)=>`<tr style="background:${i%2?'#f8fafc':'#ffffff'}">
+      <td style="padding:11px 12px;font-size:12px;border-bottom:1px solid #eef2f7">${esc(it.description)}</td>
+      <td style="padding:11px 8px;text-align:center;font-size:12px;font-weight:600;border-bottom:1px solid #eef2f7">${it.qty}</td>
+      <td style="padding:11px 8px;text-align:center;font-size:12px;color:#64748b;border-bottom:1px solid #eef2f7">${esc(it.unite||'—')}</td>
+    </tr>`).join('');
+  const sig=(title,dateLabel)=>`<div style="flex:1">
+        <div style="font-size:10.5px;font-weight:700;color:${g};margin-bottom:6px">${title}</div>
+        <div style="font-size:10px;color:#94a3b8">${dateLabel} : ......................</div>
+        <div style="height:38px;border-bottom:1px solid #cbd5e1;margin-top:8px"></div>
+        <div style="font-size:9.5px;color:#94a3b8;margin-top:5px">Signature</div>
+      </div>`;
+  return `<div class="invoice-paper" id="invoice-paper" style="padding:0;font-family:Inter,Arial,sans-serif;color:#0f172a;overflow:hidden">
+    <div style="background:linear-gradient(100deg,${g},${g2});padding:26px 32px;display:flex;justify-content:space-between;align-items:flex-start;gap:18px">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${logo}
+        <div>
+          <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-.02em;line-height:1.1">${docTitle(inv)}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:2px">${company.name||''}</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:10.5px;color:rgba(255,255,255,.92);line-height:1.7">
+        <div style="font-size:13px;font-weight:700;color:#fff">${esc(inv.number)}</div>
+        ${legalLines(company,false)||'<div>—</div>'}
+      </div>
+    </div>
+    <div style="padding:26px 32px 32px">
+      <div style="display:flex;justify-content:space-between;gap:24px;margin-bottom:22px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.09em;color:${g};font-weight:700;margin-bottom:5px">Livré à</div>
+          <div style="font-weight:700;font-size:14px">${client.name}</div>
+          <div style="font-size:11px;color:#64748b;white-space:pre-line;margin-top:2px">${client.address||''}</div>
+          ${legalLines(client,false)?`<div style="font-size:9.5px;color:#94a3b8;margin-top:4px;line-height:1.6">${legalLines(client,false)}</div>`:''}
+        </div>
+        <div style="text-align:right;font-size:11px;color:#475569;line-height:1.9">
+          <div><span style="color:#94a3b8">Date&nbsp;:</span> <strong>${formatDate(inv.date)}</strong></div>
+          ${inv.refNumber?`<div><span style="color:#94a3b8">Facture&nbsp;:</span> <strong>${esc(inv.refNumber)}</strong></div>`:''}
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;border-radius:6px;overflow:hidden">
+        <thead><tr style="background:${g};color:#fff">
+          <th style="padding:11px 12px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Désignation</th>
+          <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Quantité livrée</th>
+          <th style="padding:11px 8px;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Unité</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${inv.notes?`<div style="margin-top:14px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
+      <div style="margin-top:26px;padding:14px;background:#f8fafc;border:1px solid #eef2f7;border-radius:6px;font-size:10.5px;color:#64748b">
+        Le présent bon ne vaut pas facture. Les montants figurent sur la facture ${inv.refNumber?esc(inv.refNumber):'correspondante'}.
+      </div>
+      <div style="display:flex;gap:32px;margin-top:26px;padding-top:18px;border-top:1px solid #eef2f7">
+        ${sig('Visa du client','Reçu le')}
+        ${sig('Visa du fournisseur','Livré le')}
+      </div>
+    </div>
+  </div>`;
 }
 function renderInvoiceClassic(inv,tpl){
   const company=escObj(state.company), client=escObj(getClient(inv.clientId)), totals=calcInvoiceTotals(inv);
