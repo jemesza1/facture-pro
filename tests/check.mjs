@@ -1153,6 +1153,88 @@ console.log('\nBon de livraison');
   await page.evaluate(() => { state.invoices = []; saveData(); });
 }
 
+/* ---------------------------------------------------------------- *
+ * The two notices that open by themselves. One of them is the last
+ * thing standing between a cleared cache and a year of invoices, so
+ * what it takes for it to appear — and to stay away — is checked.
+ * ---------------------------------------------------------------- */
+console.log('\nThe notices that open on their own');
+{
+  const dialogs = () => page.evaluate(() => ({
+    backup: !!document.querySelector('#modal-root [data-backup]'),
+    feedback: !!document.querySelector('#modal-root [data-feedback]'),
+  }));
+  const openWith = async (setup) => {
+    await page.evaluate(setup);
+    await page.reload();
+    await page.waitForFunction(() => typeof backupDue === 'function', {timeout: 30000});
+    await page.waitForTimeout(2600);
+    return dialogs();
+  };
+  const REAL = () => {
+    localStorage.removeItem('fp_last_export');
+    localStorage.removeItem('fp_backup_snoozed_until');
+    localStorage.removeItem('fp_feedback_seen');
+    state.clients = [{id: 'r1', name: 'SARL Réelle'}];
+    state.invoices = [{id: 'ri1', number: 'FAC-2026-777', clientId: 'r1', template: 'classique',
+                       date: '2026-07-01', dueDate: '2026-07-31', status: 'envoyee',
+                       items: [{description: 'Prestation', qty: 1, unitPrice: 100000, tva: 19}]}];
+    saveData();
+  };
+
+  let seen = await openWith(REAL);
+  check('a merchant with real invoices and no export is asked to save', seen.backup);
+  check('and is not asked for feedback in the same breath', !seen.feedback);
+
+  const later = await page.evaluate(() => {
+    snoozeBackupDialog();
+    return {closed: !document.querySelector('#modal-root [data-backup]'),
+            snoozed: parseInt(localStorage.getItem('fp_backup_snoozed_until') || '0', 10) > Date.now()};
+  });
+  check('"later" closes it', later.closed);
+  check('and buys a week of silence', later.snoozed);
+
+  seen = await openWith(() => {});
+  check('so the next opening says nothing', !seen.backup);
+
+  seen = await openWith(() => { localStorage.removeItem('fp_backup_snoozed_until'); });
+  check('once the week is over it asks again', seen.backup);
+
+  const exported = await page.evaluate(async () => {
+    exportFromDialog();
+    await new Promise(r => setTimeout(r, 300));
+    return {closed: !document.querySelector('#modal-root [data-backup]'),
+            stamped: !!localStorage.getItem('fp_last_export')};
+  });
+  check('saving closes it', exported.closed);
+  check('and the export is recorded, so it stops asking', exported.stamped);
+
+  seen = await openWith(() => {
+    localStorage.setItem('fp_last_export', String(Date.now() - 10 * 86400000));
+  });
+  check('an export ten days old keeps it away', !seen.backup);
+
+  seen = await openWith(() => {
+    localStorage.setItem('fp_last_export', String(Date.now() - 40 * 86400000));
+  });
+  check('an export forty days old brings it back', seen.backup);
+
+  /* Nothing real to lose: the seeded examples are ours, not the user's. */
+  seen = await openWith(() => {
+    localStorage.removeItem('facturepro_dz_v24');
+    localStorage.removeItem('fp_last_export');
+    localStorage.removeItem('fp_feedback_seen');
+    state.clients = []; state.invoices = []; state.payments = [];
+  });
+  check('a visitor with only the examples is not told to save them', !seen.backup);
+  check('and gets the "write to us" notice instead', seen.feedback);
+
+  seen = await openWith(() => {});
+  check('which is not repeated on the next opening either', !seen.feedback);
+
+  await page.evaluate(() => { state.invoices = []; state.clients = []; saveData(); });
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

@@ -112,6 +112,7 @@ function paintBackupNotice() {
   var generic = document.getElementById('local-warn');
   if (generic) generic.classList.add('hidden');
   try { lucide.createIcons(); } catch (e) {}
+  try { offerBackupDialog(); } catch (e) {}
 }
 
 /* The stamp is set by wrapping exportData rather than by editing it, because
@@ -129,6 +130,106 @@ function paintBackupNotice() {
     return out;
   };
 })();
+
+/* The same reminder, said once as a dialog.
+
+   The banner has a weakness: it lives above the page and a person who opens
+   the application to write an invoice reads past it, every time, for months.
+   The day the cache is cleared there is no second chance — this is the one
+   notice in the application where "seen and ignored" costs a year of
+   invoices.
+
+   So when a backup is genuinely overdue, it is put in front of the work
+   once, with the button that does it. Everything that decides whether it is
+   owed is the banner's: real data only, never the seeded examples, and
+   "later" buys the same week of silence. It cannot appear twice in a
+   session, and it never stacks on another dialog. */
+var backupDialogShown = false;
+
+function backupDialogHtml() {
+  /* The age is in the header line, so the body does not repeat it: the banner
+     needs the figure because it has no subtitle to put it in. */
+  return '<div class="modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="bk-title">' +
+    '<div class="modal-header flex items-start gap-3">' +
+      '<span class="w-10 h-10 shrink-0 rounded-xl bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">' +
+        '<i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>' +
+      '</span>' +
+      '<span class="min-w-0 flex-1">' +
+        '<h3 id="bk-title" class="font-semibold text-base sm:text-lg leading-tight">' + esc(t('backup.title')) + '</h3>' +
+        '<p class="text-xs text-slate-500 mt-0.5">' + esc(backupAgeLabel()) + '</p>' +
+      '</span>' +
+      '<button type="button" onclick="snoozeBackupDialog()" aria-label="' + esc(t('backup.snooze')) + '" class="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">' +
+        '<i data-lucide="x" class="w-4 h-4"></i>' +
+      '</button>' +
+    '</div>' +
+    '<div class="modal-body space-y-3">' +
+      '<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">' + esc(t('backup.dialogBody')) + '</p>' +
+      '<div class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">' +
+        '<i data-lucide="file-input" class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"></i>' +
+        '<p class="text-xs leading-relaxed text-amber-900 dark:text-amber-200">' + esc(t('backup.restoreHint')) + '</p>' +
+      '</div>' +
+      '<p class="text-xs text-slate-500 dark:text-slate-400">' + esc(t('backup.private')) + '</p>' +
+    '</div>' +
+    '<div class="modal-footer flex flex-wrap justify-end gap-2">' +
+      '<button type="button" onclick="snoozeBackupDialog()" class="btn-secondary">' + esc(t('backup.snooze')) + '</button>' +
+      '<button type="button" onclick="exportFromDialog()" class="btn-primary"><i data-lucide="download" class="w-4 h-4"></i> ' + esc(t('backup.cta')) + '</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function openBackupDialog() {
+  var root = document.getElementById('modal-root');
+  if (!root) return;
+  backupDialogShown = true;
+  window.__fpBackupDialogShown = true;
+  root.innerHTML = '<div class="modal-backdrop" data-backup="1" onclick="if(event.target===this)snoozeBackupDialog()">' +
+                     backupDialogHtml() +
+                   '</div>';
+  try { lucide.createIcons(); } catch (e) {}
+}
+
+function backupDialogIsOpen() {
+  return !!document.querySelector('#modal-root [data-backup]');
+}
+
+function closeBackupDialog() {
+  var root = document.getElementById('modal-root');
+  if (root && backupDialogIsOpen()) root.innerHTML = '';
+}
+
+/* Closing it is the same answer as the banner's "later": a week of silence,
+   not a promise never to ask again. */
+function snoozeBackupDialog() {
+  closeBackupDialog();
+  snoozeBackup();
+}
+
+/* The download is the point, so the dialog gets out of the way once it has
+   started. markBackup, wrapped around exportData, clears the snooze and
+   repaints the banner on its own. */
+function exportFromDialog() {
+  closeBackupDialog();
+  try { exportData(); } catch (e) {}
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && backupDialogIsOpen()) snoozeBackupDialog();
+});
+
+/* Offered from paintBackupNotice rather than on load, because that is the
+   call app.js makes once the data is read and the dashboard is drawn — a
+   dialog fired before loadData would be asking about an empty state. */
+function offerBackupDialog() {
+  if (backupDialogShown || !backupDue()) return;
+  setTimeout(function () {
+    if (backupDialogShown || !backupDue()) return;
+    var root = document.getElementById('modal-root');
+    if (!root || root.innerHTML.trim() !== '') return;
+    var preview = document.getElementById('preview-root');
+    if (preview && !preview.classList.contains('hidden')) return;
+    openBackupDialog();
+  }, 900);
+}
 
 /* The line under Export/Import in Paramètres, so the state is legible before
    the reminder ever has to appear. */
