@@ -6,8 +6,8 @@ other.
 |                | The application            | The international generator     |
 | -------------- | -------------------------- | ------------------------------- |
 | Address        | `/`                        | `/international.html`           |
-| For            | Algerian merchants         | anyone outside Algeria          |
-| Arrives from   | word of mouth, ads, direct | an English or French web search |
+| For            | Algerian merchants         | a merchant in one of the six, invoicing at home |
+| Arrives from   | word of mouth, ads, direct | a web search, in their own language |
 | Keeps books    | yes — invoices, clients, payments, debts | no — nothing is stored in the user's ledger |
 | Fiscal work    | timbre, G50, Journal du mois, 19/9/0 per line | none |
 | Documents      | facture, devis, avoir, bon de livraison | one invoice |
@@ -17,6 +17,20 @@ other.
 
 The first is a ledger. The second is a form that prints a page. Everything
 below exists to keep that line sharp.
+
+**Who the generator is for.** A Moroccan invoicing a Moroccan client. A Briton
+invoicing a British one. Someone in their own country, issuing an ordinary
+domestic invoice, who arrived from a search in their own language. It is not
+built for the Algerian exporter — that case exists and is served by a single
+link in Aide, but it is not the audience, and designing for it would produce a
+different and worse page.
+
+That reading is what makes *only where a PDF is accepted* the right rule. A
+domestic invoice is a tax document in its own country, held to that country's
+rules. It is not an export document travelling with a shipment, where a
+commercial invoice would have been enough. This is why France and Saudi are
+out: their mandates bite hardest on exactly the domestic invoice this page
+would be producing.
 
 The drafts this was specified from are kept at
 `docs/international-draft.html` — reference only, not shipped, not linked, not
@@ -170,9 +184,15 @@ page cannot deliver.
 
 ### Phase 3 — three languages
 
-UI in EN / FR / AR, defaulted from the browser and switchable. Document in EN
-or FR, defaulted from the country — French for FR, MA, TN; English for GB, US,
-AE, SA, INT.
+UI in EN / FR / AR, defaulted from the browser and switchable. The document is
+written in the language its country actually invoices in — French for MA and
+TN, English for GB, US, AE and INT — and stays editable, because a Moroccan
+firm billing in Arabic and a Dubai firm billing in English are both ordinary.
+
+Three languages is not a shortfall here, it is the coverage: Morocco and
+Tunisia work in French and Arabic, the Gulf in English and Arabic, Britain and
+the United States in English. The six countries that ship are exactly the six
+these three serve.
 
 Money is formatted with a fixed locale in every language. The drafts pass
 `ar-DZ` to `toLocaleString`, which can render `١٢٣`; rule 4 in the README is
