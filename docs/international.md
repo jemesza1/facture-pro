@@ -124,6 +124,17 @@ network otherwise blocked.
 **Accepted when:** the page loads, previews and exports a correct one-page PDF
 with no request leaving this origin, and `npm test` still reports 198.
 
+Prove the second half rather than reading the source for `<script src>`. Drive
+the page in Chromium with every off-origin request aborted — `page.route` on
+`**/*`, letting through only `localhost` and `file://` — and assert that the
+layout still has its styles, that the preview renders, and that the PDF
+export produces a file. A stylesheet that silently failed to load leaves a
+page that still *works*, which is precisely how the CDN outage went unnoticed
+until it reached users.
+
+Google Fonts is the one exception, as it is everywhere else here: a missing
+font falls back to the system sans-serif and the page stays readable.
+
 ### Phase 2 — the countries
 
 The `COUNTRIES` table from the drafts: DZ, FR, MA, TN, AE, SA, GB, US, INT.
