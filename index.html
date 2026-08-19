@@ -77,7 +77,7 @@
           <h2 id="page-title" class="text-base sm:text-xl font-semibold truncate">Tableau de bord</h2>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button type="button" id="feedback-btn" onclick="openFeedback()" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Signaler un problème ou proposer une idée">
+          <button type="button" id="feedback-btn" onclick="if(typeof openFeedback==='function')openFeedback()" class="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Signaler un problème ou proposer une idée">
             <i data-lucide="message-circle" class="w-4 h-4"></i><span class="hidden sm:inline" data-i18n="feedback.btn">Un souci ?</span>
           </button>
           <button type="button" id="lang-toggle" onclick="toggleLocale()" class="px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold">العربية</button>
