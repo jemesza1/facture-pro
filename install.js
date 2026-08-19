@@ -99,6 +99,7 @@
 
   function show(d, onInstall) {
     if (bar) return;
+    shownWith = onInstall;
     styles();
     bar = document.createElement('div');
     bar.id = 'fp-install';
@@ -131,6 +132,19 @@
     bar.querySelector('.x').setAttribute('aria-label', d.close);
     document.body.appendChild(bar);
   }
+
+  /* What show() was last called with, so the bar can be rebuilt verbatim when
+     the language changes under it. The strings are written into the DOM once,
+     at the moment the bar appears; without this it keeps the wording of
+     whatever language was active then, in a page that has moved on. */
+  var shownWith = null;
+
+  window.fpInstallRelang = function () {
+    if (!bar) return;
+    var h = shownWith;
+    hide();
+    show(T[lang()], h);
+  };
 
   var deferred = null;
 

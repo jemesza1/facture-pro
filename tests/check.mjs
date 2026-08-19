@@ -737,6 +737,29 @@ console.log('\nWhat the accountants asked for');
   check('the payment mode list is translated too, not only its label',
         labels.arPay !== labels.frPay);
 
+  /* --- the notices that write their own text ---
+     Reported from a phone: a French dashboard carrying an Arabic banner.
+     applyLocale walks [data-i18n] and renderPage repaints the backup notice,
+     but the local-storage warning and the install bar set their text
+     imperatively, once, when they first appear — so they kept the wording of
+     whatever language was live at that moment and never moved again. */
+  const notice = await page.evaluate(() => {
+    const el = document.getElementById('lw-title');
+    if (!el) return null;
+    const out = {};
+    if (locale !== 'fr') toggleLocale();
+    out.fr = el.textContent;
+    toggleLocale();
+    out.ar = el.textContent;
+    toggleLocale();
+    out.back = el.textContent;
+    return out;
+  });
+  check('the storage warning follows the language into Arabic',
+        !!notice && notice.ar !== notice.fr && notice.ar.indexOf('\u0628\u064a\u0627\u0646\u0627\u062a\u0643') === 0);
+  check('and back out of it',
+        !!notice && notice.back === notice.fr && notice.fr.indexOf('Vos donn\u00e9es') === 0);
+
   await page.evaluate(() => { state.devis = []; state.payments = []; saveData(); });
 }
 

@@ -60,5 +60,13 @@ function applyLocale(){
   const btn=document.getElementById('lang-toggle');if(btn)btn.textContent=t('langBtn');
   if(typeof STATUS!=='undefined'){Object.keys(STATUS).forEach(k=>{if(I18N[locale].status[k])STATUS[k].label=I18N[locale].status[k];});}
   setPageTitle();
+  /* Two notices write their text imperatively rather than through data-i18n,
+     so nothing above reaches them: the local-storage warning painted by
+     index.html and the install bar built by install.js. Both kept the wording
+     of the language that was active when they first appeared, which is how a
+     French dashboard ended up carrying an Arabic banner. paintBackupNotice is
+     not here on purpose — renderPage already repaints it. */
+  try{if(typeof paintWarn==='function')paintWarn();}catch(e){}
+  try{if(typeof fpInstallRelang==='function')fpInstallRelang();}catch(e){}
   if(typeof lucide!=='undefined')try{lucide.createIcons();}catch(e){}
 }
