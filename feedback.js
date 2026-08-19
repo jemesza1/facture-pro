@@ -112,13 +112,24 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && feedbackIsOpen()) closeFeedback();
 });
 
+/* On a phone the header button is an icon with no visible word, so the label
+   a screen reader announces is the only one there is — it has to follow the
+   language like everything else. */
+function paintFeedbackButton() {
+  var btn = document.getElementById('feedback-btn');
+  if (!btn) return;
+  btn.setAttribute('aria-label', t('feedback.title'));
+  btn.setAttribute('title', t('feedback.title'));
+}
+
 /* Switching FR/AR redraws the page but not what is already in modal-root, and
    a French dialog left standing over an Arabic app reads as a bug. */
 (function () {
   var prev = window.applyLocale;
-  if (typeof prev !== 'function') return;
+  if (typeof prev !== 'function') { paintFeedbackButton(); return; }
   window.applyLocale = function () {
     var out = prev.apply(this, arguments);
+    paintFeedbackButton();
     if (feedbackIsOpen()) {
       var back = document.querySelector('#modal-root [data-feedback]');
       if (back) { back.innerHTML = feedbackHtml(); try { lucide.createIcons(); } catch (e) {} }
