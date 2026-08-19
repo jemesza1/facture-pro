@@ -11,7 +11,7 @@ other.
 | Keeps books    | yes — invoices, clients, payments, debts | no — nothing is stored in the user's ledger |
 | Fiscal work    | timbre, G50, Journal du mois, 19/9/0 per line | none |
 | Documents      | facture, devis, avoir, bon de livraison | one invoice |
-| Storage        | `facturepro_dz_v24`        | its own key, or none            |
+| Storage        | `facturepro_dz_v24`        | one draft, overwritten          |
 | UI languages   | FR / AR                    | EN / FR / AR                    |
 | Document       | French, LTR, by design     | EN / FR, per country            |
 
@@ -41,6 +41,28 @@ reasoning is right for them and wrong here. `lib-calc.js` is Algerian
 arithmetic: `timbreFor`, the 19/9/0 rates, `amountInWords` ending in
 "dinars". None of it applies to a British invoice, and importing it would
 invite exactly the blurring this document exists to prevent.
+
+## One job: making an invoice
+
+The page creates an invoice and prints it. It does not keep them.
+
+There is no list, no history, no archive, no status, no "my invoices". A
+visitor fills the form, reads the preview, exports the PDF, and the page has
+nothing further to offer them. That is the entire product.
+
+It stores exactly one thing: **the form as it currently stands**, so an
+accidental refresh does not destroy ten minutes of typing. One key, one draft,
+overwritten by whatever is on screen. It is a crash guard, not an archive.
+
+This has a consequence for the wording. The drafts carry a `Save` button that
+reports `Saved locally`, and that sentence is untrue in the way that matters:
+it tells the visitor they have a document to come back to, and the next
+invoice silently overwrites it. There is no Save button. The draft is kept
+continuously, and if anything is said about it at all it says the form is
+remembered — never that an invoice was saved.
+
+Anyone who needs a list of invoices needs the application, and the DZ notice
+below is where they are told so.
 
 ## The confusion that must not happen
 
@@ -165,7 +187,8 @@ that one is what says the Algerian product did not move.
 ## Out of scope
 
 G50. Journal du mois. Droit de timbre. Devis, avoir, bon de livraison.
-Créances, payment status, client list. Saved history. Accounts. Arabic
+Créances, payment status, client list. A list of invoices, an archive, a
+history, a "my invoices" screen, a Save button, an account. Arabic
 document body. Currency conversion — two currencies are never summed, here or
 anywhere, because an invented rate inside a fiscal figure is worse than two
 lines.
