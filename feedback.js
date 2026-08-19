@@ -148,7 +148,7 @@ function paintFeedbackButton() {
     /* The backup reminder outranks this one and fires first: nobody should be
        asked for feedback on the way out of being told their invoices are one
        cleared cache from gone. It waits for another opening. */
-    if (window.__fpBackupDialogShown) return;
+    if (window.__fpBackupDialogShown || window.__fpNewsDialogShown) return;
     var root = document.getElementById('modal-root');
     if (!root || root.innerHTML.trim() !== '') return;
     var preview = document.getElementById('preview-root');

@@ -1,6 +1,6 @@
 (function(){
 function load(src){return new Promise(function(res,rej){var s=document.createElement("script");s.src=src;s.onload=res;s.onerror=function(){rej(src)};document.head.appendChild(s);});}
-var V="20260819a";
+var V="20260819b";
 var core=["lib-calc.js","a.js","dash-fix.js","b1.js","b2a.js","b2b.js","c1.js","c2.js","extra.js","pro-polish.js","commerce.js","lib-xlsx.js","excel.js","backup.js","avoir.js","bl.js"];
 try{localStorage.removeItem("fp_xai_key");}catch(e){}
 core.reduce(function(p,f){return p.then(function(){return load(f+"?v="+V);});},Promise.resolve())
@@ -13,6 +13,7 @@ core.reduce(function(p,f){return p.then(function(){return load(f+"?v="+V);});},P
      feedback dialog is a courtesy, and a file that fails to arrive must
      not take the invoices down with it. One broken fetch inside the core
      chain skips this whole block. */
+  load("news.js?v="+V).catch(function(){});
   load("feedback.js?v="+V)
     .then(function(){try{if(typeof paintFeedbackButton==="function")paintFeedbackButton();}catch(e){}})
     .catch(function(){});

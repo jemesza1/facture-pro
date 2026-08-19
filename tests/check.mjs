@@ -1232,6 +1232,32 @@ console.log('\nThe notices that open on their own');
   seen = await openWith(() => {});
   check('which is not repeated on the next opening either', !seen.feedback);
 
+  /* The announcements: ours to them, rather than theirs to us. */
+  seen = await openWith(() => { localStorage.removeItem('fp_news_seen'); });
+  check('an unread announcement is shown', await page.evaluate(() => !!document.querySelector('#modal-root [data-news]')));
+  check('and the feedback notice waits its turn', !seen.feedback);
+
+  const news = await page.evaluate(() => {
+    closeNews();
+    return {closed: !document.querySelector('#modal-root [data-news]'),
+            marked: JSON.parse(localStorage.getItem('fp_news_seen') || '[]').length === NEWS.length,
+            listed: renderNews().includes(NEWS[0][locale === 'ar' ? 'ar' : 'fr'].title)};
+  });
+  check('closing it marks it read', news.closed && news.marked);
+  check('and it stays readable in Aide', news.listed);
+
+  seen = await openWith(() => {});
+  check('a read announcement is not shown again', await page.evaluate(() => !document.querySelector('#modal-root [data-news]')));
+
+  /* Publishing a new one means an id nobody has stored yet: someone who read
+     every previous announcement still gets it. */
+  seen = await openWith(() => {
+    localStorage.setItem('fp_news_seen', JSON.stringify(['2020-01-01-something-older']));
+  });
+  check('but an announcement published since is', await page.evaluate(() => !!document.querySelector('#modal-root [data-news]')));
+
+  await page.evaluate(() => { closeNews(); localStorage.removeItem('fp_news_seen'); });
+
   await page.evaluate(() => { state.invoices = []; state.clients = []; saveData(); });
 }
 
