@@ -1232,6 +1232,19 @@ console.log('\nThe notices that open on their own');
   seen = await openWith(() => {});
   check('which is not repeated on the next opening either', !seen.feedback);
 
+  /* A week, not a season: the request for feedback comes back on its own. */
+  seen = await openWith(() => {
+    localStorage.setItem('fp_news_seen', JSON.stringify(NEWS.map(n => n.id)));
+    localStorage.setItem('fp_feedback_seen', String(Date.now() - 3 * 86400000));
+  });
+  check('three days after it was closed it stays quiet', !seen.feedback);
+
+  seen = await openWith(() => {
+    localStorage.setItem('fp_news_seen', JSON.stringify(NEWS.map(n => n.id)));
+    localStorage.setItem('fp_feedback_seen', String(Date.now() - 8 * 86400000));
+  });
+  check('a week later it asks again', seen.feedback);
+
   /* The announcements: ours to them, rather than theirs to us. */
   seen = await openWith(() => { localStorage.removeItem('fp_news_seen'); });
   check('an unread announcement is shown', await page.evaluate(() => !!document.querySelector('#modal-root [data-news]')));

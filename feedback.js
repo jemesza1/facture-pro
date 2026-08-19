@@ -9,15 +9,15 @@
    So it is said once, plainly, at the start: here is where to write, and
    here is what to put in the message. Then it gets out of the way.
 
-   Deliberately quiet: shown on the first opening, silent for the next two
-   months after it is closed, and never on top of a preview or another
+   Deliberately quiet: shown on the first opening, silent for the rest of the
+   week after it is closed, and never on top of a preview or another
    dialog. The header button and the Aide card keep it reachable in between,
    which is the point — the dialog is a reminder, not the only door. */
 
 var FEEDBACK_FB = 'https://www.facebook.com/share/18MFPVTn2V/';
 var FEEDBACK_MAIL = 'mrkorichi.a@gmail.com';
 var FEEDBACK_KEY = 'fp_feedback_seen';
-var FEEDBACK_AGAIN_DAYS = 60;
+var FEEDBACK_AGAIN_DAYS = 7;
 var FEEDBACK_DAY = 86400000;
 
 function feedbackDue() {
