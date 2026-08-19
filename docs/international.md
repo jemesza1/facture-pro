@@ -18,6 +18,11 @@ other.
 The first is a ledger. The second is a form that prints a page. Everything
 below exists to keep that line sharp.
 
+The drafts this was specified from are kept at
+`docs/international-draft.html` — reference only, not shipped, not linked, not
+in the sitemap. The `COUNTRIES` table is the real work in them; the header of
+that file lists what makes it unusable as a starting point.
+
 ## The boundary
 
 **The application does not change.** Not `a.js`, not `c2.js`, not

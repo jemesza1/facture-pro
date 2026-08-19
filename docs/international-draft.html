@@ -1,0 +1,829 @@
+<!-- REFERENCE ONLY — NOT SHIPPED, NOT LINKED, NOT IN THE SITEMAP.
+
+     The draft the international generator was specified from. Kept because
+     the COUNTRIES table is the real work in it: the identifier fields each
+     country's invoice has to carry, with the currency, rate, legal sentence
+     and title that go with them.
+
+     It is not a starting file. It loads Tailwind and two libraries from CDNs,
+     which is the dependency this repository removed after an outage; it calls
+     a Saudi invoice ZATCA-compliant while emitting no QR; it formats money
+     with ar-DZ, which can render Arabic-Indic digits; and its Save button
+     tells the visitor an invoice was kept when the next one overwrites it.
+
+     Read docs/international.md first. It says what to take from here and what
+     to leave. -->
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- SEO Primary -->
+  <title>Free International Invoice Generator | Multi-Country VAT & Tax Invoices | FacturePro</title>
+  <meta name="description" content="Create professional invoices for Algeria, France, UAE, Saudi Arabia, USA, UK, Morocco and more. Free online invoice generator with country-specific tax fields, multi-currency and PDF export. No signup required." />
+  <meta name="keywords" content="international invoice generator, free invoice maker, multi country invoice, VAT invoice EU, tax invoice UAE, Saudi VAT invoice, Algeria facture, France facture TVA, create invoice online, PDF invoice generator, business invoice template, cross border invoice, export invoice, freelance invoice, professional invoice free" />
+  <meta name="author" content="CheMs SoUu — FacturePro" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://facturedz.com/international" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Free International Invoice Generator | FacturePro" />
+  <meta property="og:description" content="Professional multi-country invoices with correct tax fields. Algeria, France, UAE, KSA, USA, UK and more. Free PDF export." />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="fr_FR" />
+  <meta property="og:locale:alternate" content="ar_DZ" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Free International Invoice Generator | FacturePro" />
+  <meta name="twitter:description" content="Create compliant invoices for 9 countries. Free, private, PDF export." />
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Cairo', 'sans-serif'],
+            arabic: ['Cairo', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [dir="rtl"] body, [dir="rtl"] { font-family: 'Cairo', sans-serif; }
+    .paper {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    }
+    @media (max-width: 1024px) {
+      .paper { width: 100%; min-height: auto; }
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #preview-area, #preview-area * { visibility: visible; }
+      #preview-area { position: absolute; left: 0; top: 0; width: 100%; }
+      #landing, header, footer, #app-form { display: none !important; }
+    }
+    .hero-gradient {
+      background: linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%);
+    }
+    .country-chip:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+  <!-- ========== LANDING (shown first to foreign visitors) ========== -->
+  <section id="landing" class="min-h-screen flex flex-col">
+    <header class="absolute top-0 left-0 right-0 z-20">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-emerald-500/30">FP</div>
+          <span class="font-semibold text-white tracking-tight">FacturePro</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="setLang('en')" class="px-3 py-1 text-xs rounded-full text-white/80 hover:text-white border border-white/20 hover:border-white/40 transition">EN</button>
+          <button onclick="setLang('fr')" class="px-3 py-1 text-xs rounded-full text-white/80 hover:text-white border border-white/20 hover:border-white/40 transition">FR</button>
+          <button onclick="setLang('ar')" class="px-3 py-1 text-xs rounded-full text-white/80 hover:text-white border border-white/20 hover:border-white/40 transition">AR</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="hero-gradient flex-1 flex items-center relative overflow-hidden">
+      <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 20% 50%, #10b981 0%, transparent 40%), radial-gradient(circle at 80% 20%, #3b82f6 0%, transparent 35%);"></div>
+      <div class="relative max-w-6xl mx-auto px-4 py-24 w-full text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-emerald-300 text-xs font-medium mb-6">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span data-i18n="badge">Free · Private · No signup</span>
+        </div>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight max-w-3xl mx-auto" data-i18n="hero_title">
+          Professional invoices for any country
+        </h1>
+        <p class="mt-5 text-lg text-slate-300 max-w-xl mx-auto leading-relaxed" data-i18n="hero_sub">
+          Correct tax fields, currency and legal mentions for Algeria, France, UAE, Saudi Arabia, USA, UK and more. Export PDF in one click.
+        </p>
+
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button onclick="startApp()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-base shadow-xl shadow-emerald-500/25 transition active:scale-[0.98]">
+            <span data-i18n="cta_main">Create international invoice</span>
+          </button>
+          <button onclick="startApp('FR')" class="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium border border-white/20 transition">
+            <span data-i18n="cta_eu">EU / France invoice</span>
+          </button>
+        </div>
+
+        <!-- Quick country chips -->
+        <div class="mt-14">
+          <p class="text-xs text-slate-400 mb-4 uppercase tracking-wider" data-i18n="supported">Supported countries</p>
+          <div class="flex flex-wrap justify-center gap-2">
+            <button onclick="startApp('DZ')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇩🇿 Algeria</button>
+            <button onclick="startApp('FR')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇫🇷 France</button>
+            <button onclick="startApp('AE')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇦🇪 UAE</button>
+            <button onclick="startApp('SA')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇸🇦 Saudi</button>
+            <button onclick="startApp('US')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇺🇸 USA</button>
+            <button onclick="startApp('GB')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇬🇧 UK</button>
+            <button onclick="startApp('MA')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇲🇦 Morocco</button>
+            <button onclick="startApp('TN')" class="country-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm border border-white/10 transition">🇹🇳 Tunisia</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trust strip -->
+    <div class="bg-white border-t border-slate-100 py-6">
+      <div class="max-w-4xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-sm">
+        <div>
+          <div class="font-semibold text-slate-900" data-i18n="trust1_t">9 countries</div>
+          <div class="text-slate-500 text-xs mt-0.5" data-i18n="trust1_d">Correct legal fields</div>
+        </div>
+        <div>
+          <div class="font-semibold text-slate-900" data-i18n="trust2_t">100% private</div>
+          <div class="text-slate-500 text-xs mt-0.5" data-i18n="trust2_d">Data stays in browser</div>
+        </div>
+        <div>
+          <div class="font-semibold text-slate-900" data-i18n="trust3_t">PDF export</div>
+          <div class="text-slate-500 text-xs mt-0.5" data-i18n="trust3_d">A4 professional</div>
+        </div>
+        <div>
+          <div class="font-semibold text-slate-900" data-i18n="trust4_t">Free forever</div>
+          <div class="text-slate-500 text-xs mt-0.5" data-i18n="trust4_d">No account needed</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== APP ========== -->
+  <div id="app" class="hidden min-h-screen flex flex-col">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button onclick="showLanding()" class="text-slate-400 hover:text-slate-700 text-sm" title="Back">←</button>
+          <div class="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">FP</div>
+          <div>
+            <div class="font-semibold text-slate-900 text-sm">FacturePro International</div>
+            <div class="text-[10px] text-slate-500">Multi-country invoices</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-lang" class="px-3 py-1.5 text-sm rounded-full border border-slate-200 hover:bg-slate-50">العربية</button>
+          <button id="btn-pdf" class="px-4 py-1.5 text-sm rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 font-medium">PDF</button>
+          <button id="btn-save" class="px-4 py-1.5 text-sm rounded-lg bg-slate-900 text-white hover:bg-slate-800 font-medium">Save</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="app-form" class="flex-1 max-w-7xl mx-auto w-full px-4 py-6 grid lg:grid-cols-2 gap-6">
+      <section class="space-y-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-slate-900" data-i18n="section_country">Country & Template</h2>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="label_country">Country</label>
+              <select id="country" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="label_template">Template</label>
+              <select id="template" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="label_currency">Currency</label>
+              <select id="currency" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="label_tax">Tax (%)</label>
+              <div class="flex gap-2">
+                <input id="taxRate" type="number" min="0" max="100" step="0.1" value="19" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+                <input id="taxName" type="text" value="TVA" class="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <h2 class="font-semibold text-slate-900" data-i18n="section_business">Your business</h2>
+          <div class="grid sm:grid-cols-2 gap-3" id="business-fields"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <h2 class="font-semibold text-slate-900" data-i18n="section_client">Client</h2>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="client_name">Client name</label>
+              <input id="clientName" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="client_address">Address</label>
+              <input id="clientAddress" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="client_tax">Client tax ID</label>
+              <input id="clientTaxId" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="invoice_number">Invoice #</label>
+              <input id="invoiceNumber" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="issue_date">Issue date</label>
+              <input id="issueDate" type="date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1" data-i18n="due_date">Due date</label>
+              <input id="dueDate" type="date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-slate-900" data-i18n="section_items">Line items</h2>
+            <button id="btn-add-item" class="text-sm px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium">+ Add</button>
+          </div>
+          <div id="items-list" class="space-y-2"></div>
+          <div class="pt-3 border-t border-slate-100 space-y-1 text-sm">
+            <div class="flex justify-between"><span data-i18n="subtotal">Subtotal</span><span id="subtotal">0</span></div>
+            <div class="flex justify-between"><span id="tax-label">Tax (19%)</span><span id="tax-amount">0</span></div>
+            <div class="flex justify-between font-semibold text-base"><span data-i18n="total">Total</span><span id="total">0</span></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <h2 class="font-semibold text-slate-900" data-i18n="section_notes">Notes & legal</h2>
+          <textarea id="notes" rows="2" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
+          <textarea id="legalMentions" rows="3" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-600"></textarea>
+        </div>
+      </section>
+
+      <section class="lg:sticky lg:top-20 self-start">
+        <div class="bg-slate-200/60 rounded-2xl p-4 overflow-auto max-h-[calc(100vh-6rem)]">
+          <div id="preview-area" class="paper mx-auto p-8 text-sm text-slate-800"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="text-center text-xs text-slate-400 py-4">
+      FacturePro International · Data stays in your browser · Created by CheMs SoUu
+    </footer>
+  </div>
+
+<script>
+const COUNTRIES = {
+  DZ: { code:'DZ', name:'Algeria', nameAr:'الجزائر', nameFr:'Algérie', currency:'DZD', taxRate:19, taxName:'TVA',
+    fields:[
+      {key:'name', label:'Business name', labelAr:'اسم الشركة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'nif', label:'NIF', labelAr:'الرقم الجبائي (NIF)', labelFr:'NIF', required:true},
+      {key:'rc', label:'RC', labelAr:'السجل التجاري (RC)', labelFr:'RC', required:true},
+      {key:'nis', label:'NIS', labelAr:'الرقم الإحصائي', labelFr:'NIS', required:false}
+    ],
+    legal:'Facture conforme à la réglementation algérienne. TVA 19%.',
+    legalAr:'فاتورة مطابقة للتشريع الجزائري. رسم على القيمة المضافة 19%.',
+    legalEn:'Invoice compliant with Algerian regulations. VAT 19%.',
+    invoiceTitle:'FACTURE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  },
+  FR: { code:'FR', name:'France / EU', nameAr:'فرنسا', nameFr:'France / UE', currency:'EUR', taxRate:20, taxName:'TVA',
+    fields:[
+      {key:'name', label:'Company name', labelAr:'اسم الشركة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'siret', label:'SIRET', labelAr:'SIRET', labelFr:'SIRET', required:true},
+      {key:'tvaIntra', label:'VAT number (EU)', labelAr:'رقم TVA الأوروبي', labelFr:'N° TVA intracommunautaire', required:true},
+      {key:'rcs', label:'RCS', labelAr:'RCS', labelFr:'RCS', required:false}
+    ],
+    legal:'Pénalités de retard : 3× taux légal. Indemnité forfaitaire 40€.',
+    legalAr:'غرامات التأخير حسب القانون الفرنسي.',
+    legalEn:'Late payment penalties apply. Fixed recovery fee €40.',
+    invoiceTitle:'FACTURE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  },
+  MA: { code:'MA', name:'Morocco', nameAr:'المغرب', nameFr:'Maroc', currency:'MAD', taxRate:20, taxName:'TVA',
+    fields:[
+      {key:'name', label:'Company name', labelAr:'اسم الشركة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'ice', label:'ICE', labelAr:'ICE', labelFr:'ICE', required:true},
+      {key:'if', label:'IF', labelAr:'المعرف الضريبي', labelFr:'IF', required:true}
+    ],
+    legal:'Facture conforme à la réglementation marocaine.',
+    legalAr:'فاتورة مطابقة للتشريع المغربي.',
+    legalEn:'Invoice compliant with Moroccan regulations.',
+    invoiceTitle:'FACTURE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  },
+  TN: { code:'TN', name:'Tunisia', nameAr:'تونس', nameFr:'Tunisie', currency:'TND', taxRate:19, taxName:'TVA',
+    fields:[
+      {key:'name', label:'Company name', labelAr:'اسم الشركة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'mf', label:'Tax ID', labelAr:'المعرف الجبائي', labelFr:'Matricule fiscal', required:true}
+    ],
+    legal:'Facture conforme à la législation tunisienne.',
+    legalAr:'فاتورة مطابقة للتشريع التونسي.',
+    legalEn:'Invoice compliant with Tunisian law.',
+    invoiceTitle:'FACTURE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  },
+  AE: { code:'AE', name:'UAE', nameAr:'الإمارات', nameFr:'Émirats', currency:'AED', taxRate:5, taxName:'VAT',
+    fields:[
+      {key:'name', label:'Company name', labelAr:'اسم الشركة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'trn', label:'TRN', labelAr:'الرقم الضريبي TRN', labelFr:'TRN', required:true}
+    ],
+    legal:'Tax Invoice. Issued in accordance with UAE VAT law.',
+    legalAr:'فاتورة ضريبية وفقاً لقانون الإمارات.',
+    legalEn:'Tax Invoice. Issued in accordance with UAE VAT law.',
+    invoiceTitle:'TAX INVOICE', invoiceTitleAr:'فاتورة ضريبية', invoiceTitleEn:'TAX INVOICE'
+  },
+  SA: { code:'SA', name:'Saudi Arabia', nameAr:'السعودية', nameFr:'Arabie Saoudite', currency:'SAR', taxRate:15, taxName:'VAT',
+    fields:[
+      {key:'name', label:'Company name', labelAr:'اسم المنشأة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'vat', label:'VAT Number', labelAr:'الرقم الضريبي', labelFr:'N° TVA', required:true},
+      {key:'cr', label:'CR', labelAr:'السجل التجاري', labelFr:'CR', required:true}
+    ],
+    legal:'Tax Invoice — Compliant with ZATCA requirements.',
+    legalAr:'فاتورة ضريبية — وفقاً لهيئة الزكاة.',
+    legalEn:'Tax Invoice — Compliant with ZATCA requirements.',
+    invoiceTitle:'TAX INVOICE', invoiceTitleAr:'فاتورة ضريبية', invoiceTitleEn:'TAX INVOICE'
+  },
+  GB: { code:'GB', name:'United Kingdom', nameAr:'بريطانيا', nameFr:'Royaume-Uni', currency:'GBP', taxRate:20, taxName:'VAT',
+    fields:[
+      {key:'name', label:'Company name', labelAr:'اسم الشركة', labelFr:'Raison sociale', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'vat', label:'VAT Number', labelAr:'رقم VAT', labelFr:'N° TVA', required:true},
+      {key:'companyNumber', label:'Company Number', labelAr:'رقم الشركة', labelFr:'N° société', required:false}
+    ],
+    legal:'VAT Invoice. Payment terms: Net 30 unless otherwise stated.',
+    legalAr:'فاتورة ضريبية بريطانية.',
+    legalEn:'VAT Invoice. Payment terms: Net 30 unless otherwise stated.',
+    invoiceTitle:'INVOICE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  },
+  US: { code:'US', name:'United States', nameAr:'أمريكا', nameFr:'États-Unis', currency:'USD', taxRate:0, taxName:'Sales Tax',
+    fields:[
+      {key:'name', label:'Business name', labelAr:'اسم النشاط', labelFr:'Nom commercial', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'ein', label:'EIN', labelAr:'EIN', labelFr:'EIN', required:false}
+    ],
+    legal:'Payment due upon receipt unless otherwise agreed.',
+    legalAr:'الدفع عند الاستلام إلا اتفاق مخالف.',
+    legalEn:'Payment due upon receipt unless otherwise agreed.',
+    invoiceTitle:'INVOICE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  },
+  INT: { code:'INT', name:'International', nameAr:'دولي', nameFr:'International', currency:'USD', taxRate:0, taxName:'Tax',
+    fields:[
+      {key:'name', label:'Name', labelAr:'الاسم', labelFr:'Nom', required:true},
+      {key:'address', label:'Address', labelAr:'العنوان', labelFr:'Adresse', required:true},
+      {key:'taxId', label:'Tax ID', labelAr:'الرقم الضريبي', labelFr:'N° fiscal', required:false}
+    ],
+    legal:'International invoice. Terms as agreed between parties.',
+    legalAr:'فاتورة دولية. الشروط حسب الاتفاق.',
+    legalEn:'International invoice. Terms as agreed between parties.',
+    invoiceTitle:'INVOICE', invoiceTitleAr:'فاتورة', invoiceTitleEn:'INVOICE'
+  }
+};
+
+const TEMPLATES = {
+  'dz-classic': { id:'dz-classic', name:'Algeria Classic', country:'DZ', accent:'#006233' },
+  'dz-modern':  { id:'dz-modern',  name:'Algeria Modern',  country:'DZ', accent:'#059669' },
+  'fr-minimal': { id:'fr-minimal', name:'Europe Minimal',  country:'FR', accent:'#1e40af' },
+  'fr-corporate':{ id:'fr-corporate',name:'Europe Corporate',country:'FR', accent:'#0f172a' },
+  'us-modern':  { id:'us-modern',  name:'US Modern',       country:'US', accent:'#2563eb' },
+  'gcc-premium':{ id:'gcc-premium',name:'Gulf Premium',    country:'AE', accent:'#b45309' },
+  'sa-tax':     { id:'sa-tax',     name:'Saudi Tax',       country:'SA', accent:'#047857' },
+  'intl-clean': { id:'intl-clean', name:'International',   country:'INT',accent:'#334155' }
+};
+
+const CURRENCIES = {
+  DZD:{symbol:'DA'}, EUR:{symbol:'€'}, USD:{symbol:'$'}, GBP:{symbol:'£'},
+  MAD:{symbol:'MAD'}, TND:{symbol:'TND'}, AED:{symbol:'AED'}, SAR:{symbol:'ر.س'}
+};
+
+const I18N = {
+  en: {
+    badge:'Free · Private · No signup',
+    hero_title:'Professional invoices for any country',
+    hero_sub:'Correct tax fields, currency and legal mentions for Algeria, France, UAE, Saudi Arabia, USA, UK and more. Export PDF in one click.',
+    cta_main:'Create international invoice',
+    cta_eu:'EU / France invoice',
+    supported:'Supported countries',
+    trust1_t:'9 countries', trust1_d:'Correct legal fields',
+    trust2_t:'100% private', trust2_d:'Data stays in browser',
+    trust3_t:'PDF export', trust3_d:'A4 professional',
+    trust4_t:'Free forever', trust4_d:'No account needed',
+    section_country:'Country & Template', label_country:'Country', label_template:'Template',
+    label_currency:'Currency', label_tax:'Tax (%)', section_business:'Your business',
+    section_client:'Client', client_name:'Client name', client_address:'Address',
+    client_tax:'Client tax ID', invoice_number:'Invoice #', issue_date:'Issue date',
+    due_date:'Due date', section_items:'Line items', subtotal:'Subtotal', total:'Total',
+    section_notes:'Notes & legal', desc:'Description', qty:'Qty', price:'Price'
+  },
+  fr: {
+    badge:'Gratuit · Privé · Sans inscription',
+    hero_title:'Des factures professionnelles pour tous les pays',
+    hero_sub:'Champs fiscaux, devise et mentions légales corrects pour l\'Algérie, la France, les Émirats, l\'Arabie saoudite, les USA, le Royaume-Uni et plus. Export PDF en un clic.',
+    cta_main:'Créer une facture internationale',
+    cta_eu:'Facture UE / France',
+    supported:'Pays supportés',
+    trust1_t:'9 pays', trust1_d:'Champs légaux corrects',
+    trust2_t:'100% privé', trust2_d:'Données dans le navigateur',
+    trust3_t:'Export PDF', trust3_d:'A4 professionnel',
+    trust4_t:'Gratuit', trust4_d:'Sans compte',
+    section_country:'Pays & Modèle', label_country:'Pays', label_template:'Modèle',
+    label_currency:'Devise', label_tax:'Taxe (%)', section_business:'Votre entreprise',
+    section_client:'Client', client_name:'Nom du client', client_address:'Adresse',
+    client_tax:'N° fiscal client', invoice_number:'N° Facture', issue_date:"Date d'émission",
+    due_date:"Date d'échéance", section_items:'Articles', subtotal:'Sous-total', total:'Total',
+    section_notes:'Notes & mentions', desc:'Description', qty:'Qté', price:'Prix'
+  },
+  ar: {
+    badge:'مجاني · خاص · بدون تسجيل',
+    hero_title:'فواتير احترافية لأي دولة',
+    hero_sub:'حقول ضريبية وعملة ونصوص قانونية صحيحة للجزائر وفرنسا والإمارات والسعودية وأمريكا وبريطانيا وغيرها. تصدير PDF بنقرة واحدة.',
+    cta_main:'إنشاء فاتورة دولية',
+    cta_eu:'فاتورة أوروبا / فرنسا',
+    supported:'الدول المدعومة',
+    trust1_t:'9 دول', trust1_d:'حقول قانونية صحيحة',
+    trust2_t:'خصوصية 100%', trust2_d:'البيانات في المتصفح',
+    trust3_t:'تصدير PDF', trust3_d:'A4 احترافي',
+    trust4_t:'مجاني دائماً', trust4_d:'بدون حساب',
+    section_country:'الدولة والنموذج', label_country:'الدولة', label_template:'النموذج',
+    label_currency:'العملة', label_tax:'الضريبة (%)', section_business:'مؤسستك',
+    section_client:'العميل', client_name:'اسم العميل', client_address:'العنوان',
+    client_tax:'الرقم الضريبي للعميل', invoice_number:'رقم الفاتورة', issue_date:'تاريخ الإصدار',
+    due_date:'تاريخ الاستحقاق', section_items:'البنود', subtotal:'المجموع الفرعي', total:'الإجمالي',
+    section_notes:'ملاحظات وشروط', desc:'الوصف', qty:'الكمية', price:'السعر'
+  }
+};
+
+let state = {
+  lang: 'en', country: 'DZ', template: 'dz-classic', currency: 'DZD',
+  taxRate: 19, taxName: 'TVA', business: {},
+  clientName: '', clientAddress: '', clientTaxId: '',
+  invoiceNumber: '', issueDate: '', dueDate: '',
+  items: [{ id: 1, desc: '', qty: 1, price: 0 }],
+  notes: '', legalMentions: ''
+};
+
+function setLang(lang) {
+  state.lang = lang;
+  document.documentElement.lang = lang === 'ar' ? 'ar' : (lang === 'fr' ? 'fr' : 'en');
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  applyLandingI18n();
+  if (!document.getElementById('app').classList.contains('hidden')) {
+    const c = COUNTRIES[state.country];
+    state.legalMentions = lang === 'ar' ? c.legalAr : (lang === 'fr' ? c.legal : c.legalEn);
+    updateUI();
+    renderPreview();
+  }
+}
+
+function applyLandingI18n() {
+  const t = I18N[state.lang] || I18N.en;
+  document.querySelectorAll('#landing [data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+}
+
+function startApp(countryCode) {
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  if (countryCode) applyCountryDefaults(countryCode);
+  else applyCountryDefaults(state.country);
+  updateUI();
+  renderPreview();
+  window.scrollTo(0, 0);
+}
+
+function showLanding() {
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('landing').classList.remove('hidden');
+}
+
+function init() {
+  const today = new Date().toISOString().slice(0, 10);
+  state.issueDate = today;
+  const due = new Date(); due.setDate(due.getDate() + 30);
+  state.dueDate = due.toISOString().slice(0, 10);
+  state.invoiceNumber = 'INV-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900)+100);
+
+  // Detect browser language preference for landing
+  const nav = (navigator.language || 'en').toLowerCase();
+  if (nav.startsWith('ar')) state.lang = 'ar';
+  else if (nav.startsWith('fr')) state.lang = 'fr';
+  else state.lang = 'en';
+  setLang(state.lang);
+
+  populateCountries();
+  populateTemplates();
+  populateCurrencies();
+  renderBusinessFields();
+  renderItems();
+  bindEvents();
+  loadFromStorage();
+}
+
+function populateCountries() {
+  const sel = document.getElementById('country');
+  if (!sel) return;
+  sel.innerHTML = Object.values(COUNTRIES).map(c => {
+    const n = state.lang === 'ar' ? c.nameAr : (state.lang === 'fr' ? c.nameFr : c.name);
+    return `<option value="${c.code}">${n}</option>`;
+  }).join('');
+  sel.value = state.country;
+}
+
+function populateTemplates() {
+  const sel = document.getElementById('template');
+  if (!sel) return;
+  sel.innerHTML = Object.values(TEMPLATES).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  sel.value = state.template;
+}
+
+function populateCurrencies() {
+  const sel = document.getElementById('currency');
+  if (!sel) return;
+  sel.innerHTML = Object.entries(CURRENCIES).map(([code, c]) =>
+    `<option value="${code}">${code} (${c.symbol})</option>`
+  ).join('');
+  sel.value = state.currency;
+}
+
+function applyCountryDefaults(code) {
+  const c = COUNTRIES[code];
+  if (!c) return;
+  state.country = code;
+  state.currency = c.currency;
+  state.taxRate = c.taxRate;
+  state.taxName = c.taxName;
+  state.legalMentions = state.lang === 'ar' ? c.legalAr : (state.lang === 'fr' ? c.legal : c.legalEn);
+  const match = Object.values(TEMPLATES).find(t => t.country === code);
+  if (match) state.template = match.id;
+  const elC = document.getElementById('country');
+  const elCur = document.getElementById('currency');
+  const elTax = document.getElementById('taxRate');
+  const elTaxN = document.getElementById('taxName');
+  const elTpl = document.getElementById('template');
+  const elLeg = document.getElementById('legalMentions');
+  if (elC) elC.value = code;
+  if (elCur) elCur.value = state.currency;
+  if (elTax) elTax.value = state.taxRate;
+  if (elTaxN) elTaxN.value = state.taxName;
+  if (elTpl) elTpl.value = state.template;
+  if (elLeg) elLeg.value = state.legalMentions;
+  renderBusinessFields();
+}
+
+function fieldLabel(f) {
+  if (state.lang === 'ar') return f.labelAr;
+  if (state.lang === 'fr') return f.labelFr;
+  return f.label;
+}
+
+function renderBusinessFields() {
+  const c = COUNTRIES[state.country];
+  const box = document.getElementById('business-fields');
+  if (!box) return;
+  box.innerHTML = c.fields.map(f => {
+    const label = fieldLabel(f);
+    const val = state.business[f.key] || '';
+    return `<div class="${f.key === 'address' || f.key === 'name' ? 'sm:col-span-2' : ''}">
+      <label class="block text-xs font-medium text-slate-500 mb-1">${label}${f.required ? ' *' : ''}</label>
+      <input data-biz="${f.key}" value="${escapeHtml(val)}" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-biz]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      state.business[e.target.dataset.biz] = e.target.value;
+      renderPreview(); scheduleSave();
+    });
+  });
+}
+
+function renderItems() {
+  const list = document.getElementById('items-list');
+  if (!list) return;
+  const t = I18N[state.lang] || I18N.en;
+  list.innerHTML = state.items.map((it, idx) => `
+    <div class="grid grid-cols-12 gap-2 items-center">
+      <input data-idx="${idx}" data-field="desc" value="${escapeHtml(it.desc)}" placeholder="${t.desc}"
+        class="col-span-5 rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-emerald-500" />
+      <input data-idx="${idx}" data-field="qty" type="number" min="0" step="0.01" value="${it.qty}"
+        class="col-span-2 rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-emerald-500" />
+      <input data-idx="${idx}" data-field="price" type="number" min="0" step="0.01" value="${it.price}"
+        class="col-span-3 rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-emerald-500" />
+      <div class="col-span-1 text-xs text-slate-500 text-end">${formatMoney(it.qty * it.price)}</div>
+      <button data-del="${idx}" class="col-span-1 text-red-500 hover:text-red-700 text-lg leading-none">×</button>
+    </div>`).join('');
+  list.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const i = +e.target.dataset.idx;
+      const field = e.target.dataset.field;
+      let val = e.target.value;
+      if (field === 'qty' || field === 'price') val = parseFloat(val) || 0;
+      state.items[i][field] = val;
+      calcTotals(); renderPreview(); scheduleSave();
+    });
+  });
+  list.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const i = +e.target.dataset.del;
+      state.items.splice(i, 1);
+      if (!state.items.length) state.items.push({ id: Date.now(), desc: '', qty: 1, price: 0 });
+      renderItems(); calcTotals(); renderPreview(); scheduleSave();
+    });
+  });
+  calcTotals();
+}
+
+function calcTotals() {
+  const sub = state.items.reduce((s, it) => s + (it.qty * it.price), 0);
+  const tax = sub * (state.taxRate / 100);
+  const total = sub + tax;
+  const sym = CURRENCIES[state.currency]?.symbol || state.currency;
+  const elS = document.getElementById('subtotal');
+  const elT = document.getElementById('tax-amount');
+  const elTot = document.getElementById('total');
+  const elL = document.getElementById('tax-label');
+  if (elS) elS.textContent = formatMoney(sub) + ' ' + sym;
+  if (elT) elT.textContent = formatMoney(tax) + ' ' + sym;
+  if (elTot) elTot.textContent = formatMoney(total) + ' ' + sym;
+  if (elL) elL.textContent = `${state.taxName} (${state.taxRate}%)`;
+  return { sub, tax, total, sym };
+}
+
+function formatMoney(n) {
+  const loc = state.lang === 'ar' ? 'ar-DZ' : (state.lang === 'fr' ? 'fr-FR' : 'en-US');
+  return (Math.round(n * 100) / 100).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function invoiceTitle(c) {
+  if (state.lang === 'ar') return c.invoiceTitleAr;
+  if (state.lang === 'fr') return c.invoiceTitle;
+  return c.invoiceTitleEn;
+}
+
+function renderPreview() {
+  const c = COUNTRIES[state.country];
+  const tpl = TEMPLATES[state.template] || TEMPLATES['intl-clean'];
+  const { sub, tax, total, sym } = calcTotals();
+  const title = invoiceTitle(c);
+  const bizLines = c.fields.map(f => {
+    const v = state.business[f.key];
+    if (!v) return '';
+    return `<div><span class="text-slate-500">${fieldLabel(f)}:</span> ${escapeHtml(v)}</div>`;
+  }).filter(Boolean).join('');
+  const itemsRows = state.items.filter(it => it.desc || it.price).map(it => `
+    <tr class="border-b border-slate-100">
+      <td class="py-2 pe-2">${escapeHtml(it.desc) || '—'}</td>
+      <td class="py-2 text-center">${it.qty}</td>
+      <td class="py-2 text-end">${formatMoney(it.price)}</td>
+      <td class="py-2 text-end font-medium">${formatMoney(it.qty * it.price)}</td>
+    </tr>`).join('');
+  const t = I18N[state.lang] || I18N.en;
+  const el = document.getElementById('preview-area');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="border-top:4px solid ${tpl.accent}" class="pt-2">
+      <div class="flex justify-between items-start mb-8 gap-4">
+        <div>
+          <div class="text-2xl font-bold tracking-tight" style="color:${tpl.accent}">${escapeHtml(state.business.name || (state.lang==='ar'?'اسم الشركة':'Your company'))}</div>
+          <div class="mt-2 text-xs text-slate-600 space-y-0.5">${bizLines}</div>
+        </div>
+        <div class="text-end">
+          <div class="text-xl font-bold text-slate-900">${title}</div>
+          <div class="mt-2 text-xs space-y-0.5">
+            <div><span class="text-slate-500">#</span> ${escapeHtml(state.invoiceNumber)}</div>
+            <div>${state.issueDate}</div>
+            <div class="text-slate-500">${state.dueDate}</div>
+          </div>
+        </div>
+      </div>
+      <div class="mb-6 p-3 rounded-lg bg-slate-50">
+        <div class="text-xs font-semibold text-slate-500 mb-1">${state.lang==='ar'?'إلى':'Bill to'}</div>
+        <div class="font-medium">${escapeHtml(state.clientName) || '—'}</div>
+        <div class="text-xs text-slate-600">${escapeHtml(state.clientAddress)}</div>
+        ${state.clientTaxId ? `<div class="text-xs text-slate-600">${escapeHtml(state.clientTaxId)}</div>` : ''}
+      </div>
+      <table class="w-full text-xs mb-6">
+        <thead><tr class="border-b-2 border-slate-200 text-slate-500">
+          <th class="py-2 text-start font-medium">${t.desc}</th>
+          <th class="py-2 text-center font-medium">${t.qty}</th>
+          <th class="py-2 text-end font-medium">${t.price}</th>
+          <th class="py-2 text-end font-medium">${t.total}</th>
+        </tr></thead>
+        <tbody>${itemsRows || '<tr><td colspan="4" class="py-4 text-center text-slate-400">—</td></tr>'}</tbody>
+      </table>
+      <div class="flex justify-end mb-8">
+        <div class="w-48 space-y-1 text-xs">
+          <div class="flex justify-between"><span class="text-slate-500">${t.subtotal}</span><span>${formatMoney(sub)} ${sym}</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">${state.taxName} (${state.taxRate}%)</span><span>${formatMoney(tax)} ${sym}</span></div>
+          <div class="flex justify-between font-bold text-sm border-t border-slate-200 pt-1 mt-1"><span>${t.total}</span><span style="color:${tpl.accent}">${formatMoney(total)} ${sym}</span></div>
+        </div>
+      </div>
+      ${state.notes ? `<div class="text-xs text-slate-600 mb-4">${escapeHtml(state.notes)}</div>` : ''}
+      <div class="text-[10px] text-slate-400 border-t border-slate-100 pt-3">${escapeHtml(state.legalMentions)}</div>
+      <div class="text-[10px] text-slate-300 mt-2">${tpl.name} · ${c.name} · FacturePro</div>
+    </div>`;
+}
+
+function updateUI() {
+  const t = I18N[state.lang] || I18N.en;
+  document.querySelectorAll('#app [data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) el.textContent = t[key];
+  });
+  const btnLang = document.getElementById('btn-lang');
+  if (btnLang) btnLang.textContent = state.lang === 'ar' ? 'EN' : (state.lang === 'en' ? 'FR' : 'العربية');
+  ['clientName','clientAddress','clientTaxId','invoiceNumber','issueDate','dueDate','notes','legalMentions'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = state[id] || '';
+  });
+  const elTax = document.getElementById('taxRate');
+  const elTaxN = document.getElementById('taxName');
+  if (elTax) elTax.value = state.taxRate;
+  if (elTaxN) elTaxN.value = state.taxName;
+  populateCountries();
+  renderBusinessFields();
+  renderItems();
+}
+
+function bindEvents() {
+  document.getElementById('country')?.addEventListener('change', e => {
+    applyCountryDefaults(e.target.value); updateUI(); renderPreview(); scheduleSave();
+  });
+  document.getElementById('template')?.addEventListener('change', e => {
+    state.template = e.target.value; renderPreview(); scheduleSave();
+  });
+  document.getElementById('currency')?.addEventListener('change', e => {
+    state.currency = e.target.value; calcTotals(); renderPreview(); scheduleSave();
+  });
+  document.getElementById('taxRate')?.addEventListener('input', e => {
+    state.taxRate = parseFloat(e.target.value) || 0; calcTotals(); renderPreview(); scheduleSave();
+  });
+  document.getElementById('taxName')?.addEventListener('input', e => {
+    state.taxName = e.target.value; calcTotals(); renderPreview(); scheduleSave();
+  });
+  ['clientName','clientAddress','clientTaxId','invoiceNumber','issueDate','dueDate','notes','legalMentions'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', e => {
+      state[id] = e.target.value; renderPreview(); scheduleSave();
+    });
+  });
+  document.getElementById('btn-add-item')?.addEventListener('click', () => {
+    state.items.push({ id: Date.now(), desc: '', qty: 1, price: 0 });
+    renderItems(); renderPreview(); scheduleSave();
+  });
+  document.getElementById('btn-lang')?.addEventListener('click', () => {
+    state.lang = state.lang === 'en' ? 'fr' : (state.lang === 'fr' ? 'ar' : 'en');
+    setLang(state.lang);
+  });
+  document.getElementById('btn-save')?.addEventListener('click', () => {
+    saveToStorage();
+    alert(state.lang === 'ar' ? 'تم الحفظ' : (state.lang === 'fr' ? 'Sauvegardé' : 'Saved locally'));
+  });
+  document.getElementById('btn-pdf')?.addEventListener('click', exportPDF);
+}
+
+let saveTimer;
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveToStorage, 400); }
+function saveToStorage() { try { localStorage.setItem('facturepro_intl_v3', JSON.stringify(state)); } catch(e){} }
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem('facturepro_intl_v3');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    state = { ...state, ...data };
+    if (!state.items?.length) state.items = [{ id:1, desc:'', qty:1, price:0 }];
+  } catch(e){}
+}
+
+async function exportPDF() {
+  const el = document.getElementById('preview-area');
+  const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+  const img = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const imgWidth = 210;
+  const imgHeight = canvas.height * imgWidth / canvas.width;
+  let heightLeft = imgHeight, position = 0;
+  pdf.addImage(img, 'PNG', 0, position, imgWidth, imgHeight);
+  heightLeft -= 297;
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(img, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= 297;
+  }
+  pdf.save((state.invoiceNumber || 'invoice') + '.pdf');
+}
+
+init();
+</script>
+</body>
+</html>
