@@ -73,22 +73,18 @@ below is where they are told so.
 
 ### An Algerian using the international page
 
-This is the one real hazard. The page has no droit de timbre. An Algerian who
-finds it, picks Algeria, and issues a cash invoice from it gets a document
-that is **short by the stamp duty and not compliant**.
+This is the one real hazard, and the reason the shape of Phase 2 is what it
+is. The page has no droit de timbre. An Algerian who finds it, picks Algeria
+and issues a cash invoice from it would get a document **short by the stamp
+duty and not compliant**.
 
-Do not solve this by removing Algeria from the country list. Removing it makes
-the trap quieter, not smaller: the same person picks *International* and gets
-the same wrong invoice with nothing to warn them.
+So it issues nothing. Algeria is in the picker, and selecting it replaces the
+form with one sentence and a link back to `/`. France and Saudi work the same
+way for their own reasons — see Phase 2.
 
-Solve it by catching them. When the country is `DZ`, the form shows, above
-everything else and in the visitor's language:
-
-> This page does not compute the droit de timbre and does not feed a G50.
-> For an invoice in Algeria, use the full application → [link]
-
-The link is the entry point back to `/`. A visitor who is in the wrong place
-should be told so and shown the door, in one sentence, without being blocked.
+Deleting the three instead would have been quieter, not safer: the same
+visitor picks *International* and prints the same paper with nothing to warn
+them. A person in the wrong place should be told so and shown the door.
 
 ### An exporter inside the application
 
@@ -137,20 +133,40 @@ font falls back to the system sans-serif and the page stays readable.
 
 ### Phase 2 — the countries
 
-The `COUNTRIES` table from the drafts: DZ, FR, MA, TN, AE, SA, GB, US, INT.
-Per-country identifier fields, currency, rate, legal sentence, invoice title.
-Selecting a country sets all of them; each stays editable.
+Six countries issue an invoice: **MA, TN, AE, GB, US, INT**. Each carries its
+own identifier fields, currency, rate, legal sentence and invoice title;
+selecting one sets all of them, and each stays editable.
 
-Two corrections carry from the drafts. The Saudi entry claims "Compliant with
-ZATCA requirements" — a Saudi tax invoice needs a QR carrying TLV-encoded
-fields and this page emits none, so the claim is false. It says `Tax Invoice`.
-The same restraint everywhere: French B2B invoicing is moving onto certified
-platforms and a PDF is not one. The page describes itself as an
-**international invoice**, never as conforming to a national regime.
+Three are listed and issue nothing: **DZ, FR, SA**.
 
-**Accepted when:** each country sets its own fields and rate; no country
-string claims a compliance the page cannot deliver; the DZ notice from *The
-confusion that must not happen* appears whenever `DZ` is selected.
+That is the decision — the page only produces a document where a PDF is
+actually the accepted form. Where a country requires an electronic invoice
+through a certified platform, the honest output is not a worse invoice, it is
+no invoice.
+
+They stay *in the picker* rather than being deleted, for the reason the DZ
+hazard was already settled on: deleting a country does not remove the need for
+its invoice. The person picks *International* instead and prints the same
+paper with nothing to warn them. Listed, selecting one replaces the form with
+a sentence saying why and what to do instead:
+
+- **DZ** — this page computes no droit de timbre and feeds no G50. Use the
+  application → `/`. This is the only one with somewhere better to send them.
+- **FR** — French B2B invoicing runs through a certified platform (PDP); a PDF
+  does not replace it.
+- **SA** — a ZATCA tax invoice carries a QR with TLV-encoded fields, which
+  this page does not emit.
+
+No `Tax Invoice` title, no legal sentence, no export for these three. There is
+nothing to get wrong because nothing is produced.
+
+France is the one worth revisiting. Its B2C, non-VAT and proforma cases are
+untouched by the reform, and it is the heaviest search term in the list. It is
+out by decision, not because every French invoice is impossible.
+
+**Accepted when:** the six issue invoices with their own fields and rates; the
+three issue nothing and say why; no string anywhere claims a compliance the
+page cannot deliver.
 
 ### Phase 3 — three languages
 
@@ -191,7 +207,8 @@ are new, and small.
 
 - the page makes no request outside this origin
 - choosing a country sets its currency, rate and identifier fields
-- selecting DZ shows the notice pointing at the application
+- selecting DZ, FR or SA issues no invoice and explains why
+- DZ points at the application
 - no country string claims ZATCA or French conformity
 - no total carries a droit de timbre, for any country
 - amounts are latin digits in all three UI languages
