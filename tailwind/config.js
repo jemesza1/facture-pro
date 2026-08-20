@@ -12,6 +12,7 @@ module.exports = {
     './index.html',
     './droit-de-timbre.html',
     './montant-en-lettres.html',
+    './international.html',
     './*.js',
   ],
   darkMode: 'class',

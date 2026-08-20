@@ -146,6 +146,55 @@ finds through a search runs exactly the code the application runs. Put shared
 arithmetic there and nowhere else — it must stay free of `state`, the DOM and
 the translations.
 
+## The international generator
+
+`international.html` is the second product on this domain, and it is not the
+application. The application is a ledger for Algerian merchants; the generator
+is a form that prints one invoice for a merchant invoicing at home in Morocco,
+Tunisia, the UAE, Britain or the United States, who arrived from a search in
+their own language. `docs/international.md` is the specification it was built
+from and the place to read before changing it.
+
+The line between the two is the whole design:
+
+- **Shared:** `/vendor/`, the Google font, the analytics snippet, the green.
+- **Not shared:** state, storage, translations, templates, arithmetic. The page
+  is one self-contained file with its own `COUNTRIES`, its own strings and its
+  own totals. Duplication here is the feature — nothing it does can reach the
+  ledger.
+- It does **not** load `lib-calc.js`. That file is Algerian arithmetic —
+  `timbreFor`, the 19/9/0 rates, an amount in words ending in "dinars" — and
+  none of it applies to a British invoice.
+
+It stores one thing: the form as it currently stands, under one key,
+overwritten. That is a crash guard, not an archive, so there is no Save button
+and no string that tells a visitor an invoice was kept. Anyone who needs a list
+of invoices needs the application.
+
+**Six countries issue an invoice** — MA, TN, AE, GB, US and a generic
+International — each with its own identifier fields, currency, rate, legal
+sentence and title, all editable. **Three are listed and issue nothing:**
+
+- **DZ** — the page computes no droit de timbre and feeds no G50, so the
+  invoice would be short by the stamp duty. It is sent to the application.
+- **FR** — French B2B invoicing runs through a certified platform (PDP); a PDF
+  does not replace it.
+- **SA** — a ZATCA tax invoice carries a QR code with TLV-encoded fields, which
+  this page does not emit.
+
+They stay in the picker rather than being deleted, because deleting a country
+does not remove the need for its invoice: the same visitor would pick
+*International* and print the same paper with nothing to warn them.
+
+The UI is EN / FR / AR, defaulted from the browser. The document is written in
+the language its country invoices in — French for MA and TN, English for the
+rest — and stays LTR, like every other invoice here. Money is formatted with
+one fixed locale in all three languages, so a total never renders as `١٢٣`.
+Arabic is a UI language here, not a document language.
+
+An Algerian merchant invoicing a foreign client is the benign mirror case: one
+link in Aide, and nothing else. The application stays a single-country product.
+
 ## Features
 - Dashboard, invoices, devis, produits, paiements, créances, clients (DA, NIF, NIN, NIS, RC, AI)
 - Droit de timbre (art. 100, barème LF 2025) sur les règlements en espèces
@@ -156,8 +205,10 @@ the translations.
 
 ## Tests
 
-`cd tests && npm install && npm test` — 76 checks against a real headless
-browser. Run them before every deploy; the suite prints `Safe to deploy.` or
+`cd tests && npm install && npm test` — 238 checks against a real headless
+browser. Run `npm run build` in the root first: the last group drives
+`public/`, the built site, because what it proves is that the international
+generator renders and exports with every off-origin request blocked. Run them before every deploy; the suite prints `Safe to deploy.` or
 lists what broke. The first group verifies that data written by the *previous*
 version survives the update, which is what lets us ship without losing anyone's
 work. When you fix a bug, add the check that would have caught it.

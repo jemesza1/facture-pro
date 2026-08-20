@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Free Invoice Generator — Morocco, Tunisia, UAE, UK, USA | FacturePro</title>
+<meta name="description" content="Create and export a professional invoice for your own country: Morocco, Tunisia, the UAE, the United Kingdom, the United States, or a generic international invoice. Correct identifier fields, currency and tax rate. Free, no signup, PDF in one click." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://facturedz.com/international.html" />
+<meta property="og:title" content="Free Invoice Generator — six countries, correct fields" />
+<meta property="og:description" content="An invoice with the identifiers, currency and tax rate your country expects. Free, private, PDF export." />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="fr_FR" />
+<meta property="og:locale:alternate" content="ar_AR" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  /* Written before the tailwind link, as on every other page here: the
+     utilities load last and win the ties the design was drawn against. */
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .fld{width:100%;border:1px solid #cbd5e1;border-radius:11px;padding:.5rem .7rem;
+       font-size:.875rem;background:#fff;color:inherit}
+  .fld:focus{outline:2px solid var(--brand2);outline-offset:1px}
+  /* Rule 4 of the repository, applied to what people type: with the interface
+     in Arabic, "14 Cheapside" renders as "Cheapside 14" in a right-to-left
+     field. Each field takes its direction from its own first letter instead,
+     so a Latin address stays in order and an Arabic one still reads right to
+     left. The codes below keep their unconditional left-to-right. */
+  .fld{unicode-bidi:plaintext}
+  /* Money, codes and dates never reorder, whatever the interface language. */
+  .num,.ltr-code{direction:ltr;unicode-bidi:isolate}
+  input[type=number],input[type=date]{direction:ltr;text-align:start}
+  button.seg{border:1px solid #cbd5e1;background:transparent;color:inherit;
+    padding:.3rem .7rem;border-radius:999px;font-size:.8125rem;font-weight:600;cursor:pointer}
+  button.seg[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  .chip{border:1px solid #cbd5e1;background:#fff;border-radius:999px;
+        padding:.45rem .9rem;font-size:.875rem;cursor:pointer}
+  .chip:hover{border-color:var(--brand);color:var(--brand)}
+  .hero{background:linear-gradient(135deg,#0f172a 0%,#04371f 55%,#0f172a 100%)}
+  /* The document. It stays left-to-right in every interface language — the
+     invoice is a document, not a screen, and the repository keeps them LTR. */
+  .paper{background:#fff;width:794px;max-width:100%;direction:ltr;text-align:left;
+         color:#0f172a;padding:40px;border-radius:6px;box-shadow:0 10px 30px rgba(2,6,23,.12)}
+  .paper table{width:100%;border-collapse:collapse}
+  .paper th,.paper td{padding:.45rem .3rem;font-size:.8125rem;text-align:left}
+  .paper th{border-bottom:2px solid #cbd5e1;color:#475569;font-weight:600}
+  .paper td{border-bottom:1px solid #e2e8f0}
+  .paper .r{text-align:right}
+  /* Ctrl+P prints the document, not the form around it. The PDF button is
+     still the intended path — this only stops the browser printing a screen. */
+  @media print{
+    body *{visibility:hidden}
+    #preview,#preview *{visibility:visible}
+    #preview{position:absolute;left:0;top:0;width:100%;box-shadow:none;padding:0}
+    header,footer,#landing{display:none !important}
+  }
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260820a" />
+<!-- The two libraries the export needs, served from this domain like every
+     other page here. A blocked cdnjs is what used to leave the PDF button
+     throwing "html2canvas is not defined". -->
+<script defer src="vendor/jspdf.umd.min.js"></script>
+<script defer src="vendor/html2canvas.min.js"></script>
+</head>
+<body class="min-h-screen">
+
+<header class="border-b border-slate-200 bg-white">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <a href="/" class="flex items-center gap-2 min-w-0">
+      <span class="w-9 h-9 rounded-xl grid place-items-center text-white font-bold shrink-0" style="background:var(--brand)">F</span>
+      <span class="font-bold truncate">FacturePro</span>
+    </a>
+    <div class="flex items-center gap-1.5">
+      <button type="button" class="seg" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" class="seg" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" class="seg" data-lang="ar" aria-pressed="false">AR</button>
+    </div>
+  </div>
+</header>
+
+<!-- The landing. A visitor must know within a second that this is not the
+     Algerian workspace: hero first, form second. -->
+<section id="landing">
+  <div class="hero">
+    <div class="max-w-3xl mx-auto px-4 py-16 sm:py-20 text-center">
+      <p id="t-badge" class="inline-block px-3 py-1 rounded-full text-xs font-medium mb-5"
+         style="background:rgba(5,150,105,.18);color:#6ee7b7">Free · Private · No signup</p>
+      <h1 id="t-h1" class="text-3xl sm:text-4xl font-bold text-white leading-tight">An invoice your country will accept</h1>
+      <p id="t-lede" class="mt-4 text-slate-300 leading-relaxed">Pick where you invoice from. The identifier fields, the currency and the tax rate follow. Export the PDF and you are done.</p>
+      <p id="t-pick" class="mt-10 mb-3 text-xs uppercase tracking-wider text-slate-400">Choose a country</p>
+      <div id="chips" class="flex flex-wrap justify-center gap-2"></div>
+    </div>
+  </div>
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-4xl mx-auto px-4 py-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-sm">
+      <div><div id="t-tr1t" class="font-semibold">Six countries</div><div id="t-tr1d" class="text-slate-500 text-xs mt-0.5">The fields each one asks for</div></div>
+      <div><div id="t-tr2t" class="font-semibold">Stays on your device</div><div id="t-tr2d" class="text-slate-500 text-xs mt-0.5">Nothing is sent anywhere</div></div>
+      <div><div id="t-tr3t" class="font-semibold">PDF export</div><div id="t-tr3d" class="text-slate-500 text-xs mt-0.5">A4, one click</div></div>
+      <div><div id="t-tr4t" class="font-semibold">No account</div><div id="t-tr4d" class="text-slate-500 text-xs mt-0.5">Nothing to sign up to</div></div>
+    </div>
+  </div>
+</section>
+
+<main id="app" class="max-w-6xl mx-auto px-4 py-6 hidden">
+
+  <div class="flex items-center justify-between gap-3 mb-5">
+    <button type="button" id="back" class="text-sm text-slate-500 hover:text-slate-900">← <span id="t-back">Countries</span></button>
+    <button type="button" id="btn-pdf" class="px-4 py-2 rounded-xl text-white text-sm font-semibold" style="background:var(--brand)">PDF</button>
+  </div>
+
+  <!-- The picker stays out of the form and never hides: a visitor who lands
+       on a country that issues nothing must be able to choose another. -->
+  <div class="card p-5 mb-5">
+    <label id="t-lcountry" class="block text-xs font-medium text-slate-500 mb-1" for="country">Country</label>
+    <select id="country" class="fld sm:max-w-xs"></select>
+  </div>
+
+  <!-- Where a PDF is not the accepted form of the invoice, nothing is issued
+       and this replaces the whole form. -->
+  <div id="blocked" class="card p-6 hidden">
+    <h2 id="blocked-country" class="text-lg font-bold mb-2"></h2>
+    <p id="blocked-why" class="text-slate-600 leading-relaxed"></p>
+    <a id="blocked-link" href="/" class="hidden mt-4 inline-block px-4 py-2 rounded-xl text-white text-sm font-semibold" style="background:var(--brand)"></a>
+  </div>
+
+  <div id="work" class="grid lg:grid-cols-2 gap-6">
+
+    <section class="space-y-5">
+      <div class="card p-5 space-y-4">
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label id="t-ldoclang" class="block text-xs font-medium text-slate-500 mb-1" for="doclang">Invoice language</label>
+            <select id="doclang" class="fld">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
+          <div>
+            <label id="t-lcurrency" class="block text-xs font-medium text-slate-500 mb-1" for="currency">Currency</label>
+            <input id="currency" class="fld ltr-code" />
+          </div>
+          <div>
+            <label id="t-ltax" class="block text-xs font-medium text-slate-500 mb-1" for="taxRate">Tax</label>
+            <div class="flex gap-2">
+              <input id="taxRate" type="number" min="0" max="100" step="0.1" class="fld" />
+              <input id="taxName" class="fld w-28" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-5 space-y-3">
+        <h2 id="t-seller" class="font-semibold">Your business</h2>
+        <div id="biz-fields" class="grid sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <div class="card p-5 space-y-3">
+        <h2 id="t-client" class="font-semibold">Client</h2>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label id="t-cname" class="block text-xs font-medium text-slate-500 mb-1" for="clientName">Client name</label>
+            <input id="clientName" class="fld" />
+          </div>
+          <div class="sm:col-span-2">
+            <label id="t-caddr" class="block text-xs font-medium text-slate-500 mb-1" for="clientAddress">Address</label>
+            <input id="clientAddress" class="fld" />
+          </div>
+          <div>
+            <label id="t-ctax" class="block text-xs font-medium text-slate-500 mb-1" for="clientTaxId">Client tax number</label>
+            <input id="clientTaxId" class="fld ltr-code" />
+          </div>
+          <div>
+            <label id="t-num" class="block text-xs font-medium text-slate-500 mb-1" for="invoiceNumber">Invoice number</label>
+            <input id="invoiceNumber" class="fld ltr-code" />
+          </div>
+          <div>
+            <label id="t-issue" class="block text-xs font-medium text-slate-500 mb-1" for="issueDate">Issue date</label>
+            <input id="issueDate" type="date" class="fld" />
+          </div>
+          <div>
+            <label id="t-due" class="block text-xs font-medium text-slate-500 mb-1" for="dueDate">Due date</label>
+            <input id="dueDate" type="date" class="fld" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 id="t-lines" class="font-semibold">Lines</h2>
+          <button type="button" id="add-line" class="text-sm px-3 py-1.5 rounded-lg font-semibold"
+                  style="background:rgba(5,150,105,.12);color:var(--brand)">+ <span id="t-add">Add</span></button>
+        </div>
+        <div id="items" class="space-y-2"></div>
+        <div class="pt-3 border-t border-slate-200 space-y-1 text-sm">
+          <div class="flex justify-between"><span id="t-sub">Subtotal</span><span id="subtotal" class="num">—</span></div>
+          <div class="flex justify-between"><span id="tax-label">Tax</span><span id="tax-amount" class="num">—</span></div>
+          <div class="flex justify-between font-bold text-base"><span id="t-total">Total</span><span id="total" class="num">—</span></div>
+        </div>
+      </div>
+
+      <div class="card p-5 space-y-3">
+        <h2 id="t-notes" class="font-semibold">Notes and legal mention</h2>
+        <textarea id="notes" rows="2" class="fld"></textarea>
+        <textarea id="legal" rows="3" class="fld text-slate-600"></textarea>
+        <p id="t-draft" class="text-xs text-slate-500">This form is remembered on this device so a refresh does not lose it. No invoice is kept — export the PDF.</p>
+      </div>
+    </section>
+
+    <section class="lg:sticky lg:top-4 self-start">
+      <div class="rounded-2xl p-4 bg-slate-200/60 overflow-auto max-h-[calc(100vh-2rem)]">
+        <div id="preview" class="paper mx-auto"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-slate-500">
+  <p id="t-foot">FacturePro · a free invoice generator · Created by CheMs SoUu</p>
+  <p class="mt-2"><a href="/" class="underline" id="t-dz">Invoicing in Algeria? Use the application.</a></p>
+</footer>
+
+<script>
+/* The international invoice generator.
+ *
+ * Self-contained on purpose. It shares the vendored libraries, the font and
+ * the brand with the application and nothing else — not its state, not its
+ * storage, not its translations, not its arithmetic. In particular it does
+ * not load lib-calc.js: that file is Algerian arithmetic (droit de timbre,
+ * the 19/9/0 rates, an amount in words ending in "dinars"), none of which
+ * belongs on a British or Emirati invoice.
+ *
+ * It makes one invoice and prints it. It keeps no list, no history and no
+ * archive — one draft of the form on screen, overwritten, so a refresh does
+ * not cost ten minutes of typing. */
+(function(){
+'use strict';
+
+/* ---------------------------------------------------------------- *
+ * The countries.
+ *
+ * Six issue an invoice. Three are listed and issue nothing: this page
+ * only produces a document where a PDF is the accepted form of it.
+ * Deleting those three would be quieter, not safer — the same visitor
+ * would pick International and print the same paper with nothing to
+ * warn them.
+ * ---------------------------------------------------------------- */
+var COUNTRIES = {
+  MA: {code:'MA', flag:'🇲🇦', name:{en:'Morocco', fr:'Maroc', ar:'المغرب'},
+       currency:'MAD', taxRate:20, taxName:'TVA', docLang:'fr', title:'FACTURE',
+       legal:{fr:'TVA marocaine au taux indiqué. Paiement à réception, sauf accord écrit contraire.',
+              en:'Moroccan VAT at the rate shown. Payment on receipt unless otherwise agreed in writing.'},
+       fields:[{key:'ice', label:{en:'ICE', fr:'ICE', ar:'ICE'}, code:true},
+               {key:'if',  label:{en:'Tax ID (IF)', fr:'Identifiant fiscal (IF)', ar:'المعرّف الجبائي'}, code:true},
+               {key:'rc',  label:{en:'Trade register (RC)', fr:'Registre de commerce (RC)', ar:'السجل التجاري'}, code:true}]},
+
+  TN: {code:'TN', flag:'🇹🇳', name:{en:'Tunisia', fr:'Tunisie', ar:'تونس'},
+       currency:'TND', taxRate:19, taxName:'TVA', docLang:'fr', title:'FACTURE',
+       legal:{fr:'TVA tunisienne au taux indiqué. Paiement à réception, sauf accord écrit contraire.',
+              en:'Tunisian VAT at the rate shown. Payment on receipt unless otherwise agreed in writing.'},
+       fields:[{key:'mf', label:{en:'Tax ID', fr:'Matricule fiscal', ar:'المعرّف الجبائي'}, code:true}]},
+
+  AE: {code:'AE', flag:'🇦🇪', name:{en:'United Arab Emirates', fr:'Émirats arabes unis', ar:'الإمارات'},
+       currency:'AED', taxRate:5, taxName:'VAT', docLang:'en', title:'TAX INVOICE',
+       legal:{en:'Tax invoice. VAT charged at the rate shown. Payment on receipt unless otherwise agreed.',
+              fr:'Facture fiscale. TVA au taux indiqué. Paiement à réception, sauf accord contraire.'},
+       fields:[{key:'trn', label:{en:'TRN', fr:'TRN', ar:'الرقم الضريبي'}, code:true}]},
+
+  GB: {code:'GB', flag:'🇬🇧', name:{en:'United Kingdom', fr:'Royaume-Uni', ar:'المملكة المتحدة'},
+       currency:'GBP', taxRate:20, taxName:'VAT', docLang:'en', title:'INVOICE',
+       legal:{en:'VAT charged at the rate shown. Payment within 30 days unless otherwise agreed.',
+              fr:'TVA au taux indiqué. Paiement sous 30 jours, sauf accord contraire.'},
+       fields:[{key:'vat', label:{en:'VAT number', fr:'N° de TVA', ar:'رقم القيمة المضافة'}, code:true},
+               {key:'coNo', label:{en:'Company number', fr:'N° de société', ar:'رقم الشركة'}, code:true}]},
+
+  US: {code:'US', flag:'🇺🇸', name:{en:'United States', fr:'États-Unis', ar:'الولايات المتحدة'},
+       currency:'USD', taxRate:0, taxName:'Sales tax', docLang:'en', title:'INVOICE',
+       legal:{en:'Sales tax at the rate shown, where it applies. Payment on receipt unless otherwise agreed.',
+              fr:'Taxe de vente au taux indiqué, le cas échéant. Paiement à réception, sauf accord contraire.'},
+       fields:[{key:'ein', label:{en:'EIN', fr:'EIN', ar:'EIN'}, code:true}]},
+
+  INT:{code:'INT', flag:'🌍', name:{en:'International', fr:'International', ar:'دولي'},
+       currency:'USD', taxRate:0, taxName:'Tax', docLang:'en', title:'INVOICE',
+       legal:{en:'Terms as agreed between the parties. Amounts stated in the currency shown.',
+              fr:'Conditions convenues entre les parties. Montants exprimés dans la devise indiquée.'},
+       fields:[{key:'taxId', label:{en:'Tax number', fr:'N° fiscal', ar:'الرقم الضريبي'}, code:true}]},
+
+  /* Listed, and issuing nothing. */
+  DZ: {code:'DZ', flag:'🇩🇿', name:{en:'Algeria', fr:'Algérie', ar:'الجزائر'}, blocked:true, home:true,
+       why:{en:'This page computes no droit de timbre and feeds no G50, so an Algerian invoice made here would be short by the stamp duty. The application does both.',
+            fr:"Cette page ne calcule pas le droit de timbre et n'alimente aucun G50 : une facture algérienne faite ici serait incomplète du timbre. L'application fait les deux.",
+            ar:'هذه الصفحة لا تحسب رسم الطابع ولا تُغذّي أي G50، فالفاتورة الجزائرية الصادرة منها تنقصها قيمة الطابع. التطبيق يقوم بالأمرين.'},
+       cta:{en:'Open the application', fr:"Ouvrir l'application", ar:'افتح التطبيق'}},
+
+  FR: {code:'FR', flag:'🇫🇷', name:{en:'France', fr:'France', ar:'فرنسا'}, blocked:true,
+       why:{en:'French B2B invoicing runs through a certified platform (PDP). A PDF does not replace it, so this page issues no French invoice.',
+            fr:"La facturation B2B française passe par une plateforme agréée (PDP). Un PDF ne la remplace pas : cette page n'émet donc pas de facture française.",
+            ar:'الفوترة بين الشركات في فرنسا تمرّ عبر منصّة معتمدة (PDP)، وملف PDF لا يحلّ محلّها، لذلك لا تُصدر هذه الصفحة فاتورة فرنسية.'}},
+
+  SA: {code:'SA', flag:'🇸🇦', name:{en:'Saudi Arabia', fr:'Arabie saoudite', ar:'السعودية'}, blocked:true,
+       why:{en:'A ZATCA tax invoice carries a QR code with TLV-encoded fields, which this page does not emit. An invoice without it is not the document Saudi rules ask for.',
+            fr:"Une facture fiscale ZATCA porte un QR code à champs encodés en TLV, que cette page n'émet pas. Sans lui, ce n'est pas le document attendu en Arabie saoudite.",
+            ar:'الفاتورة الضريبية لدى هيئة الزكاة والضريبة والجمارك تحمل رمز QR بحقول مُرمّزة بصيغة TLV، وهذه الصفحة لا تُنتجه، فالفاتورة بدونه ليست المستند المطلوب.'}}
+};
+
+var ORDER = ['MA','TN','AE','GB','US','INT','DZ','FR','SA'];
+
+/* The document is written in the language its country invoices in, and the
+   labels below are the whole of it. There is no amount in words: it is a
+   French and Algerian convention, absent from British, American and Gulf
+   invoices, and the application's converter says "dinars". */
+var DOC = {
+  en:{billTo:'Bill to', number:'Invoice no.', issued:'Issue date', due:'Due date',
+      desc:'Description', qty:'Qty', price:'Unit price', amount:'Amount',
+      subtotal:'Subtotal', total:'Total', notes:'Notes', company:'Your company'},
+  fr:{billTo:'Facturé à', number:'N° de facture', issued:"Date d'émission", due:"Date d'échéance",
+      desc:'Désignation', qty:'Qté', price:'P.U.', amount:'Montant',
+      subtotal:'Sous-total', total:'Total', notes:'Notes', company:'Votre entreprise'}
+};
+
+var UI = {
+  en:{badge:'Free · Private · No signup',
+      h1:'An invoice your country will accept',
+      lede:'Pick where you invoice from. The identifier fields, the currency and the tax rate follow. Export the PDF and you are done.',
+      pick:'Choose a country',
+      tr1t:'Six countries', tr1d:'The fields each one asks for',
+      tr2t:'Stays on your device', tr2d:'Nothing is sent anywhere',
+      tr3t:'PDF export', tr3d:'A4, one click',
+      tr4t:'No account', tr4d:'Nothing to sign up to',
+      back:'Countries', country:'Country', doclang:'Invoice language', currency:'Currency',
+      tax:'Tax rate and name', seller:'Your business', client:'Client',
+      name:'Business name', address:'Address',
+      cname:'Client name', caddr:'Address', ctax:'Client tax number',
+      num:'Invoice number', issue:'Issue date', due:'Due date',
+      lines:'Lines', add:'Add', sub:'Subtotal', total:'Total',
+      notes:'Notes and legal mention',
+      draft:'This form is remembered on this device so a refresh does not lose it. No invoice is kept — export the PDF.',
+      foot:'FacturePro · a free invoice generator · Created by CheMs SoUu',
+      dz:'Invoicing in Algeria? Use the application.',
+      desc:'Description', qty:'Qty', price:'Unit price', remove:'Remove this line',
+      noInvoice:'No invoice is issued for this country'},
+  fr:{badge:'Gratuit · Privé · Sans inscription',
+      h1:'Une facture que votre pays accepte',
+      lede:"Choisissez le pays depuis lequel vous facturez. Les identifiants, la devise et le taux suivent. Exportez le PDF et c'est fini.",
+      pick:'Choisissez un pays',
+      tr1t:'Six pays', tr1d:'Les champs que chacun exige',
+      tr2t:'Reste sur votre appareil', tr2d:"Rien n'est envoyé nulle part",
+      tr3t:'Export PDF', tr3d:'A4, en un clic',
+      tr4t:'Sans compte', tr4d:"Rien à créer",
+      back:'Pays', country:'Pays', doclang:'Langue de la facture', currency:'Devise',
+      tax:'Taux et nom de la taxe', seller:'Votre entreprise', client:'Client',
+      name:'Raison sociale', address:'Adresse',
+      cname:'Nom du client', caddr:'Adresse', ctax:'N° fiscal du client',
+      num:'N° de facture', issue:"Date d'émission", due:"Date d'échéance",
+      lines:'Lignes', add:'Ajouter', sub:'Sous-total', total:'Total',
+      notes:'Notes et mention légale',
+      draft:"Ce formulaire est conservé sur cet appareil : un rafraîchissement ne l'efface pas. Aucune facture n'est gardée — exportez le PDF.",
+      foot:'FacturePro · générateur de factures gratuit · Created by CheMs SoUu',
+      dz:"Vous facturez en Algérie ? Utilisez l'application.",
+      desc:'Désignation', qty:'Qté', price:'P.U.', remove:'Supprimer cette ligne',
+      noInvoice:"Aucune facture n'est émise pour ce pays"},
+  ar:{badge:'مجاني · خاص · بدون تسجيل',
+      h1:'فاتورة يقبلها بلدك',
+      lede:'اختر البلد الذي تفوتر منه. تتبعه الحقول التعريفية والعملة ونسبة الضريبة. صدّر ملف PDF وانتهى الأمر.',
+      pick:'اختر بلداً',
+      tr1t:'ستّة بلدان', tr1d:'الحقول التي يطلبها كل بلد',
+      tr2t:'يبقى على جهازك', tr2d:'لا شيء يُرسل إلى أي مكان',
+      tr3t:'تصدير PDF', tr3d:'مقاس A4 بنقرة واحدة',
+      tr4t:'بدون حساب', tr4d:'لا شيء تسجّله',
+      back:'البلدان', country:'البلد', doclang:'لغة الفاتورة', currency:'العملة',
+      tax:'نسبة الضريبة واسمها', seller:'مؤسستك', client:'العميل',
+      name:'التسمية التجارية', address:'العنوان',
+      cname:'اسم العميل', caddr:'العنوان', ctax:'الرقم الضريبي للعميل',
+      num:'رقم الفاتورة', issue:'تاريخ الإصدار', due:'تاريخ الاستحقاق',
+      lines:'السطور', add:'إضافة', sub:'المجموع الفرعي', total:'الإجمالي',
+      notes:'ملاحظات ومذكّرة قانونية',
+      draft:'يُحفظ هذا النموذج على هذا الجهاز حتى لا يضيع عند تحديث الصفحة. لا تُحفظ أي فاتورة — صدّر ملف PDF.',
+      foot:'FacturePro · مولّد فواتير مجاني · Created by CheMs SoUu',
+      dz:'تفوتر في الجزائر؟ استعمل التطبيق.',
+      desc:'الوصف', qty:'الكمية', price:'سعر الوحدة', remove:'حذف هذا السطر',
+      noInvoice:'لا تُصدر أي فاتورة لهذا البلد'}
+};
+
+var DRAFT_KEY = 'facturedz_intl_draft';   /* one draft, overwritten. Not an archive. */
+
+var state = {
+  lang:'en', country:'INT', docLang:'en', currency:'USD', taxRate:0, taxName:'Tax',
+  biz:{}, clientName:'', clientAddress:'', clientTaxId:'',
+  invoiceNumber:'', issueDate:'', dueDate:'', notes:'', legal:'',
+  items:[{desc:'', qty:1, price:0}]
+};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function t(){ return UI[state.lang] || UI.en; }
+
+/* Money is formatted with one fixed locale in every interface language.
+   Passing the UI language through to toLocaleString is how a total ends up
+   reading ١٢٣ : the rule here is that money and codes stay latin, and only
+   the words around them change. */
+function money(n){
+  var v = Math.round((Number(n) || 0) * 100) / 100;
+  return v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function amount(n){ return money(n) + ' ' + state.currency; }
+
+/* Totals. Subtotal, one tax, total — and nothing else. No droit de timbre:
+   it is Algerian, and Algeria issues nothing here. */
+function totals(){
+  var sub = state.items.reduce(function(s, it){
+    return s + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0);
+  var tax = sub * ((Number(state.taxRate) || 0) / 100);
+  sub = Math.round(sub * 100) / 100;
+  tax = Math.round(tax * 100) / 100;
+  return {sub:sub, tax:tax, total:Math.round((sub + tax) * 100) / 100};
+}
+
+/* ---------------------------------------------------------------- *
+ * Language of the interface. The document keeps its own.
+ * ---------------------------------------------------------------- */
+function setLang(lang){
+  state.lang = UI[lang] ? lang : 'en';
+  var ar = state.lang === 'ar';
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = ar ? 'rtl' : 'ltr';
+  document.body.classList.toggle('ar', ar);
+  [].forEach.call(document.querySelectorAll('button.seg[data-lang]'), function(b){
+    b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang));
+  });
+  paintText();
+  paintChips();
+  paintCountries();
+  paintBizFields();
+  paintItems();
+  if (!$('app').classList.contains('hidden')) paintBlocked();
+  render();
+  save();
+}
+
+function paintText(){
+  var s = t();
+  var map = {'t-badge':s.badge,'t-h1':s.h1,'t-lede':s.lede,'t-pick':s.pick,
+    't-tr1t':s.tr1t,'t-tr1d':s.tr1d,'t-tr2t':s.tr2t,'t-tr2d':s.tr2d,
+    't-tr3t':s.tr3t,'t-tr3d':s.tr3d,'t-tr4t':s.tr4t,'t-tr4d':s.tr4d,
+    't-back':s.back,'t-lcountry':s.country,'t-ldoclang':s.doclang,'t-lcurrency':s.currency,
+    't-ltax':s.tax,'t-seller':s.seller,'t-client':s.client,'t-cname':s.cname,'t-caddr':s.caddr,
+    't-ctax':s.ctax,'t-num':s.num,'t-issue':s.issue,'t-due':s.due,'t-lines':s.lines,
+    't-add':s.add,'t-sub':s.sub,'t-total':s.total,'t-notes':s.notes,'t-draft':s.draft,
+    't-foot':s.foot,'t-dz':s.dz};
+  Object.keys(map).forEach(function(id){ var el = $(id); if (el) el.textContent = map[id]; });
+}
+
+function cname(c){ return c.name[state.lang] || c.name.en; }
+
+function paintChips(){
+  $('chips').innerHTML = ORDER.map(function(code){
+    var c = COUNTRIES[code];
+    return '<button type="button" class="chip" data-country="' + code + '">' +
+           c.flag + ' ' + esc(cname(c)) + '</button>';
+  }).join('');
+}
+
+function paintCountries(){
+  var sel = $('country');
+  sel.innerHTML = ORDER.map(function(code){
+    return '<option value="' + code + '">' + esc(cname(COUNTRIES[code])) + '</option>';
+  }).join('');
+  sel.value = state.country;
+}
+
+/* ---------------------------------------------------------------- *
+ * Picking a country.
+ * ---------------------------------------------------------------- */
+function applyCountry(code){
+  var c = COUNTRIES[code];
+  if (!c) return;
+  state.country = code;
+  if (!c.blocked){
+    state.currency = c.currency;
+    state.taxRate  = c.taxRate;
+    state.taxName  = c.taxName;
+    state.docLang  = c.docLang;
+    state.legal    = c.legal[state.docLang] || c.legal.en;
+  }
+  $('country').value = code;
+  if (!c.blocked){
+    $('currency').value = state.currency;
+    $('taxRate').value  = state.taxRate;
+    $('taxName').value  = state.taxName;
+    $('doclang').value  = state.docLang;
+    $('legal').value    = state.legal;
+  }
+  paintBizFields();
+  paintBlocked();
+  render();
+}
+
+/* Three countries are listed and issue nothing. The form, the preview and
+   the export go away together — there is nothing to get wrong because
+   nothing is produced. */
+function paintBlocked(){
+  var c = COUNTRIES[state.country];
+  var off = !!c.blocked;
+  $('work').classList.toggle('hidden', off);
+  $('blocked').classList.toggle('hidden', !off);
+  $('btn-pdf').classList.toggle('hidden', off);
+  if (!off) return;
+  $('blocked-country').textContent = c.flag + ' ' + cname(c) + ' — ' + t().noInvoice;
+  $('blocked-why').textContent = c.why[state.lang] || c.why.en;
+  var link = $('blocked-link');
+  link.classList.toggle('hidden', !c.home);
+  if (c.home) link.textContent = c.cta[state.lang] || c.cta.en;
+}
+
+function fieldLabel(f){ return f.label[state.lang] || f.label.en; }
+
+function paintBizFields(){
+  var c = COUNTRIES[state.country];
+  var box = $('biz-fields');
+  if (c.blocked){ box.innerHTML = ''; return; }
+  var s = t();
+  var base = [{key:'name', label:{en:s.name, fr:s.name, ar:s.name}, wide:true},
+              {key:'address', label:{en:s.address, fr:s.address, ar:s.address}, wide:true}];
+  box.innerHTML = base.concat(c.fields).map(function(f){
+    return '<div class="' + (f.wide ? 'sm:col-span-2' : '') + '">' +
+      '<label class="block text-xs font-medium text-slate-500 mb-1" for="biz-' + f.key + '">' +
+      esc(fieldLabel(f)) + '</label>' +
+      '<input id="biz-' + f.key + '" data-biz="' + f.key + '" class="fld' + (f.code ? ' ltr-code' : '') +
+      '" value="' + esc(state.biz[f.key] || '') + '" /></div>';
+  }).join('');
+  [].forEach.call(box.querySelectorAll('[data-biz]'), function(inp){
+    inp.addEventListener('input', function(){
+      state.biz[inp.dataset.biz] = inp.value;
+      render(); save();
+    });
+  });
+}
+
+function paintItems(){
+  var s = t();
+  $('items').innerHTML = state.items.map(function(it, i){
+    return '<div class="grid grid-cols-12 gap-2 items-center">' +
+      '<input class="fld col-span-6" data-i="' + i + '" data-f="desc" placeholder="' + esc(s.desc) +
+        '" value="' + esc(it.desc) + '" aria-label="' + esc(s.desc) + '" />' +
+      '<input class="fld col-span-2" data-i="' + i + '" data-f="qty" type="number" min="0" step="0.01" value="' +
+        esc(it.qty) + '" aria-label="' + esc(s.qty) + '" />' +
+      '<input class="fld col-span-3" data-i="' + i + '" data-f="price" type="number" min="0" step="0.01" value="' +
+        esc(it.price) + '" aria-label="' + esc(s.price) + '" />' +
+      '<button type="button" class="col-span-1 text-slate-400 hover:text-red-600 text-lg" data-del="' + i +
+        '" aria-label="' + esc(s.remove) + '" title="' + esc(s.remove) + '">×</button>' +
+    '</div>';
+  }).join('');
+  [].forEach.call($('items').querySelectorAll('input'), function(inp){
+    inp.addEventListener('input', function(){
+      var i = Number(inp.dataset.i), f = inp.dataset.f;
+      state.items[i][f] = (f === 'desc') ? inp.value : (parseFloat(inp.value) || 0);
+      render(); save();
+    });
+  });
+  [].forEach.call($('items').querySelectorAll('[data-del]'), function(b){
+    b.addEventListener('click', function(){
+      state.items.splice(Number(b.dataset.del), 1);
+      if (!state.items.length) state.items.push({desc:'', qty:1, price:0});
+      paintItems(); render(); save();
+    });
+  });
+}
+
+/* ---------------------------------------------------------------- *
+ * The document.
+ * ---------------------------------------------------------------- */
+function render(){
+  var c = COUNTRIES[state.country];
+  if (c.blocked){ $('preview').innerHTML = ''; return; }
+  var d = DOC[state.docLang] || DOC.en;
+  var tt = totals();
+
+  $('subtotal').textContent  = amount(tt.sub);
+  $('tax-amount').textContent = amount(tt.tax);
+  $('total').textContent     = amount(tt.total);
+  $('tax-label').textContent = state.taxName + ' (' + state.taxRate + ' %)';
+
+  var ids = c.fields.map(function(f){
+    var v = state.biz[f.key];
+    return v ? '<div>' + esc(fieldLabel(f)) + ': <span class="ltr-code">' + esc(v) + '</span></div>' : '';
+  }).join('');
+
+  var rows = state.items.filter(function(it){ return it.desc || it.price; }).map(function(it){
+    return '<tr><td>' + (esc(it.desc) || '—') + '</td>' +
+      '<td class="r num">' + esc(it.qty) + '</td>' +
+      '<td class="r num">' + money(it.price) + '</td>' +
+      '<td class="r num">' + money((Number(it.qty) || 0) * (Number(it.price) || 0)) + '</td></tr>';
+  }).join('');
+
+  $('preview').innerHTML =
+  '<div style="border-top:4px solid var(--brand);padding-top:14px">' +
+    '<div style="display:flex;justify-content:space-between;gap:24px;margin-bottom:28px">' +
+      '<div>' +
+        '<div style="font-size:20px;font-weight:700;color:var(--brand)">' +
+          (esc(state.biz.name) || esc(d.company)) + '</div>' +
+        '<div style="font-size:12px;color:#475569;margin-top:6px;line-height:1.6">' +
+          (state.biz.address ? '<div>' + esc(state.biz.address) + '</div>' : '') + ids + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:18px;font-weight:700">' + esc(c.title) + '</div>' +
+        '<div style="font-size:12px;color:#475569;margin-top:6px;line-height:1.6">' +
+          '<div>' + esc(d.number) + ': <span class="ltr-code">' + esc(state.invoiceNumber) + '</span></div>' +
+          '<div>' + esc(d.issued) + ': <span class="ltr-code">' + esc(state.issueDate) + '</span></div>' +
+          (state.dueDate ? '<div>' + esc(d.due) + ': <span class="ltr-code">' + esc(state.dueDate) + '</span></div>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#f1f5f9;border-radius:10px;padding:12px;margin-bottom:22px">' +
+      '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b">' + esc(d.billTo) + '</div>' +
+      '<div style="font-weight:600;margin-top:4px">' + (esc(state.clientName) || '—') + '</div>' +
+      (state.clientAddress ? '<div style="font-size:12px;color:#475569">' + esc(state.clientAddress) + '</div>' : '') +
+      (state.clientTaxId ? '<div style="font-size:12px;color:#475569" class="ltr-code">' + esc(state.clientTaxId) + '</div>' : '') +
+    '</div>' +
+    '<table><thead><tr><th>' + esc(d.desc) + '</th><th class="r">' + esc(d.qty) + '</th>' +
+      '<th class="r">' + esc(d.price) + '</th><th class="r">' + esc(d.amount) + '</th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="4" style="text-align:center;color:#94a3b8">—</td></tr>') + '</tbody></table>' +
+    '<div style="display:flex;justify-content:flex-end;margin-top:18px">' +
+      '<div style="width:250px;font-size:13px">' +
+        '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#475569">' +
+          esc(d.subtotal) + '</span><span class="num">' + amount(tt.sub) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#475569">' +
+          esc(state.taxName) + ' (' + esc(state.taxRate) + ' %)</span><span class="num">' + amount(tt.tax) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;margin-top:4px;' +
+          'border-top:1px solid #cbd5e1;font-weight:700"><span>' + esc(d.total) +
+          '</span><span class="num">' + amount(tt.total) + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    (state.notes ? '<div style="font-size:12px;color:#475569;margin-top:22px">' +
+      esc(d.notes) + ': ' + esc(state.notes) + '</div>' : '') +
+    '<div style="font-size:11px;color:#64748b;border-top:1px solid #e2e8f0;margin-top:24px;padding-top:10px">' +
+      esc(state.legal) + '</div>' +
+  '</div>';
+}
+
+/* ---------------------------------------------------------------- *
+ * The draft. One key, overwritten by whatever is on screen — a crash
+ * guard, not an archive, and never described as a saved invoice.
+ * ---------------------------------------------------------------- */
+var saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch(e){}
+  }, 300);
+}
+function load(){
+  var raw;
+  try { raw = localStorage.getItem(DRAFT_KEY); } catch(e){ return false; }
+  if (!raw) return false;
+  try {
+    var d = JSON.parse(raw);
+    if (!d || typeof d !== 'object') return false;
+    Object.keys(state).forEach(function(k){ if (d[k] !== undefined) state[k] = d[k]; });
+    if (!COUNTRIES[state.country]) state.country = 'INT';
+    if (!Array.isArray(state.items) || !state.items.length) state.items = [{desc:'', qty:1, price:0}];
+    return true;
+  } catch(e){ return false; }
+}
+
+/* ---------------------------------------------------------------- *
+ * PDF. Same two vendored libraries the application uses, served from
+ * this domain: a blocked CDN used to leave the button throwing.
+ * ---------------------------------------------------------------- */
+function exportPDF(){
+  var el = $('preview');
+  if (!el || COUNTRIES[state.country].blocked) return;
+  if (typeof html2canvas !== 'function' || !window.jspdf){
+    alert('PDF: ' + (state.lang === 'fr' ? 'bibliothèque indisponible' : 'library unavailable'));
+    return;
+  }
+  var btn = $('btn-pdf'), was = btn.textContent;
+  btn.textContent = '…';
+  html2canvas(el, {scale:2, backgroundColor:'#ffffff', logging:false, windowWidth:874})
+  .then(function(canvas){
+    /* JPEG, as in the application: a PNG of a full page is the usual cause
+       of a failed save on a phone. */
+    var img = canvas.toDataURL('image/jpeg', 0.92);
+    var jsPDF = window.jspdf.jsPDF;
+    var pdf = new jsPDF('p', 'mm', 'a4');
+    var PW = 210, PH = 297;
+    var h = canvas.height * PW / canvas.width;
+    pdf.addImage(img, 'JPEG', 0, 0, PW, h);
+    var left = h - PH, pos = 0;
+    while (left > 0){ pos -= PH; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, PW, h); left -= PH; }
+    pdf.save((state.invoiceNumber || 'invoice') + '.pdf');
+  })
+  .catch(function(e){ console.error('PDF', e); })
+  .then(function(){ btn.textContent = was; });
+}
+
+/* ---------------------------------------------------------------- *
+ * Wiring.
+ * ---------------------------------------------------------------- */
+function openForm(code){
+  if (code) applyCountry(code);
+  $('landing').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  paintBlocked();
+  render();
+  window.scrollTo(0, 0);
+  save();
+}
+
+function bindText(id, key){
+  $(id).addEventListener('input', function(){ state[key] = $(id).value; render(); save(); });
+}
+
+function init(){
+  var nav = (navigator.language || 'en').toLowerCase();
+  state.lang = nav.indexOf('ar') === 0 ? 'ar' : (nav.indexOf('fr') === 0 ? 'fr' : 'en');
+
+  var had = load();
+  if (!had){
+    var today = new Date();
+    var iso = function(d){ return d.toISOString().slice(0, 10); };
+    var due = new Date(today.getTime() + 30 * 86400000);
+    state.issueDate = iso(today);
+    state.dueDate = iso(due);
+    state.invoiceNumber = 'INV-' + today.getFullYear() + '-001';
+    state.legal = COUNTRIES[state.country].legal[state.docLang];
+  }
+
+  paintChips();
+  paintCountries();
+  ['clientName','clientAddress','clientTaxId','invoiceNumber','issueDate','dueDate','notes','legal']
+    .forEach(function(k){ $(k).value = state[k] || ''; bindText(k, k); });
+  $('currency').value = state.currency;
+  $('taxRate').value = state.taxRate;
+  $('taxName').value = state.taxName;
+  $('doclang').value = state.docLang;
+  paintBizFields();
+  paintItems();
+  setLang(state.lang);
+
+  $('chips').addEventListener('click', function(e){
+    var b = e.target.closest('[data-country]');
+    if (b) openForm(b.dataset.country);
+  });
+  $('country').addEventListener('change', function(){ applyCountry($('country').value); save(); });
+  $('doclang').addEventListener('change', function(){
+    state.docLang = $('doclang').value;
+    var c = COUNTRIES[state.country];
+    if (!c.blocked) $('legal').value = state.legal = (c.legal[state.docLang] || c.legal.en);
+    render(); save();
+  });
+  $('currency').addEventListener('input', function(){ state.currency = $('currency').value; render(); save(); });
+  $('taxRate').addEventListener('input', function(){ state.taxRate = parseFloat($('taxRate').value) || 0; render(); save(); });
+  $('taxName').addEventListener('input', function(){ state.taxName = $('taxName').value; render(); save(); });
+  $('add-line').addEventListener('click', function(){
+    state.items.push({desc:'', qty:1, price:0}); paintItems(); render(); save();
+  });
+  $('back').addEventListener('click', function(){
+    $('app').classList.add('hidden');
+    $('landing').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  });
+  $('btn-pdf').addEventListener('click', exportPDF);
+  [].forEach.call(document.querySelectorAll('button.seg[data-lang]'), function(b){
+    b.addEventListener('click', function(){ setLang(b.dataset.lang); });
+  });
+
+  /* Somebody who already started an invoice comes back to it, not to the
+     hero they have read once. */
+  if (had) openForm(state.country);
+}
+
+init();
+})();
+</script>
+
+<!-- Vercel Web Analytics, as on the other public pages: without it this
+     page's visitors are invisible. -->
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
