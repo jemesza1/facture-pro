@@ -2290,6 +2290,30 @@ const landing = await readFile(join(ROOT, 'landing-facturepro.html'), 'utf8');
 check('the old landing page points its authority at the home page',
       /rel="canonical" href="https:\/\/www\.facturedz\.com\/"/.test(landing));
 
+/* One page, one address. index.html sends a visitor with no stored data to
+   accueil.html, and a crawler never has stored data — so "/" is where Google
+   arrives and accueil.html is what it reads. If that page claims its own
+   address, the two compete for the same words with the same content and the
+   one people actually type is the one that loses. */
+const acc = await readFile(join(ROOT, 'accueil.html'), 'utf8');
+check('the landing sends its authority to the address people type',
+      /rel="canonical" href="https:\/\/www\.facturedz\.com\/"/.test(acc),
+      (acc.match(/rel="canonical"[^>]*/) || ['missing'])[0]);
+check('and a shared link opens that address too',
+      /property="og:url" content="https:\/\/www\.facturedz\.com\/"/.test(acc));
+check('the sitemap asks for one of the two, not both',
+      !/accueil\.html/.test(await readFile(join(ROOT, 'sitemap.xml'), 'utf8')));
+
+/* The older landing is linked from nowhere and makes the same pitch in the
+   same words. Out of the index, but follow: its links still count. */
+check('the superseded landing page stays out of the index',
+      /name="robots" content="noindex, follow"/.test(landing));
+
+/* Every stamp in the head moves together, or a file that changed is the one
+   file the browser keeps from last time. */
+const stamps = [...new Set((home.match(/\?v=[0-9a-z]+/g) || []))];
+check('one cache-busting stamp across the whole head', stamps.length === 1, stamps.join(' '));
+
 /* ---------------------------------------------------------------- *
  * The host the site claims to live at.
  *
