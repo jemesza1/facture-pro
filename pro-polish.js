@@ -2,23 +2,34 @@
 (function(){
   function ar(){ return (typeof locale!=='undefined' && locale==='ar'); }
 
+  /* One backup, two carriers. The file a merchant downloads and the copy
+     drive.js writes to their Google Drive must be the same object, or the day
+     a list is added it gets added to one of them and the other quietly ships a
+     backup with a hole in it. Both call this. */
+  window.buildBackup = function(){
+    return {
+      company:state.company,
+      clients:state.clients,
+      invoices:state.invoices,
+      nextInvoiceNumber:state.nextInvoiceNumber,
+      /* Absent until now. ensureAvoirState rebuilt the counter from the
+         documents on restore, which works, so nothing was visibly broken —
+         but it guessed what the file could have carried. */
+      nextAvoirNumber:state.nextAvoirNumber||1,
+      products:state.products||[],
+      devis:state.devis||[],
+      payments:state.payments||[],
+      expenses:state.expenses||[],
+      nextDevisNumber:state.nextDevisNumber||1,
+      exportedAt:new Date().toISOString(),
+      version:'facturepro-dz-v25'
+    };
+  };
+
   var _export = window.exportData;
   window.exportData = function(){
     try{
-      var data={
-        company:state.company,
-        clients:state.clients,
-        invoices:state.invoices,
-        nextInvoiceNumber:state.nextInvoiceNumber,
-        products:state.products||[],
-        devis:state.devis||[],
-        payments:state.payments||[],
-        expenses:state.expenses||[],
-        nextDevisNumber:state.nextDevisNumber||1,
-        exportedAt:new Date().toISOString(),
-        version:'facturepro-dz-v25'
-      };
-      var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      var blob=new Blob([JSON.stringify(window.buildBackup(),null,2)],{type:'application/json'});
       var a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
       a.download='facturepro-'+new Date().toISOString().slice(0,10)+'.json';
@@ -48,6 +59,53 @@
     return '';
   }
 
+  window.validBackup = validBackup;
+
+  /* The half of an import that touches state. importData reads the file and
+     asks the questions; this applies what was read. drive.js restores through
+     it too, so a file coming back from Drive lands on the path the file import
+     has already proven — including the avoir counter and the empty-expenses
+     rule below.
+
+     It returns false instead of throwing. A half-applied backup is worse than
+     a refused one, and the caller owns the toast. */
+  window.applyBackup = function(d){
+    if(validBackup(d)) return false;
+    try{
+      if(d.company) state.company=Object.assign({},state.company,d.company);
+      if(Array.isArray(d.clients)) state.clients=d.clients.map(function(c){
+        return Object.assign({},c,{id:c.id||uid()});});
+      if(Array.isArray(d.invoices)) state.invoices=d.invoices.map(function(i){
+        return Object.assign({},i,{id:i.id||uid(),items:Array.isArray(i.items)?i.items:[],
+                                   paymentMode:i.paymentMode||'virement'});});
+      if(Array.isArray(d.products)) state.products=d.products;
+      if(Array.isArray(d.devis)) state.devis=d.devis;
+      if(Array.isArray(d.payments)) state.payments=d.payments;
+      /* A backup written before this feature has no expenses key. Leaving
+         what is in memory would blend the importer's dépenses into somebody
+         else's books, so the absent list means an empty one. */
+      state.expenses=Array.isArray(d.expenses)?d.expenses:[];
+      if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
+
+      /* an imported set must never hand out a number that already exists */
+      var maxNo=0;
+      (state.invoices||[]).forEach(function(i){
+        var m=/(\d+)\s*$/.exec(i.number||''); if(m) maxNo=Math.max(maxNo,parseInt(m[1],10)||0);});
+      state.nextInvoiceNumber=Math.max(Number(d.nextInvoiceNumber)||1,maxNo+1);
+
+      /* Same rule one series over: the file's counter is taken, but never
+         below what the restored documents already use. A counter that walks
+         backwards hands two avoirs the same number. */
+      var fromFile=Number(d.nextAvoirNumber)||0;
+      delete state.nextAvoirNumber;
+      if(typeof ensureAvoirState==='function') ensureAvoirState();
+      state.nextAvoirNumber=Math.max(Number(state.nextAvoirNumber)||1,fromFile);
+
+      saveData();
+      return true;
+    }catch(err){ return false; }
+  };
+
   window.importData = function(ev){
     var f=ev&&ev.target&&ev.target.files&&ev.target.files[0];
     if(!f) return;
@@ -71,34 +129,8 @@
       try{ localStorage.setItem(STORAGE_KEY+'_avant_import',
              localStorage.getItem(STORAGE_KEY)||''); }catch(e){}
 
-      try{
-        if(d.company) state.company=Object.assign({},state.company,d.company);
-        if(Array.isArray(d.clients)) state.clients=d.clients.map(function(c){
-          return Object.assign({},c,{id:c.id||uid()});});
-        if(Array.isArray(d.invoices)) state.invoices=d.invoices.map(function(i){
-          return Object.assign({},i,{id:i.id||uid(),items:Array.isArray(i.items)?i.items:[],
-                                     paymentMode:i.paymentMode||'virement'});});
-        if(Array.isArray(d.products)) state.products=d.products;
-        if(Array.isArray(d.devis)) state.devis=d.devis;
-        if(Array.isArray(d.payments)) state.payments=d.payments;
-        /* A backup written before this feature has no expenses key. Leaving
-           what is in memory would blend the importer's dépenses into somebody
-           else's books, so the absent list means an empty one. */
-        state.expenses=Array.isArray(d.expenses)?d.expenses:[];
-        if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
-
-        /* an imported set must never hand out a number that already exists */
-        var maxNo=0;
-        (state.invoices||[]).forEach(function(i){
-          var m=/(\d+)\s*$/.exec(i.number||''); if(m) maxNo=Math.max(maxNo,parseInt(m[1],10)||0);});
-        state.nextInvoiceNumber=Math.max(Number(d.nextInvoiceNumber)||1,maxNo+1);
-
-        saveData();
-        toast(t('toast.importOk'));
-        renderPage();
-      }catch(err){
-        toast(t('toast.badFile'),'err');
-      }
+      if(!window.applyBackup(d)) toast(t('toast.badFile'),'err');
+      else { toast(t('toast.importOk')); renderPage(); }
       input.value='';
     };
     reader.onerror=function(){ toast(t('toast.unreadable'),'err'); input.value=''; };

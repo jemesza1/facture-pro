@@ -156,6 +156,59 @@ hook written into `b2a.js` is dead code. `backup.js` comes after
 land on the function the button really calls. Keep it after — and nothing that
 loads later may replace `exportData` wholesale, or the stamp is lost again.
 
+## Google Drive
+
+`backup.js` asks for an export every thirty days, and `guide.html` spends its
+seventh section explaining that a cleared cache is an emptied ledger. Both put
+the same job on the same person. `drive.js` does it instead — and the file does
+not come to us. It goes into the merchant's own Drive, under their own account.
+
+There is no server, no user table, no password to reset and no fiscal data of
+somebody else's to be responsible for. "Sign in with Google" is the whole
+registration, and the copy lands where its owner can see it, download it and
+send it to their accountant.
+
+Three decisions hold it up:
+
+- **`localStorage` stays the source.** The application reads and writes there
+  exactly as before and works with no signal exactly as before. Drive is a copy
+  that follows. Nothing in this file sits on the path of an invoice being
+  written.
+- **Google's library is fetched on the click, never at boot.** It is the one
+  dependency that cannot be served from `/vendor/` — Google forbids
+  self-hosting `gsi/client`. Loaded at startup it would turn an offline-first
+  application into one that waits for Google; loaded on the click it concerns
+  only the person who asked to sync. The regression suite fails if a
+  `accounts.google.com` script is present before anybody asked.
+- **The access token never reaches `localStorage`.** It lives an hour in a
+  variable and dies with the tab.
+
+The scope is `drive.file` and nothing wider: it reaches only the files this
+application created, so the rest of the merchant's Drive stays invisible to it.
+One file, `facturepro-sauvegarde.json`, rewritten in place — a folder of three
+hundred dated files is not a backup, it is one more question to answer on the
+day one of them has to be picked.
+
+**`buildBackup()` and `applyBackup()` in `pro-polish.js` are the only way in
+and out.** The downloaded file and the Drive copy are the same object, restored
+through the same code, so a list added to `state` is added in one place instead
+of two — and a Drive restore lands on the path the file import has already
+proven. A restore keeps the same confirmation and the same
+`_avant_import` snapshot the file import takes.
+
+The feature is dark until `DRIVE_CLIENT_ID` is filled in at the top of
+`drive.js`: no client, no card, nothing changed anywhere in the application.
+It is created on `console.cloud.google.com` — Drive API enabled, external
+consent screen, `drive.file` scope, a Web application OAuth client with this
+domain in the authorized JavaScript origins. **The client ID is public** and
+belongs in the file where every visitor can read it; the client secret shown
+on the same page is not used by browser applications and must never be pasted
+here.
+
+Two things it does not do yet: it does not sync on its own (the merchant
+presses the button), and with one file per account, two devices editing the
+same day means the second save overwrites the first.
+
 ## Guide
 
 `guide.html` is the manual: eight steps from the fiscal identifiers to the
@@ -237,12 +290,13 @@ link in Aide, and nothing else. The application stays a single-country product.
 - Droit de timbre (art. 100, barème LF 2025) sur les règlements en espèces
 - 29 templates, PDF, dark mode
 - Logo upload (Paramètres)
+- Sauvegarde dans le Google Drive du commerçant (optionnelle, hors ligne intacte)
 - FR / العربية + RTL
 - localStorage only (privacy)
 
 ## Tests
 
-`cd tests && npm install && npm test` — 298 checks against a real headless
+`cd tests && npm install && npm test` — 321 checks against a real headless
 browser. Run `npm run build` in the root first: the last group drives
 `public/`, the built site, because what it proves is that the international
 generator renders and exports with every off-origin request blocked. Run them before every deploy; the suite prints `Safe to deploy.` or

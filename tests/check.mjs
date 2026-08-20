@@ -1938,6 +1938,117 @@ console.log('\nThe international generator');
   check('and it is translated in Arabic too', aideAr.length > 5 && !/tools\.intl/.test(aideAr), aideAr);
 }
 
+/* ---------------------------------------------------------------- *
+ * The backup payload, and the Drive card that carries it.
+ *
+ * Nothing here talks to Google. What is checked is the half that decides
+ * whether a restored ledger is the ledger that was saved — the list that
+ * gets forgotten the day a feature adds one, and the counters that hand out
+ * document numbers. A Drive round trip runs through exactly these two
+ * functions, so a bug here is a bug there.
+ * ---------------------------------------------------------------- */
+console.log('\nBackup payload, restore, and the Drive card');
+
+const payload = await page.evaluate(() => {
+  /* Seeded here rather than leaned on: earlier groups empty the ledger to see
+     the empty states, and a backup check that passes because something else
+     happened to leave data behind is not a check. */
+  state.clients  = [{id:'c1', name:'SARL Atlas', nif:'099999999999999'}];
+  state.invoices = [{id:'i1', number:'FAC-2026-900', clientId:'c1', template:'classique',
+                     date:'2026-07-01', dueDate:'2026-07-31', status:'payee',
+                     items:[{description:'Prestation', qty:1, unitPrice:100000, tva:19}], notes:''}];
+  state.products = [{id:'p1', name:'Ciment', price:900}];
+  state.devis    = [{id:'d1', number:'DEV-2026-001', clientId:'c1', items:[]}];
+  state.payments = [{id:'y1', invoiceId:'i1', amount:5000, date:'2026-07-02'}];
+  state.expenses = [{id:'e1', label:'Loyer', amount:30000, date:'2026-07-01', category:'loyer'}];
+  state.nextAvoirNumber = 7;
+  state.nextDevisNumber = 4;
+  return window.buildBackup();
+});
+check('the backup carries the clients', Array.isArray(payload.clients) && payload.clients.length > 0);
+check('the backup carries the invoices', Array.isArray(payload.invoices) && payload.invoices.length > 0);
+check('the backup carries the products', payload.products.length === 1);
+check('the backup carries the devis', payload.devis.length === 1);
+check('the backup carries the payments', payload.payments.length === 1);
+check('the backup carries the dépenses', payload.expenses.length === 1);
+check('the backup carries the avoir counter', payload.nextAvoirNumber === 7, String(payload.nextAvoirNumber));
+check('the backup carries the devis counter', payload.nextDevisNumber === 4, String(payload.nextDevisNumber));
+
+/* An emptied ledger restored from its own backup must come back whole. This
+   is the path a merchant walks after a cleared cache or a new phone. */
+const trip = await page.evaluate(() => {
+  const saved = window.buildBackup();
+  state.clients = []; state.invoices = []; state.products = [];
+  state.devis = []; state.payments = []; state.expenses = [];
+  const ok = window.applyBackup(JSON.parse(JSON.stringify(saved)));
+  return {ok, clients: state.clients.length, invoices: state.invoices.length,
+          products: state.products.length, devis: state.devis.length,
+          payments: state.payments.length, expenses: state.expenses.length,
+          avoir: state.nextAvoirNumber};
+});
+check('a wiped ledger restores', trip.ok);
+check('and the clients come back', trip.clients > 0, String(trip.clients));
+check('and the invoices come back', trip.invoices > 0, String(trip.invoices));
+check('and the products come back', trip.products === 1, String(trip.products));
+check('and the devis come back', trip.devis === 1, String(trip.devis));
+check('and the payments come back', trip.payments === 1, String(trip.payments));
+check('and the dépenses come back', trip.expenses === 1, String(trip.expenses));
+check('and the avoir counter comes back', trip.avoir === 7, String(trip.avoir));
+
+/* A file whose counter is older than its own documents would number a second
+   avoir over the top of one that already exists. */
+const counter = await page.evaluate(() => {
+  const d = window.buildBackup();
+  d.invoices = d.invoices.concat([{id:'av9', type:'avoir', number:'AV-2026-004',
+    clientId:'c1', date:'2026-07-05', status:'payee', items:[]}]);
+  d.nextAvoirNumber = 1;
+  window.applyBackup(d);
+  return state.nextAvoirNumber;
+});
+check('a stale avoir counter never walks back over an existing number',
+      counter >= 5, String(counter));
+
+/* The rule pro-polish.js states: an absent list means an empty one, never
+   whatever the current browser happens to be holding. */
+const noExp = await page.evaluate(() => {
+  const d = window.buildBackup();
+  delete d.expenses;
+  window.applyBackup(d);
+  return state.expenses.length;
+});
+check('a backup with no dépenses key restores none, rather than keeping ours',
+      noExp === 0, String(noExp));
+
+const refused = await page.evaluate(() => {
+  const before = state.clients.length;
+  const ok = window.applyBackup({clients: 'not a list', invoices: []});
+  return {ok, before, after: state.clients.length};
+});
+check('a malformed backup is refused', refused.ok === false);
+check('and it does not touch what is loaded', refused.after === refused.before,
+      refused.before + ' -> ' + refused.after);
+
+/* Offline-first is the whole product. Google's library is the one dependency
+   that cannot be served from this domain, so it must not be fetched until
+   somebody asks for a sync — and with no OAuth client configured there is
+   nothing to ask for, and no card to show. */
+const drive = await page.evaluate(() => {
+  navigate('settings');
+  return {
+    configured: typeof DRIVE_CLIENT_ID === 'string' && DRIVE_CLIENT_ID !== '',
+    card: !!document.getElementById('drive-card'),
+    gsi: !!document.querySelector('script[src*="accounts.google.com"]'),
+    hasBuild: typeof window.buildBackup === 'function',
+    hasApply: typeof window.applyBackup === 'function'
+  };
+});
+check('no Google script is loaded while nobody has asked to sync', !drive.gsi);
+check('the Drive card stays hidden until an OAuth client is configured',
+      drive.configured === drive.card,
+      'configured=' + drive.configured + ' card=' + drive.card);
+check('and the two functions a Drive restore goes through are reachable',
+      drive.hasBuild && drive.hasApply);
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
