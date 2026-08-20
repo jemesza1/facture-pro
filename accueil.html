@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    try {
+      if (localStorage.getItem('facturepro_dark') === '1')
+        document.documentElement.classList.add('dark');
+    } catch (e) {}
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#006233" />
+  <title>FacturePro Algérie — Facturation gratuite et conforme — فاتورة برو</title>
+  <meta name="description" content="Logiciel de facturation gratuit pour l'Algérie. TVA 19 % et 9 %, NIF, RC, NIS, droit de timbre, PDF. Français et arabe. Sans compte, données sur votre appareil." />
+  <meta name="author" content="CheMs SoUu" />
+  <link rel="canonical" href="https://www.facturedz.com/accueil.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FacturePro" />
+  <meta property="og:locale" content="fr_DZ" />
+  <meta property="og:locale:alternate" content="ar_DZ" />
+  <meta property="og:url" content="https://www.facturedz.com/accueil.html" />
+  <meta property="og:title" content="FacturePro — Facturation conforme à la fiscalité algérienne" />
+  <meta property="og:description" content="Factures conformes (TVA, droit de timbre, NIF, NIS, RC), PDF, français et arabe. Gratuit, sans inscription." />
+  <meta property="og:image" content="https://www.facturedz.com/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #006233;
+      --green-2: #059669;
+      --green-deep: #004d29;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #e2e8f0;
+      --paper: #f8fafc;
+      --white: #fff;
+      --card: #fff;
+      --nav-bg: rgba(255,255,255,.92);
+      --chip-bg: #ecfdf5;
+      --chip-line: #a7f3d0;
+      --row-line: #f1f5f9;
+      --invoice: #fff;
+    }
+    html.dark {
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --line: #1e293b;
+      --paper: #020617;
+      --white: #020617;
+      --card: #0f172a;
+      --nav-bg: rgba(2,6,23,.88);
+      --chip-bg: #064e3b;
+      --chip-line: #065f46;
+      --row-line: #1e293b;
+      --invoice: #0f172a;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--white);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    html[lang="ar"] body { font-family: Cairo, Inter, sans-serif; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
+    .nav {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-in { display: flex; align-items: center; gap: 12px; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; }
+    .mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--green-2), var(--green));
+      display: grid; place-items: center; color: #fff; flex: none;
+    }
+    .nav-links { display: flex; gap: 4px; margin-inline-start: 18px; }
+    .nav-links a { padding: 8px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--muted); }
+    .nav-links a:hover { background: var(--paper); color: var(--ink); }
+    .nav-cta { margin-inline-start: auto; display: flex; align-items: center; gap: 8px; }
+    .lang {
+      border: 1px solid var(--line); border-radius: 9px;
+      padding: 7px 11px; font-size: 12px; font-weight: 700;
+    }
+    .icon-btn {
+      width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line);
+      display: grid; place-items: center; color: var(--ink);
+    }
+    .icon-btn:hover { background: var(--paper); }
+    .icon-btn .sun { display: none; }
+    html.dark .icon-btn .moon { display: none; }
+    html.dark .icon-btn .sun { display: block; }
+    html.dark .eyebrow { color: #6ee7b7; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border-radius: 999px; font-weight: 650; white-space: nowrap;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-green { background: var(--green); color: #fff; padding: 10px 18px; font-size: 14px; }
+    .btn-green:hover { background: var(--green-deep); }
+    .btn-lg { padding: 14px 26px; font-size: 16px; }
+    .btn-ghost { padding: 10px 16px; font-size: 14px; color: var(--muted); }
+    .hero { padding: 56px 0 28px; }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--chip-bg); color: var(--green-2); border: 1px solid var(--chip-line);
+      font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-bottom: 18px;
+    }
+    h1 { font-size: clamp(32px, 4.4vw, 52px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin-bottom: 16px; }
+    .lead { font-size: 18px; color: var(--muted); max-width: 38rem; margin-bottom: 26px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 13.5px; }
+    .chips span { display: inline-flex; align-items: center; gap: 6px; }
+    .paper {
+      background: var(--invoice); border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(15,23,42,.12); overflow: hidden; transform: rotate(1.4deg);
+    }
+    .paper-bar { height: 10px; background: linear-gradient(90deg, var(--green), var(--green-2)); }
+    .paper-in { padding: 22px 24px 20px; }
+    .paper-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .paper-top b { font-size: 13px; }
+    .paper-top span { display: block; font-size: 12px; color: var(--muted); }
+    .stamp {
+      font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--green); border: 2px solid var(--green); border-radius: 6px; padding: 4px 8px; opacity: .85;
+    }
+    table.inv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.inv th { text-align: start; color: var(--muted); font-weight: 600; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    table.inv td { padding: 8px 0; border-bottom: 1px solid var(--row-line); }
+    table.inv td:last-child, table.inv th:last-child { text-align: end; }
+    .tot { display: flex; justify-content: space-between; margin-top: 12px; font-weight: 800; }
+    .tot span:last-child { color: var(--green); }
+    .letters { margin-top: 8px; font-size: 11px; color: var(--muted); }
+    .features { padding: 64px 0; background: var(--paper); border-block: 1px solid var(--line); }
+    h2 { font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -.025em; text-align: center; margin-bottom: 10px; }
+    .sub { text-align: center; color: var(--muted); max-width: 40rem; margin: 0 auto 36px; }
+    .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .card h3 { font-size: 16px; margin: 10px 0 6px; }
+    .card p { font-size: 14px; color: var(--muted); }
+    .ico { width: 40px; height: 40px; border-radius: 12px; background: var(--chip-bg); color: var(--green-2); display: grid; place-items: center; }
+    .mods { padding: 64px 0; }
+    .mods-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .mod { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--card); }
+    .mod b { display: block; font-size: 14.5px; }
+    .mod span { font-size: 12.5px; color: var(--muted); }
+    .faq { padding: 20px 0 72px; }
+    details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+    summary { font-weight: 650; cursor: pointer; }
+    details p { margin-top: 8px; color: var(--muted); font-size: 14.5px; }
+    .band {
+      margin: 0 0 72px; background: linear-gradient(135deg, var(--green-deep), var(--green));
+      color: #fff; border-radius: 24px; padding: 48px 28px; text-align: center;
+    }
+    .band h2 { color: #fff; }
+    .band p { color: #d1fae5; margin: 8px auto 22px; }
+    .band .btn-green { background: #fff; color: var(--green); }
+    footer { background: #0b1220; color: #94a3b8; padding: 40px 0 24px; font-size: 14px; }
+    .f-in { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    footer a:hover { color: #fff; }
+    @media (max-width: 900px) {
+      .hero-grid, .grid4, .mods-list { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .paper { transform: none; }
+      h1 { font-size: 34px; }
+      .cta-row .btn { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-in">
+      <a class="brand" href="accueil.html">
+        <span class="mark">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        </span>
+        FacturePro
+      </a>
+      <div class="nav-links">
+        <a href="#pourquoi" data-fr="Pourquoi nous" data-ar="لماذا نحن">Pourquoi nous</a>
+        <a href="#modules" data-fr="L'application" data-ar="التطبيق">L'application</a>
+        <a href="#faq" data-fr="FAQ" data-ar="أسئلة">FAQ</a>
+      </div>
+      <div class="nav-cta">
+        <button type="button" class="lang" id="langBtn" aria-label="Langue">العربية</button>
+        <button type="button" class="icon-btn" id="themeBtn" aria-label="Thème">
+          <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 14.3A8.5 8.5 0 1 1 9.7 3 7 7 0 0 0 21 14.3z"/></svg>
+          <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <a class="btn btn-ghost" href="index.html?app=1" data-fr="Ouvrir l'app" data-ar="فتح التطبيق">Ouvrir l'app</a>
+        <a class="btn btn-green" href="index.html?app=1" data-fr="Commencer" data-ar="ابدأ مجاناً">Commencer</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow" data-fr="Algérie · conforme · gratuit" data-ar="الجزائر · مطابق · مجاني">Algérie · conforme · gratuit</span>
+        <h1 data-fr="Une facture conforme à la fiscalité algérienne." data-ar="فاتورة مطابقة للجبابة الجزائرية.">Une facture conforme à la fiscalité algérienne.</h1>
+        <p class="lead" data-fr="TVA 19 % et 9 %, NIF, RC, NIS, droit de timbre, montant en lettres. Français et arabe. Sans compte — vos données restent sur cet appareil." data-ar="TVA 19٪ و 9٪، NIF، RC، NIS، حق الطابع، المبلغ بالحروف. عربي وفرنسي. بدون حساب — بياناتك تبقى على هذا الجهاز.">TVA 19 % et 9 %, NIF, RC, NIS, droit de timbre, montant en lettres. Français et arabe. Sans compte — vos données restent sur cet appareil.</p>
+        <div class="cta-row">
+          <a class="btn btn-green btn-lg" href="index.html?app=1" data-fr="Commencer gratuitement" data-ar="ابدأ مجاناً">Commencer gratuitement</a>
+          <a class="btn btn-ghost btn-lg" href="#exemple" data-fr="Voir un exemple" data-ar="شاهد مثالاً">Voir un exemple</a>
+        </div>
+        <div class="chips">
+          <span data-fr="Sans inscription" data-ar="بدون تسجيل">Sans inscription</span>
+          <span>Décret 05-468</span>
+          <span data-fr="PDF en un clic" data-ar="PDF بنقرة">PDF en un clic</span>
+        </div>
+      </div>
+
+      <aside class="paper" id="exemple" aria-label="Exemple de facture">
+        <div class="paper-bar"></div>
+        <div class="paper-in">
+          <div class="paper-top">
+            <div>
+              <b>FACTURE N° 2026-014</b>
+              <span>SARL Atlas Services · Alger</span>
+              <span>NIF 099999999999999 · RC 16/00-1234567B21</span>
+            </div>
+            <div class="stamp" data-fr="Payée" data-ar="مدفوعة">Payée</div>
+          </div>
+          <table class="inv">
+            <thead>
+              <tr><th data-fr="Désignation" data-ar="البيان">Désignation</th><th>HT</th></tr>
+            </thead>
+            <tbody>
+              <tr><td data-fr="Audit stratégique T1" data-ar="تدقيق استراتيجي">Audit stratégique T1</td><td>250 000 DA</td></tr>
+              <tr><td data-fr="Accompagnement (5 j)" data-ar="مرافقة (5 أيام)">Accompagnement (5 j)</td><td>225 000 DA</td></tr>
+            </tbody>
+          </table>
+          <div class="tot"><span>TVA 19 %</span><span>90 250 DA</span></div>
+          <div class="tot"><span>TTC</span><span>565 250 DA</span></div>
+          <p class="letters">Arrêté à : cinq cent soixante-cinq mille deux cent cinquante dinars.</p>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <section class="features" id="pourquoi">
+    <div class="wrap">
+      <h2 data-fr="Pensé pour un commerçant en Algérie." data-ar="مصمم لتاجر في الجزائر.">Pensé pour un commerçant en Algérie.</h2>
+      <p class="sub" data-fr="Pas un outil générique traduit. Les mentions légales, la TVA et le timbre sont déjà là." data-ar="مو أداة عامة مترجمة. البيانات القانونية و TVA والطابع موجودين من الأصل.">Pas un outil générique traduit. Les mentions légales, la TVA et le timbre sont déjà là.</p>
+      <div class="grid4">
+        <article class="card">
+          <div class="ico">01</div>
+          <h3 data-fr="Conforme" data-ar="مطابق">Conforme</h3>
+          <p data-fr="Décret 05-468, TVA 19 % / 9 %, droit de timbre, NIF, NIS, RC." data-ar="المرسوم 05-468، TVA، حق الطابع، NIF و NIS و RC.">Décret 05-468, TVA 19 % / 9 %, droit de timbre, NIF, NIS, RC.</p>
+        </article>
+        <article class="card">
+          <div class="ico">02</div>
+          <h3>FR + العربية</h3>
+          <p data-fr="Une bascule. L'interface et les documents suivent." data-ar="زر واحد. الواجهة والوثائق يتبدّلو.">Une bascule. L'interface et les documents suivent.</p>
+        </article>
+        <article class="card">
+          <div class="ico">03</div>
+          <h3 data-fr="Sans compte" data-ar="بدون حساب">Sans compte</h3>
+          <p data-fr="Ouvrez et facturez. Rien à créer, rien à payer." data-ar="افتح وفوتر. ما كاش تسجيل وما كاش خلاص.">Ouvrez et facturez. Rien à créer, rien à payer.</p>
+        </article>
+        <article class="card">
+          <div class="ico">04</div>
+          <h3 data-fr="Chez vous" data-ar="عندك">Chez vous</h3>
+          <p data-fr="Les factures restent dans ce navigateur. Exportez un JSON de temps en temps." data-ar="الفواتير في هذا المتصفح. صدّر JSON من وقت لوقت.">Les factures restent dans ce navigateur. Exportez un JSON de temps en temps.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="mods" id="modules">
+    <div class="wrap">
+      <h2 data-fr="Tout ce que l'application garde." data-ar="كل اللي في التطبيق يبقى.">Tout ce que l'application garde.</h2>
+      <p class="sub" data-fr="Cette page n'enlève rien. Après « Commencer », le tableau de bord est le même." data-ar="هذه الصفحة ما تحذف والو. بعد «ابدأ» اللوحة هي هي.">Cette page n'enlève rien. Après « Commencer », le tableau de bord est le même.</p>
+      <div class="mods-list">
+        <div class="mod"><div><b>Tableau de bord</b><span data-fr="CA, en attente, en retard" data-ar="رقم الأعمال والمتأخرات">CA, en attente, en retard</span></div></div>
+        <div class="mod"><div><b data-fr="Factures" data-ar="فواتير">Factures</b><span>PDF · Excel</span></div></div>
+        <div class="mod"><div><b>Devis</b><span data-fr="Puis convertir en facture" data-ar="تحويل إلى فاتورة">Puis convertir en facture</span></div></div>
+        <div class="mod"><div><b data-fr="Produits" data-ar="منتجات">Produits</b><span data-fr="Catalogue réutilisable" data-ar="كتالوج جاهز">Catalogue réutilisable</span></div></div>
+        <div class="mod"><div><b>Paiements</b><span data-fr="Suivi des encaissements" data-ar="متابعة التحصيل">Suivi des encaissements</span></div></div>
+        <div class="mod"><div><b data-fr="Dépenses" data-ar="مصاريف">Dépenses</b><span data-fr="Charges du mois" data-ar="تكاليف الشهر">Charges du mois</span></div></div>
+        <div class="mod"><div><b data-fr="Créances" data-ar="مستحقات">Créances</b><span data-fr="Qui vous doit quoi" data-ar="من مدين لك">Qui vous doit quoi</span></div></div>
+        <div class="mod"><div><b data-fr="Clients" data-ar="زبائن">Clients</b><span>NIF · RC · NIS</span></div></div>
+        <div class="mod"><div><b data-fr="Modèles de facture" data-ar="قوالب الفاتورة">Modèles de facture</b><span data-fr="Dont le modèle Algérie" data-ar="منهم قالب الجزائر">Dont le modèle Algérie</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq wrap" id="faq">
+    <h2>FAQ</h2>
+    <p class="sub" data-fr="Réponses courtes, sans promesses en trop." data-ar="أجوبة قصيرة، بدون وعود زيادة.">Réponses courtes, sans promesses en trop.</p>
+    <details open>
+      <summary data-fr="C'est vraiment gratuit ?" data-ar="مجاني بصح؟">C'est vraiment gratuit ?</summary>
+      <p data-fr="Oui. Pas d'essai, pas de carte, pas d'abonnement caché." data-ar="نعم. ما كاش تجربة محدودة وما كاش بطاقة وما كاش اشتراك مخفي.">Oui. Pas d'essai, pas de carte, pas d'abonnement caché.</p>
+    </details>
+    <details>
+      <summary data-fr="Mes factures sont-elles sur internet ?" data-ar="فواتيري على الإنترنت؟">Mes factures sont-elles sur internet ?</summary>
+      <p data-fr="Non. Elles restent dans ce navigateur. Si vous videz le cache, elles partent — exportez un fichier JSON, ou Drive si vous l'activez." data-ar="لا. تبقى في هذا المتصفح. إذا مسحت الذاكرة تضيع — صدّر JSON، أو Drive إذا فعّلتو.">Non. Elles restent dans ce navigateur. Si vous videz le cache, elles partent — exportez un fichier JSON, ou Drive si vous l'activez.</p>
+    </details>
+    <details>
+      <summary data-fr="Je perds le tableau de bord ?" data-ar="نضيّع لوحة التحكم؟">Je perds le tableau de bord ?</summary>
+      <p data-fr="Non. Factures, devis, produits, paiements, dépenses, créances, clients et modèles restent exactement comme aujourd'hui." data-ar="لا. الفواتير والعروض والمنتجات والدفعات والمصاريف والمستحقات والزبائن والقوالب تبقى كما هي.">Non. Factures, devis, produits, paiements, dépenses, créances, clients et modèles restent exactement comme aujourd'hui.</p>
+    </details>
+  </section>
+
+  <div class="wrap">
+    <div class="band">
+      <h2 data-fr="Ouvrir l'application." data-ar="افتح التطبيق.">Ouvrir l'application.</h2>
+      <p data-fr="Même FacturePro. Même menu. Une page d'accueil en plus, pour les nouveaux." data-ar="نفس FacturePro. نفس القائمة. صفحة ترحيب زيادة للجدد.">Même FacturePro. Même menu. Une page d'accueil en plus, pour les nouveaux.</p>
+      <a class="btn btn-green btn-lg" href="index.html?app=1" data-fr="Commencer gratuitement" data-ar="ابدأ مجاناً">Commencer gratuitement</a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrap f-in">
+      <div>
+        <b style="color:#fff">FacturePro</b>
+        <p style="margin-top:8px;max-width:28rem" data-fr="Facturation pour l'Algérie. Created by CheMs SoUu." data-ar="فوترة للجزائر. إعداد CheMs SoUu.">Facturation pour l'Algérie. Created by CheMs SoUu.</p>
+      </div>
+      <div>
+        <a href="guide.html">Guide</a> ·
+        <a href="droit-de-timbre.html">Droit de timbre</a> ·
+        <a href="calcul-tva.html">TVA</a> ·
+        <a href="international.html">International</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var KEY = 'fp_locale';
+      function loc() {
+        try { return localStorage.getItem(KEY) || 'fr'; } catch (e) { return 'fr'; }
+      }
+      function apply(l) {
+        document.documentElement.lang = l;
+        document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+        var nodes = document.querySelectorAll('[data-fr]');
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          n.textContent = l === 'ar' ? n.getAttribute('data-ar') : n.getAttribute('data-fr');
+        }
+        var btn = document.getElementById('langBtn');
+        if (btn) btn.textContent = l === 'ar' ? 'FR' : 'العربية';
+        try { localStorage.setItem(KEY, l); } catch (e) {}
+      }
+      apply(loc());
+      var b = document.getElementById('langBtn');
+      if (b) b.addEventListener('click', function () {
+        apply(loc() === 'ar' ? 'fr' : 'ar');
+      });
+      function setDark(on) {
+        document.documentElement.classList.toggle('dark', on);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', on ? '#020617' : '#006233');
+        try { localStorage.setItem('facturepro_dark', on ? '1' : '0'); } catch (e) {}
+      }
+      setDark(document.documentElement.classList.contains('dark'));
+      var th = document.getElementById('themeBtn');
+      if (th) th.addEventListener('click', function () {
+        setDark(!document.documentElement.classList.contains('dark'));
+      });
+    })();
+  </script>
+</body>
+</html>

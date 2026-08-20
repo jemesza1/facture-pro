@@ -2302,7 +2302,8 @@ check('the old landing page points its authority at the home page',
  * ---------------------------------------------------------------- */
 console.log('\nThe host the site claims to live at');
 
-for (const f of [...INDEXED, 'landing-facturepro.html', 'sitemap.xml', 'robots.txt']) {
+for (const f of [...INDEXED, 'accueil.html', 'landing-facturepro.html',
+                 'sitemap.xml', 'robots.txt']) {
   const text = await readFile(join(ROOT, f), 'utf8');
   const bare = (text.match(/https:\/\/facturedz\.com/g) || []).length;
   check(`${f} never names the host that only redirects`, bare === 0, bare + ' left');
