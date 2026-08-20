@@ -276,13 +276,13 @@
       var lowStock=(state.products||[]).filter(function(p){return Number(p.stock)<=Number(p.minStock||0);}).length;
       var alert='';
       if(totalDebt>0 || lowStock>0){
-        alert='<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">'+
-          (totalDebt>0? '<button type="button" onclick="navigate(\'debts\')" class="card p-4 text-start border border-amber-200 dark:border-amber-800/50">'+
-            '<p class="text-xs text-amber-700">'+(ar()?'\u062f\u064a\u0648\u0646 \u0627\u0644\u0639\u0645\u0644\u0627\u0621':'Cr\u00e9ances')+'</p>'+
-            '<p class="text-xl font-bold text-amber-600 mt-1">'+moneyUI(totalDebt)+'</p></button>':'')+
-          (lowStock>0? '<button type="button" onclick="navigate(\'products\')" class="card p-4 text-start border border-red-200">'+
-            '<p class="text-xs text-red-600">'+(ar()?'\u062a\u0646\u0628\u064a\u0647 \u0645\u062e\u0632\u0648\u0646':'Alerte stock')+'</p>'+
-            '<p class="text-xl font-bold text-red-600 mt-1">'+lowStock+'</p></button>':'')+
+        alert='<div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4 items-start">'+
+          (totalDebt>0? '<button type="button" onclick="navigate(\'debts\')" class="stat-card text-start w-full border border-amber-200 dark:border-amber-800/50">'+
+            '<p class="stat-label text-amber-700 dark:text-amber-400">'+(ar()?'\u062f\u064a\u0648\u0646 \u0627\u0644\u0639\u0645\u0644\u0627\u0621':'Cr\u00e9ances')+'</p>'+
+            '<p class="stat-value text-amber-600">'+moneyUI(totalDebt)+'</p></button>':'')+
+          (lowStock>0? '<button type="button" onclick="navigate(\'products\')" class="stat-card text-start w-full border border-red-200 dark:border-red-800/50">'+
+            '<p class="stat-label text-red-600">'+(ar()?'\u062a\u0646\u0628\u064a\u0647 \u0645\u062e\u0632\u0648\u0646':'Alerte stock')+'</p>'+
+            '<p class="stat-value text-red-600">'+lowStock+'</p></button>':'')+
           '</div>';
       }
       return alert+html;

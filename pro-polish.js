@@ -276,16 +276,16 @@
       var nProd=(state.products||[]).length;
       var nPay=(state.payments||[]).length;
       var paySum=(state.payments||[]).reduce(function(s,p){return s+(Number(p.amount)||0);},0);
-      var strip='<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">'+
-        '<button type="button" onclick="navigate(\'devis\')" class="card p-4 text-start hover:ring-2 hover:ring-emerald-500/30 transition">'+
-          '<p class="text-xs text-slate-500">'+(ar()?'\u0639\u0631\u0648\u0636 \u0627\u0644\u0623\u0633\u0639\u0627\u0631':'Devis')+'</p>'+
-          '<p class="text-lg font-bold mt-1">'+nDev+'</p></button>'+
-        '<button type="button" onclick="navigate(\'products\')" class="card p-4 text-start hover:ring-2 hover:ring-emerald-500/30 transition">'+
-          '<p class="text-xs text-slate-500">'+(ar()?'\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a':'Produits')+'</p>'+
-          '<p class="text-lg font-bold mt-1">'+nProd+'</p></button>'+
-        '<button type="button" onclick="navigate(\'payments\')" class="card p-4 text-start hover:ring-2 hover:ring-emerald-500/30 transition">'+
-          '<p class="text-xs text-slate-500">'+(ar()?'\u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a':'Paiements')+'</p>'+
-          '<p class="text-lg font-bold mt-1">'+moneyUI(paySum)+' <span class="text-xs font-normal text-slate-400">('+nPay+')</span></p></button>'+
+      var strip='<div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4 items-start">'+
+        '<button type="button" onclick="navigate(\'devis\')" class="stat-card text-start w-full hover:ring-2 hover:ring-emerald-500/30 transition">'+
+          '<p class="stat-label">'+(ar()?'\u0639\u0631\u0648\u0636 \u0627\u0644\u0623\u0633\u0639\u0627\u0631':'Devis')+'</p>'+
+          '<p class="stat-value">'+nDev+'</p></button>'+
+        '<button type="button" onclick="navigate(\'products\')" class="stat-card text-start w-full hover:ring-2 hover:ring-emerald-500/30 transition">'+
+          '<p class="stat-label">'+(ar()?'\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a':'Produits')+'</p>'+
+          '<p class="stat-value">'+nProd+'</p></button>'+
+        '<button type="button" onclick="navigate(\'payments\')" class="stat-card text-start w-full hover:ring-2 hover:ring-emerald-500/30 transition">'+
+          '<p class="stat-label">'+(ar()?'\u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a':'Paiements')+'</p>'+
+          '<p class="stat-value">'+moneyUI(paySum)+' <span class="text-xs font-normal text-slate-400">('+nPay+')</span></p></button>'+
         '</div>';
       return strip+html;
     };
