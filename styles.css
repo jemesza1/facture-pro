@@ -416,3 +416,16 @@ body.sidebar-open { overflow:hidden; }
 .ltr-code{direction:ltr;unicode-bidi:isolate;}
 [dir="rtl"] input.ltr-code,
 [dir="rtl"] textarea.ltr-code{direction:ltr;text-align:right;}
+
+/* Shortcut tiles on the dashboard are <button>s; without this they stretch
+   into hollow boxes in RTL (label in one corner, figure in the other). */
+button.card, button.stat-card {
+  display: block;
+  height: auto;
+  align-self: start;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
