@@ -13,6 +13,7 @@
         products:state.products||[],
         devis:state.devis||[],
         payments:state.payments||[],
+        expenses:state.expenses||[],
         nextDevisNumber:state.nextDevisNumber||1,
         exportedAt:new Date().toISOString(),
         version:'facturepro-dz-v25'
@@ -35,7 +36,7 @@
      the current data is copied aside before anything is touched. */
   function validBackup(d){
     if(!d||typeof d!=='object'||Array.isArray(d))return 'format';
-    var lists=['clients','invoices','products','devis','payments'],i,k,r;
+    var lists=['clients','invoices','products','devis','payments','expenses'],i,k,r;
     for(i=0;i<lists.length;i++){k=lists[i];
       if(d[k]!==undefined&&!Array.isArray(d[k]))return k;}
     if(Array.isArray(d.invoices)){
@@ -80,6 +81,10 @@
         if(Array.isArray(d.products)) state.products=d.products;
         if(Array.isArray(d.devis)) state.devis=d.devis;
         if(Array.isArray(d.payments)) state.payments=d.payments;
+        /* A backup written before this feature has no expenses key. Leaving
+           what is in memory would blend the importer's dépenses into somebody
+           else's books, so the absent list means an empty one. */
+        state.expenses=Array.isArray(d.expenses)?d.expenses:[];
         if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
 
         /* an imported set must never hand out a number that already exists */

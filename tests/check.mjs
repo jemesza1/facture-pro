@@ -1177,6 +1177,298 @@ console.log('\nBon de livraison');
 }
 
 /* ---------------------------------------------------------------- *
+ * 18. Dépenses et résultat approximatif.
+ *
+ *     The ledger only ever knew what came in, and turnover was being
+ *     read as if it were what was left. This page subtracts, and the
+ *     checks that carry the weight are about what it refuses to count:
+ *     the VAT and the droit de timbre, which belong to the Treasury;
+ *     an invoice that has been issued and not settled, which is a
+ *     claim and not money; and the word "bénéfice", which the figure
+ *     has not earned — no amortissements, no charges sociales, no
+ *     variation de stock.
+ *
+ *     The period is handed to resultatApprox explicitly, so none of
+ *     these figures depends on the month the machine is in.
+ * ---------------------------------------------------------------- */
+console.log('\nDépenses et résultat approximatif');
+{
+  await page.evaluate(() => {
+    if (typeof locale !== 'undefined' && locale !== 'fr') toggleLocale();
+    state.clients = [{id: 'cd', name: 'SARL Dépense', nif: '000000000000000'}];
+    state.payments = []; state.devis = []; state.products = []; state.expenses = [];
+    /* 100 000 HT settled in cash: 119 000 TTC, and 2 380,02 DA of duty on top
+       of that. Only the 100 000 is a sale. */
+    state.invoices = [
+      {id: 'dp1', number: 'FAC-2026-701', clientId: 'cd', template: 'algerie', date: '2026-05-04',
+       status: 'payee', paymentMode: 'especes',
+       items: [{description: 'Vente réglée', qty: 1, unitPrice: 100000, tva: 19}]},
+      {id: 'dp2', number: 'FAC-2026-702', clientId: 'cd', template: 'algerie', date: '2026-05-06',
+       status: 'envoyee', paymentMode: 'virement',
+       items: [{description: 'Émise, pas encaissée', qty: 1, unitPrice: 400000, tva: 19}]},
+    ];
+    state.currentPage = 'expenses';
+    saveData();
+  });
+
+  check('the menu offers the page',
+        await page.evaluate(() => !!document.querySelector('.nav-item[data-page="expenses"]')));
+
+  /* Rule 2 for contributors: a page missing from the allow-list in c2.js is
+     bounced back to the dashboard on the next refresh, silently. */
+  await page.reload();
+  await page.waitForFunction(() => typeof resultatApprox === 'function', {timeout: 30000});
+  check('and a refresh comes back to it rather than the dashboard',
+        await page.evaluate(() => state.currentPage) === 'expenses');
+
+  const sales = await page.evaluate(() => {
+    const t = calcInvoiceTotals(state.invoices.find(i => i.id === 'dp1'));
+    const r = resultatApprox('2026-05');
+    return {ventes: r.ventes, n: r.nVentes, ht: t.ht, ttc: t.ttc, net: t.net};
+  });
+  check('a settled invoice is a sale, counted at its HT',
+        sales.n === 1 && near(sales.ventes, 100000), String(sales.ventes));
+  check('so the VAT it collects is not revenue',
+        near(sales.ttc, 119000) && !near(sales.ventes, sales.ttc), `${sales.ventes} vs ${sales.ttc}`);
+  check('and neither is the droit de timbre',
+        sales.net > sales.ttc && !near(sales.ventes, sales.net), `${sales.ventes} vs ${sales.net}`);
+
+  /* The status decides, one document at a time. */
+  const byStatus = await page.evaluate(() => {
+    const keep = state.invoices, out = {};
+    ['payee', 'envoyee', 'enretard', 'brouillon', 'annulee'].forEach(status => {
+      state.invoices = [{id: 's1', number: 'FAC-2026-711', clientId: 'cd', template: 'algerie',
+                         date: '2026-05-15', status, paymentMode: 'virement',
+                         items: [{description: 'X', qty: 1, unitPrice: 200000, tva: 19}]}];
+      out[status] = resultatApprox('2026-05').ventes;
+    });
+    state.invoices = keep;
+    return out;
+  });
+  check('only a settled invoice counts', near(byStatus.payee, 200000), String(byStatus.payee));
+  check('an issued invoice is a claim, not money',
+        byStatus.envoyee === 0 && byStatus.enretard === 0,
+        `${byStatus.envoyee} / ${byStatus.enretard}`);
+  check('a brouillon is not a sale', byStatus.brouillon === 0, String(byStatus.brouillon));
+  check('and an annulée is not one either', byStatus.annulee === 0, String(byStatus.annulee));
+
+  /* An avoir is stored 'payee' and calcInvoiceTotals hands it back negated, so
+     it has to subtract here once — not twice, and not at all. */
+  const credited = await page.evaluate(() => {
+    window.confirm = () => true;
+    createAvoir('dp1');
+    const av = state.invoices.find(i => i.type === 'avoir');
+    if (av) av.date = '2026-05-20';
+    createBonLivraison('dp2');
+    const bl = state.invoices.find(i => i.type === 'bl');
+    if (bl) bl.date = '2026-05-21';
+    saveData();
+    return {ventes: resultatApprox('2026-05').ventes, avoir: !!av, bl: !!bl};
+  });
+  check('an avoir subtracts on its own', credited.avoir && near(credited.ventes, 0),
+        String(credited.ventes));
+  check('and a bon de livraison is worth nothing here',
+        credited.bl && near(credited.ventes, 0), String(credited.ventes));
+
+  await page.evaluate(() => {
+    state.invoices = state.invoices.filter(i => !i.type);
+    saveData();
+  });
+
+  /* The spend side, under the same rule the other way round: the VAT paid to
+     a supplier is deducted, not borne. */
+  const spend = await page.evaluate(() => {
+    state.expenses = [
+      {id: 'x1', date: '2026-05-02', label: 'Loyer du local', category: 'loyer',
+       amount: 20000, tva: 0, mode: 'virement'},
+      {id: 'x2', date: '2026-05-03', label: 'Ciment', category: 'achats',
+       amount: 30000, tva: 19, mode: 'especes'},
+      {id: 'x3', date: '2026-06-03', label: 'Le mois suivant', category: 'achats',
+       amount: 500000, tva: 19, mode: 'especes'},
+    ];
+    saveData();
+    const one = expenseTotals(state.expenses[1]);
+    const r = resultatApprox('2026-05');
+    return {ht: one.ht, tva: one.tva, ttc: one.ttc, depenses: r.depenses, n: r.nDepenses,
+            resultat: r.resultat, byCat: r.parCategorie,
+            year: resultatApprox('2026').depenses, all: resultatApprox('').depenses};
+  });
+  check('a dépense carries its own HT, VAT and TTC',
+        near(spend.ht, 30000) && near(spend.tva, 5700) && near(spend.ttc, 35700),
+        `${spend.ht} / ${spend.tva} / ${spend.ttc}`);
+  check('it is counted HT, because that VAT is deducted and not borne',
+        near(spend.depenses, 50000) && spend.n === 2, String(spend.depenses));
+  check('the résultat is what came in less what went out',
+        near(spend.resultat, 50000), String(spend.resultat));
+  check('the categories add up to the same figure',
+        near(Object.keys(spend.byCat).reduce((s, k) => s + spend.byCat[k], 0), spend.depenses),
+        JSON.stringify(spend.byCat));
+  check('a dépense from another month stays out of the month',
+        near(spend.year, 550000) && near(spend.all, 550000),
+        `${spend.depenses} / ${spend.year} / ${spend.all}`);
+
+  const loss = await page.evaluate(() => {
+    state.expenses.push({id: 'x4', date: '2026-05-04', label: 'Camion', category: 'transport',
+                         amount: 300000, tva: 19, mode: 'cheque'});
+    saveData();
+    navigate('expenses'); setExpensePeriod('all');
+    const el = document.getElementById('exp-result');
+    return {resultat: resultatApprox('2026-05').resultat,
+            red: !!el && el.className.includes('text-red-600')};
+  });
+  check('a month that spent more than it took shows a negative résultat',
+        near(loss.resultat, -250000), String(loss.resultat));
+  check('and shows it in red', loss.red);
+
+  /* The wording. The figure has no amortissements, no charges sociales and no
+     closing inventory in it, so the page must not offer it as a profit. */
+  const words = await page.evaluate(() => {
+    navigate('expenses');
+    const txt = document.getElementById('main-content').innerText.replace(/\s+/g, ' ');
+    const label = (document.getElementById('exp-result-label') || {}).textContent || '';
+    return {label, approx: /approximatif/i.test(label), profit: /b[ée]n[ée]fice|profit/i.test(label),
+            denied: /n'est pas un bénéfice comptable/i.test(txt),
+            amort: /amortissement/i.test(txt), social: /charges sociales/i.test(txt),
+            stock: /variation de stock/i.test(txt), keys: /\bexp\.[a-z]/i.test(txt)};
+  });
+  check('the figure is labelled a résultat approximatif', words.approx, words.label);
+  check('and never a bénéfice', !words.profit, words.label);
+  check('the page says in words that it is not a bénéfice comptable', words.denied);
+  check('and names what is missing from it',
+        words.amort && words.social && words.stock, JSON.stringify(words));
+  check('no untranslated key reaches the page', !words.keys);
+
+  /* Typing one in. */
+  const typed = await page.evaluate(() => {
+    state.expenses = []; saveData();
+    navigate('expenses'); setExpensePeriod('month');
+    openExpenseModal();
+    document.getElementById('exp-label').value = 'Sacs de ciment 50 kg';
+    document.getElementById('exp-date').value = '2026-05-09';
+    document.getElementById('exp-cat').value = 'achats';
+    document.getElementById('exp-amount').value = '12345.5';
+    document.getElementById('exp-tva').value = '9';
+    document.getElementById('exp-mode').value = 'ccp';
+    document.getElementById('exp-note').value = 'Fournisseur Ali';
+    saveExpense(null);
+    return {n: state.expenses.length, x: state.expenses[0],
+            shown: document.querySelectorAll('#main-content tr[data-exp]').length};
+  });
+  check('the form stores what was typed',
+        typed.n === 1 && typed.x.label === 'Sacs de ciment 50 kg' && typed.x.amount === 12345.5
+        && typed.x.tva === 9 && typed.x.category === 'achats' && typed.x.mode === 'ccp'
+        && typed.x.date === '2026-05-09',
+        JSON.stringify(typed.x));
+  check('and a dépense dated outside the window widens the view rather than hiding it',
+        typed.shown === 1, String(typed.shown));
+
+  const guards = await page.evaluate(() => {
+    const before = state.expenses.length;
+    openExpenseModal();
+    document.getElementById('exp-label').value = '   ';
+    document.getElementById('exp-amount').value = '900';
+    saveExpense(null);
+    const noLabel = state.expenses.length;
+    document.getElementById('exp-label').value = 'Sans montant';
+    document.getElementById('exp-amount').value = '';
+    saveExpense(null);
+    const noAmount = state.expenses.length;
+    closeModal();
+    return {before, noLabel, noAmount};
+  });
+  check('a dépense with no libellé is refused', guards.noLabel === guards.before,
+        `${guards.before} → ${guards.noLabel}`);
+  check('and one with no montant too', guards.noAmount === guards.before,
+        `${guards.before} → ${guards.noAmount}`);
+
+  /* Storage. A figure that does not survive a reload is a toy, and the only
+     thing that writes it is the whitelist in extra.js. */
+  await page.reload();
+  await page.waitForFunction(() => typeof resultatApprox === 'function', {timeout: 30000});
+  const kept = await page.evaluate(() => ({
+    n: (state.expenses || []).length, label: (state.expenses[0] || {}).label,
+    stored: /"expenses"/.test(localStorage.getItem('facturepro_dz_v24') || ''),
+  }));
+  check('dépenses survive a reload', kept.n === 1 && kept.label === 'Sacs de ciment 50 kg',
+        JSON.stringify(kept));
+  check('because saveData writes them', kept.stored);
+
+  const backup = await page.evaluate(async () => {
+    const dl = new Promise(r => { const o = URL.createObjectURL;
+      URL.createObjectURL = b => { r(b); URL.createObjectURL = o; return o(b); }; });
+    exportData();
+    return JSON.parse(await (await dl).text());
+  });
+  check('and the backup carries them',
+        Array.isArray(backup.expenses) && backup.expenses.length === 1,
+        JSON.stringify(backup.expenses));
+
+  const restored = await page.evaluate(async () => {
+    const feed = obj => new Promise(res => {
+      const file = new File([JSON.stringify(obj)], 'b.json', {type: 'application/json'});
+      const dt = new DataTransfer(); dt.items.add(file);
+      const input = document.createElement('input'); input.type = 'file'; input.files = dt.files;
+      importData({target: input});
+      setTimeout(res, 250);
+    });
+    window.confirm = () => true;
+
+    await feed({clients: [], invoices: [], expenses: 'not-a-list'});
+    const refused = (state.expenses || []).length;
+
+    await feed({clients: [], invoices: [],
+                expenses: [{id: 'r1', date: '2026-05-01', label: 'Restauré',
+                            category: 'loyer', amount: 7000, tva: 0, mode: 'especes'}]});
+    const imported = (state.expenses || []).map(x => x.label);
+
+    /* A file written before this feature carries no expenses key at all.
+       Keeping the ones in memory would blend two sets of books. */
+    await feed({clients: [], invoices: []});
+    return {refused, imported, afterOld: (state.expenses || []).length};
+  });
+  check('a backup whose expenses are not a list is refused whole',
+        restored.refused === 1, String(restored.refused));
+  check('a valid one restores them',
+        restored.imported.length === 1 && restored.imported[0] === 'Restauré',
+        JSON.stringify(restored.imported));
+  check('and one from before the feature empties the list rather than blending it',
+        restored.afterOld === 0, String(restored.afterOld));
+
+  const gone = await page.evaluate(() => {
+    state.expenses = [{id: 'z1', date: '2026-05-01', label: 'À supprimer', category: 'autre',
+                       amount: 100, tva: 19, mode: 'especes'}];
+    saveData();
+    window.confirm = () => false; deleteExpense('z1');
+    const refused = state.expenses.length;
+    window.confirm = () => true; deleteExpense('z1');
+    return {refused, after: state.expenses.length};
+  });
+  check('deleting asks first', gone.refused === 1, String(gone.refused));
+  check('and then removes it', gone.after === 0, String(gone.after));
+
+  /* Arabic. This page is interface, so it translates — unlike an invoice,
+     which stays French because it is a legal document. */
+  const arabic = await page.evaluate(() => {
+    if (locale !== 'ar') toggleLocale();
+    navigate('expenses');
+    const title = document.getElementById('page-title').textContent;
+    const txt = document.getElementById('main-content').innerText;
+    const dir = document.documentElement.dir;
+    if (locale !== 'fr') toggleLocale();
+    return {title, dir, keys: /\bexp\.[a-z]|\bnav\.[a-z]/i.test(txt),
+            french: /Résultat approximatif/.test(txt), arabic: /نتيجة تقريبية/.test(txt)};
+  });
+  check('the page is translated in Arabic', arabic.arabic && !arabic.french, arabic.title);
+  check('with no key showing through', !arabic.keys);
+  check('and the interface still mirrors', arabic.dir === 'rtl', arabic.dir);
+
+  await page.evaluate(() => {
+    state.invoices = []; state.expenses = []; state.currentPage = 'invoices';
+    saveData(); navigate('invoices');
+  });
+}
+
+/* ---------------------------------------------------------------- *
  * 11. The international generator.
  *
  * A separate product on the same domain: a form that prints one invoice

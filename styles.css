@@ -352,10 +352,12 @@ body.sidebar-open { overflow:hidden; }
 .stat-card .w-10.h-10.rounded-xl.bg-blue-100 { background: #dbeafe !important; }
 .stat-card .w-10.h-10.rounded-xl.bg-red-100 { background: #fee2e2 !important; }
 .stat-card .w-10.h-10.rounded-xl.bg-sky-100 { background: #e0f2fe !important; }
+.stat-card .w-10.h-10.rounded-xl.bg-amber-100 { background: #fef3c7 !important; }
 .dark .stat-card .w-10.h-10.rounded-xl.bg-emerald-100 { background: rgba(16,185,129,.18) !important; }
 .dark .stat-card .w-10.h-10.rounded-xl.bg-blue-100 { background: rgba(59,130,246,.18) !important; }
 .dark .stat-card .w-10.h-10.rounded-xl.bg-red-100 { background: rgba(239,68,68,.18) !important; }
 .dark .stat-card .w-10.h-10.rounded-xl.bg-sky-100 { background: rgba(14,165,233,.18) !important; }
+.dark .stat-card .w-10.h-10.rounded-xl.bg-amber-100 { background: rgba(245,158,11,.18) !important; }
 
 .dark #sidebar {
   background: #0a0f1a !important;

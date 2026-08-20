@@ -108,6 +108,41 @@ Two consequences worth knowing before editing:
 Scope is a full credit. To credit part of an invoice, issue the avoir and edit
 its lines in the ordinary invoice editor.
 
+## Dépenses et résultat approximatif
+
+The ledger knew what came in and never what went out, so the only figure a
+merchant could read was turnover — and turnover was being read as if it were
+what was left. `depenses.js` adds a page that subtracts.
+
+Three decisions settle what that figure means, and none of them is a setting:
+
+- **Only a settled invoice is a sale.** The sales side reads `status ===
+  'payee'` and nothing else. An invoice that has been issued is a claim, not
+  money; a brouillon and an annulée carry a different status and so never
+  reach it. An avoir is stored `payee` and `calcInvoiceTotals` hands it back
+  negated, so it subtracts once, on its own, exactly as it does everywhere
+  else. A bon de livraison totals zero and is worth nothing here.
+- **The base is HT, on both sides.** The VAT collected on a sale belongs to
+  the Treasury, and so does the droit de timbre: counting either would inflate
+  the result by about a fifth. The same reasoning runs the other way on a
+  spend — the VAT paid to a supplier is deducted, not borne — so a dépense is
+  entered and counted HT too.
+- **It is a "résultat approximatif" and never a bénéfice.** There are no
+  amortissements in it, no charges sociales and no variation de stock. The
+  page carries the sentence that says so; do not shorten it to "bénéfice" or
+  "profit", which would put a number on screen an accountant has to unsay.
+
+`state.expenses` is the only new list. It must stay in the `saveData`
+whitelist in `extra.js` and in the export and the import in `pro-polish.js`,
+or the page shows a figure that does not survive a reload. A backup written
+before this feature carries no `expenses` key, and the import reads that as an
+empty list rather than keeping what is in memory: the alternative is one
+merchant's dépenses standing against another's invoices.
+
+The period is a prefix match on the ISO date — a month, a year, or
+everything — and is deliberately not stored. Which window somebody is looking
+at is not data.
+
 ## Backups
 
 `backup.js` stamps `fp_last_export` when an export actually runs, and asks
@@ -116,9 +151,10 @@ examples, and "Plus tard" buys a week.
 
 The stamp is set by **wrapping** `window.exportData`, not by editing it:
 `b2a.js` declares one and `pro-polish.js` replaces it wholesale at load, so a
-hook written into `b2a.js` is dead code. `backup.js` is last in the `core`
-list in `app.js`, which is what makes the wrapper land on the function the
-button really calls. Keep it last.
+hook written into `b2a.js` is dead code. `backup.js` comes after
+`pro-polish.js` in the `core` list in `app.js`, which is what makes the wrapper
+land on the function the button really calls. Keep it after — and nothing that
+loads later may replace `exportData` wholesale, or the stamp is lost again.
 
 ## Guide
 
@@ -196,7 +232,8 @@ An Algerian merchant invoicing a foreign client is the benign mirror case: one
 link in Aide, and nothing else. The application stays a single-country product.
 
 ## Features
-- Dashboard, invoices, devis, produits, paiements, créances, clients (DA, NIF, NIN, NIS, RC, AI)
+- Dashboard, invoices, devis, produits, paiements, dépenses, créances, clients (DA, NIF, NIN, NIS, RC, AI)
+- Résultat approximatif : ventes encaissées HT moins dépenses HT
 - Droit de timbre (art. 100, barème LF 2025) sur les règlements en espèces
 - 29 templates, PDF, dark mode
 - Logo upload (Paramètres)
@@ -205,7 +242,7 @@ link in Aide, and nothing else. The application stays a single-country product.
 
 ## Tests
 
-`cd tests && npm install && npm test` — 238 checks against a real headless
+`cd tests && npm install && npm test` — 292 checks against a real headless
 browser. Run `npm run build` in the root first: the last group drives
 `public/`, the built site, because what it proves is that the international
 generator renders and exports with every off-origin request blocked. Run them before every deploy; the suite prints `Safe to deploy.` or
@@ -232,9 +269,10 @@ A page missing from that array silently bounces the user back to the dashboard.
 There is a second list in `app.js`, but it is only a fallback — `c2.js` is the one
 that runs.
 
-**3. Bump `V` in `app.js` when you change a module — and the three `?v=` in `index.html`.**
-Modules load as `a.js?v=<V>`; `index.html` carries its own `?v=` for `styles.css`,
-`i18n.js` and `app.js`. Both must move together. Without a bump, browsers keep
+**3. Bump `V` in `app.js` when you change a module — and every `?v=` in `index.html`.**
+Modules load as `a.js?v=<V>`; `index.html` carries its own `?v=` on `styles.css`,
+`vendor/tailwind.css`, `i18n.js`, `app.js` and `install.js` — five of them, and
+they move together with `V` and with `CACHE` in `sw.js`. Without a bump, browsers keep
 serving the old file and your fix never reaches users, no matter how many times
 you redeploy. The `must-revalidate` header in `vercel.json` currently hides this
 mistake — do not rely on it, it is a safety net, not the mechanism.

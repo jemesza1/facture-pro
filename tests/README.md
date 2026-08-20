@@ -43,7 +43,16 @@ The suite prints `Safe to deploy.` or lists the failing checks and exits 1.
    marked and removable; unreadable storage is put aside rather than overwritten
    with demo invoices.
 
-11. **The international generator** — driven against `public/`, the built site,
+11. **Dépenses et résultat approximatif** — the figure counts a settled
+   invoice at its HT and nothing more: not the VAT it collected, not the droit
+   de timbre, not an invoice that has only been issued, not a brouillon and
+   not an annulée. An avoir subtracts once and a bon de livraison is worth
+   nothing. The page calls the result approximate and says what is missing
+   from it; the dépenses survive a reload and an export; and a backup written
+   before the feature empties the list rather than blending one merchant's
+   spending into another's books.
+
+12. **The international generator** — driven against `public/`, the built site,
    with every off-origin request aborted: the page must keep its layout, total
    each country's own tax and no droit de timbre, refuse to issue anything for
    DZ, FR and SA while saying why, keep its amounts in latin digits in all

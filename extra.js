@@ -4,6 +4,10 @@
     if(!state.products) state.products=[];
     if(!state.devis) state.devis=[];
     if(!state.payments) state.payments=[];
+    /* Spending is a list like the others, and it has to be created here
+       rather than in depenses.js: this ensure() runs on every saveData, and
+       the whitelist below writes what it finds. */
+    if(!state.expenses) state.expenses=[];
     if(!state.nextDevisNumber) state.nextDevisNumber=1;
   }
 
@@ -20,6 +24,7 @@
         products:state.products,
         devis:state.devis,
         payments:state.payments,
+        expenses:state.expenses,
         nextDevisNumber:state.nextDevisNumber,
         nextAvoirNumber:state.nextAvoirNumber,
         nextBlNumber:state.nextBlNumber
@@ -48,6 +53,7 @@
       if(Array.isArray(d.products)) state.products=d.products;
       if(Array.isArray(d.devis)) state.devis=d.devis;
       if(Array.isArray(d.payments)) state.payments=d.payments;
+      if(Array.isArray(d.expenses)) state.expenses=d.expenses;
       if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
     }catch(e){}
   };
