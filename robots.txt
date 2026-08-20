@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://facturedz.com/sitemap.xml
+Sitemap: https://www.facturedz.com/sitemap.xml

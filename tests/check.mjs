@@ -2255,7 +2255,7 @@ for (const f of INDEXED) {
   check(`${f} names a canonical URL`, /rel="canonical"/.test(html));
   check(`${f} carries a share image`, /property="og:image"/.test(html));
   check(`${f} gives it an absolute URL, the only kind a crawler follows`,
-        /property="og:image" content="https:\/\/facturedz\.com\/og\.png"/.test(html));
+        /property="og:image" content="https:\/\/www\.facturedz\.com\/og\.png"/.test(html));
 }
 
 /* The picture itself has to survive the build: static/*.png is what gets
@@ -2288,7 +2288,40 @@ for (const f of ['dashboard-facturepro.html', 'mobile-facturepro.html', 'design-
 }
 const landing = await readFile(join(ROOT, 'landing-facturepro.html'), 'utf8');
 check('the old landing page points its authority at the home page',
-      /rel="canonical" href="https:\/\/facturedz\.com\/"/.test(landing));
+      /rel="canonical" href="https:\/\/www\.facturedz\.com\/"/.test(landing));
+
+/* ---------------------------------------------------------------- *
+ * The host the site claims to live at.
+ *
+ * The apex answers 308 to www: www is what serves the site. Every address
+ * the site declares about itself has to name that host, or each one is a hop
+ * a crawler must follow and a canonical pointing at a redirect — which Google
+ * is free to ignore. The seven sitemap entries were the worst of it:
+ * submitted naming the apex, Search Console reports the whole file as pages
+ * with redirect and indexes none of them directly.
+ * ---------------------------------------------------------------- */
+console.log('\nThe host the site claims to live at');
+
+for (const f of [...INDEXED, 'landing-facturepro.html', 'sitemap.xml', 'robots.txt']) {
+  const text = await readFile(join(ROOT, f), 'utf8');
+  const bare = (text.match(/https:\/\/facturedz\.com/g) || []).length;
+  check(`${f} never names the host that only redirects`, bare === 0, bare + ' left');
+}
+
+const map = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+check('every sitemap entry names the served host',
+      (map.match(/<loc>https:\/\/www\.facturedz\.com/g) || []).length ===
+      (map.match(/<loc>/g) || []).length,
+      (map.match(/<loc>/g) || []).length + ' entries');
+check('robots points at the sitemap on that host',
+      /Sitemap: https:\/\/www\.facturedz\.com\/sitemap\.xml/.test(
+        await readFile(join(ROOT, 'robots.txt'), 'utf8')));
+
+/* Removing the tag after validation drops the property, and with it the
+   coverage reports and the sitemap submission. */
+check('the home page keeps its Search Console proof of ownership',
+      /name="google-site-verification" content="[A-Za-z0-9_-]{20,}"/.test(home),
+      (home.match(/content="[A-Za-z0-9_-]{20,}"/) || ['missing'])[0].slice(0, 30) + '…');
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
