@@ -32,7 +32,7 @@
    être collé. Tant que la ligne est vide, la carte ne s'affiche pas et rien
    dans l'application ne change. */
 
-var DRIVE_CLIENT_ID = '';
+var DRIVE_CLIENT_ID = '95064197490-jg254go0f9qqb15m0d20kh10k1aomgb9.apps.googleusercontent.com';
 
 /* drive.file, et rien d'autre. Cette portée ne donne accès qu'aux fichiers que
    cette application a créés : le reste du Drive du commerçant lui reste
