@@ -20,12 +20,12 @@
        and a blocked cdnjs left the PDF button throwing. Nothing here can be
        taken away by a third party, and nothing follows @latest. -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles.css?v=20260820a" />
+  <link rel="stylesheet" href="styles.css?v=20260820b" />
   <!-- Last, because the Play CDN appended its <style> to the end of the head
        and the design was drawn against that cascade: the utilities win the
        ties. Move this above styles.css and the overdue total stops being red
        and the accent border comes off the cards. -->
-  <link rel="stylesheet" href="vendor/tailwind.css?v=20260820a" />
+  <link rel="stylesheet" href="vendor/tailwind.css?v=20260820b" />
   <script defer src="vendor/lucide.min.js"></script>
   <script defer src="vendor/jspdf.umd.min.js"></script>
   <script defer src="vendor/html2canvas.min.js"></script>
@@ -86,6 +86,23 @@
         </div>
       </header>
 
+      <!-- One line for the visitor this application is not for. It is shown
+           only when the browser asks for neither French nor Arabic, so the
+           Algerian merchant — every one of whom does — never sees it. In
+           English, because that is what the visitor who sees it reads. -->
+      <div id="foreign-note" class="hidden shrink-0 px-3 sm:px-6 pt-3" dir="ltr">
+        <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-800/60">
+          <span class="min-w-0 flex-1 text-slate-600 dark:text-slate-300">
+            This is an invoicing app for Algeria.
+            <a href="international.html" class="font-semibold underline text-emerald-700 dark:text-emerald-400">Invoicing from another country?</a>
+          </span>
+          <button type="button" onclick="dismissForeign()" aria-label="Close"
+                  class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
       <div id="local-warn" class="hidden shrink-0 px-3 sm:px-6 pt-3">
         <div class="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:p-3.5 dark:border-amber-500/30 dark:bg-amber-500/10">
           <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"></i>
@@ -127,8 +144,8 @@
     <div class="flex-1 overflow-y-auto p-3 sm:p-4" id="preview-body"></div>
   </div>
 
-  <script src="i18n.js?v=20260820a"></script>
-  <script src="app.js?v=20260820a"></script>
+  <script src="i18n.js?v=20260820b"></script>
+  <script src="app.js?v=20260820b"></script>
   <script>
     var LW = {
       fr:{t:"Vos données sont enregistrées dans ce navigateur uniquement.",
@@ -146,6 +163,26 @@
       if(q('lw-cta'))   q('lw-cta').textContent   = d.c;
       if(q('lw-hide'))  q('lw-hide').textContent  = d.h;
     }
+    /* Shown once to a browser that asks for neither French nor Arabic, and
+       never again after it is closed. It is deliberately not a redirect: a
+       guess about language is not grounds for moving somebody off the page
+       they asked for. */
+    function dismissForeign(){
+      var el = document.getElementById('foreign-note');
+      if (el) el.classList.add('hidden');
+      try{ localStorage.setItem('fp_foreign_seen','1'); }catch(e){}
+    }
+    (function(){
+      var seen = false;
+      try{ seen = localStorage.getItem('fp_foreign_seen') === '1'; }catch(e){}
+      var l = (navigator.language || '').toLowerCase();
+      var speaksOurs = l.indexOf('fr') === 0 || l.indexOf('ar') === 0;
+      if(!seen && !speaksOurs){
+        var el = document.getElementById('foreign-note');
+        if(el) el.classList.remove('hidden');
+      }
+    })();
+
     function dismissWarn(){
       var el = document.getElementById('local-warn');
       if(el) el.classList.add('hidden');
@@ -170,7 +207,7 @@
     };
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
-  <script defer src="install.js?v=20260820a"></script>
+  <script defer src="install.js?v=20260820b"></script>
 
   <!-- Installable, and usable with no signal. Registered after load so it
        never competes with the first paint, and failure is silent: a browser

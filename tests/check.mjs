@@ -1496,6 +1496,48 @@ console.log('\nThe international generator');
     site.close();
   }
 
+  /* The other direction: a visitor who lands on the application and is not
+     who it is for. The link in Aide is enough for the Algerian who goes
+     looking; it is not enough for a Briton who typed the domain and is now
+     reading a French dashboard full of NIF and NIS fields. */
+  {
+    const seen = [];
+    for (const [locale, expect] of [['en-GB', true], ['fr-FR', false], ['ar-DZ', false]]) {
+      const c = await browser.newContext({ locale });
+      const q = await c.newPage();
+      await q.goto(`${BASE}/index.html`);
+      await q.waitForTimeout(1200);
+      seen.push([locale, await q.evaluate(() => {
+        const el = document.getElementById('foreign-note');
+        return el ? !el.className.includes('hidden') : null;
+      }), expect]);
+      await c.close();
+    }
+    check('a browser asking for neither French nor Arabic is offered the generator',
+          seen[0][1] === true, String(seen[0][1]));
+    check('and the Algerian merchant, who asks for one of them, never sees it',
+          seen[1][1] === false && seen[2][1] === false,
+          seen.map(r => r[0] + '=' + r[1]).join(' '));
+
+    const c = await browser.newContext({ locale: 'en-GB' });
+    const q = await c.newPage();
+    await q.goto(`${BASE}/index.html`);
+    await q.waitForTimeout(1200);
+    const href = await q.evaluate(() => {
+      const a = document.querySelector('#foreign-note a');
+      return a ? a.getAttribute('href') : null;
+    });
+    check('it points at the generator', href === 'international.html', String(href));
+    await q.evaluate(() => dismissForeign());
+    await q.reload();
+    await q.waitForTimeout(1200);
+    check('closed once is closed for good', await q.evaluate(() => {
+      const el = document.getElementById('foreign-note');
+      return el ? el.className.includes('hidden') : false;
+    }));
+    await c.close();
+  }
+
   /* The mirror case, inside the application: an Algerian merchant invoicing a
      foreign client. One line in Aide, and nothing else — no button in the
      invoice editor, no country selector. The application stays a
