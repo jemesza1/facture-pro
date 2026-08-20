@@ -2236,6 +2236,60 @@ if (hov.hoverBg) {
   check('and the label stays readable on it', ratio >= 4.5, `contrast ${ratio.toFixed(1)}:1`);
 }
 
+/* ---------------------------------------------------------------- *
+ * What a link to this domain looks like before anyone opens it.
+ *
+ * The address is pasted into WhatsApp and Facebook more often than it is
+ * typed into a search bar, and a share card is the whole first impression.
+ * These are cheap to get wrong in a way nothing in the application would
+ * ever reveal: a relative og:image is ignored in silence, and a card that
+ * points at a file the build does not copy shows a broken preview to
+ * everyone but the person who added it.
+ * ---------------------------------------------------------------- */
+console.log('\nShare cards and structured data');
+
+const INDEXED = ['index.html', 'guide.html', 'droit-de-timbre.html', 'montant-en-lettres.html',
+                 'calcul-tva.html', 'calcul-salaire.html', 'international.html'];
+for (const f of INDEXED) {
+  const html = await readFile(join(ROOT, f), 'utf8');
+  check(`${f} names a canonical URL`, /rel="canonical"/.test(html));
+  check(`${f} carries a share image`, /property="og:image"/.test(html));
+  check(`${f} gives it an absolute URL, the only kind a crawler follows`,
+        /property="og:image" content="https:\/\/facturedz\.com\/og\.png"/.test(html));
+}
+
+/* The picture itself has to survive the build: static/*.png is what gets
+   copied into public/, and a card referenced from the root that only exists
+   in the repository is a broken preview on every share. */
+const og = await readFile(join(ROOT, 'public', 'og.png')).catch(() => null);
+check('the build copies the share image to the site root', og !== null);
+check('and it is a real PNG', og !== null && og[1] === 0x50 && og[2] === 0x4e && og[3] === 0x47);
+check('at the size the networks crop to (under 1 MB)', og !== null && og.length < 1024 * 1024,
+      og ? Math.round(og.length / 1024) + ' KB' : 'missing');
+
+const home = await readFile(join(ROOT, 'index.html'), 'utf8');
+const ld = (home.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/) || [])[1];
+let parsed = null;
+try { parsed = JSON.parse(ld); } catch (e) { parsed = null; }
+check('the home page carries structured data', !!ld);
+check('and it is valid JSON, not a rich result silently dropped', parsed !== null);
+check('it declares the application and its price', parsed &&
+      parsed['@type'] === 'SoftwareApplication' && parsed.offers &&
+      String(parsed.offers.price) === '0',
+      parsed ? parsed['@type'] + ' / ' + (parsed.offers && parsed.offers.price) : 'unparsed');
+check('and both languages it is written in', parsed &&
+      Array.isArray(parsed.inLanguage) && parsed.inLanguage.includes('ar'));
+
+/* The mockups ship in the same folder as the site. They must stay out of the
+   index, or they compete with the pages that are meant to rank. */
+for (const f of ['dashboard-facturepro.html', 'mobile-facturepro.html', 'design-system.html']) {
+  const html = await readFile(join(ROOT, f), 'utf8');
+  check(`${f} stays out of the search index`, /name="robots" content="noindex/.test(html));
+}
+const landing = await readFile(join(ROOT, 'landing-facturepro.html'), 'utf8');
+check('the old landing page points its authority at the home page',
+      /rel="canonical" href="https:\/\/facturedz\.com\/"/.test(landing));
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
