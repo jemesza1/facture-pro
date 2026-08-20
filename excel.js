@@ -209,4 +209,116 @@
 
     toast(say('Journal exporté', 'تم تصدير السجلّ'));
   };
+
+  /* ---------------------------------------------------------------- *
+   * The lists behind the "Excel" buttons
+   *
+   * These buttons said Excel, showed a spreadsheet icon and announced
+   * "Export Excel OK" while handing over a semicolon-separated .csv. On a
+   * phone that is a file the merchant often cannot open at all, and in Excel
+   * it is a dialog about separators before it is a table. The workbook writer
+   * for the journal was already here; this points the same four buttons at it.
+   *
+   * French headers, like the other two workbooks and like the printed
+   * invoice — a spreadsheet is a document that leaves the application and gets
+   * sent on, and two merchants must not produce two different-looking files
+   * from the same figures.
+   * ---------------------------------------------------------------- */
+  var STATUS_FR = {payee:'Payée', envoyee:'Envoyée', enretard:'En retard',
+                   brouillon:'Brouillon', annulee:'Annulée'};
+
+  window.exportListXlsx = function(kind){
+    var day = new Date().toISOString().slice(0, 10);
+    var rows = [], merges = [], cols, name, file, span;
+
+    function head(title, cells){
+      rows.push([{v: title, s: 'title'}]);
+      merges.push('A1:' + String.fromCharCode(64 + cells.length) + '1');
+      rows.push([{v: (state.company && state.company.name) || '', s: 'subtitle'}]);
+      merges.push('A2:' + String.fromCharCode(64 + cells.length) + '2');
+      rows.push([]);
+      rows.push(cells.map(function(c){ return {v: c, s: 'thead'}; }));
+      span = cells.length;
+    }
+
+    if (kind === 'products') {
+      name = 'Produits'; file = 'produits-' + day + '.xlsx';
+      cols = [36, 14, 8, 10, 10];
+      head('Produits et services', ['Désignation', 'Prix HT', 'TVA %', 'Stock', 'Seuil']);
+      (state.products || []).forEach(function(p){
+        rows.push([{v: p.name || '', s: 'cell'}, {v: Number(p.price) || 0, s: 'cellNum'},
+                   {v: p.tva != null ? Number(p.tva) : 19, s: 'cellPct'},
+                   {v: Number(p.stock) || 0, s: 'cell'}, {v: Number(p.minStock) || 0, s: 'cell'}]);
+      });
+
+    } else if (kind === 'clients') {
+      name = 'Clients'; file = 'clients-' + day + '.xlsx';
+      cols = [30, 26, 16, 20, 20, 20];
+      head('Clients', ['Nom', 'Email', 'Téléphone', 'NIF', 'NIS', 'RC']);
+      (state.clients || []).forEach(function(c){
+        rows.push([{v: c.name || '', s: 'cell'}, {v: c.email || '', s: 'cell'},
+                   {v: c.phone || '', s: 'cell'}, {v: c.nif || '', s: 'cell'},
+                   {v: c.nis || '', s: 'cell'}, {v: c.rc || '', s: 'cell'}]);
+      });
+
+    } else if (kind === 'debts') {
+      name = 'Créances'; file = 'creances-' + day + '.xlsx';
+      cols = [34, 18, 20];
+      head('Créances clients', ['Client', 'Téléphone', 'Reste dû']);
+      var owed = 0;
+      (state.clients || []).forEach(function(c){
+        var d = getClientDebt(c.id);
+        if (d <= 0) return;
+        owed += d;
+        rows.push([{v: c.name || '', s: 'cell'}, {v: c.phone || '', s: 'cell'},
+                   {v: d, s: 'cellNum'}]);
+      });
+      rows.push([{v: 'TOTAL', s: 'grand'}, {v: '', s: 'grand'}, {v: owed, s: 'grand'}]);
+
+    } else {
+      name = 'Factures'; file = 'factures-' + day + '.xlsx';
+      cols = [16, 12, 30, 20, 13, 14, 13, 14, 15, 14, 18];
+      head('Factures', ['N°', 'Date', 'Client', 'NIF client', 'Statut', 'Base HT', 'TVA',
+                        'Total TTC', 'Droit de timbre', 'Net à payer', 'Règlement']);
+      var sum = {ht: 0, tva: 0, ttc: 0, timbre: 0, net: 0}, counted = 0;
+      (state.invoices || []).slice().sort(function(a, b){
+        return String(b.date || '').localeCompare(String(a.date || ''));
+      }).forEach(function(inv){
+        var cl = getClient(inv.clientId) || {}, tt = calcInvoiceTotals(inv);
+        /* A draft was never issued and a cancelled invoice has no effect, so
+           neither belongs in a total — but both belong in a list of what
+           exists, which is what this sheet is. */
+        if (inv.status !== 'brouillon' && inv.status !== 'annulee') {
+          sum.ht += tt.ht; sum.tva += tt.tva; sum.ttc += tt.ttc;
+          sum.timbre += tt.timbre; sum.net += tt.net; counted++;
+        }
+        rows.push([
+          {v: inv.number || '', s: 'cell'},
+          {v: inv.date ? XLSX.excelDate(inv.date) : '', s: 'date'},
+          {v: cl.name || '', s: 'cell'},
+          {v: cl.nif || '', s: 'cell'},
+          {v: STATUS_FR[inv.status] || inv.status || '', s: 'cell'},
+          {v: tt.ht, s: 'cellNum'}, {v: tt.tva, s: 'cellNum'}, {v: tt.ttc, s: 'cellNum'},
+          {v: tt.timbre, s: 'cellNum'}, {v: tt.net, s: 'cellNum'},
+          {v: payLabelFr(inv), s: 'cell'}
+        ]);
+      });
+      rows.push([{v: 'TOTAL', s: 'grand'}, {v: '', s: 'grand'}, {v: '', s: 'grand'},
+                 {v: '', s: 'grand'}, {v: counted + ' facture(s)', s: 'grand'},
+                 {v: sum.ht, s: 'grand'}, {v: sum.tva, s: 'grand'}, {v: sum.ttc, s: 'grand'},
+                 {v: sum.timbre, s: 'grand'}, {v: sum.net, s: 'grand'}, {v: '', s: 'grand'}]);
+      rows.push([]);
+      rows.push([{v: 'Le total exclut les brouillons et les factures annulées. Pour la déclaration mensuelle, utilisez le Journal du mois.', s: 'note'}]);
+      merges.push('A' + rows.length + ':K' + rows.length);
+    }
+
+    if (rows.length <= 4) {
+      return toast(say('Rien à exporter', 'لا يوجد ما يُصدَّر'), 'err');
+    }
+
+    XLSX.build([{name: name, cols: cols, rows: rows, merges: merges, freeze: 4,
+                 autofilter: 'A4:' + String.fromCharCode(64 + span) + '4',
+                 heights: {1: 26, 4: 30}}], file);
+    toast(say('Export Excel OK', 'تم تصدير Excel'));
+  };
 })();

@@ -2162,6 +2162,63 @@ check('"later" still silences it', cadence.snoozed === false);
 check('but buys a day rather than a week',
       cadence.buys > 0 && cadence.buys <= 86400000 + 5000, String(cadence.buys));
 
+/* ---------------------------------------------------------------- *
+ * The Excel buttons, and the hover that erased them.
+ * ---------------------------------------------------------------- */
+console.log('\nThe Excel buttons and the dark hover');
+
+await page.evaluate(() => { if (locale !== 'fr') toggleLocale(); navigate('invoices'); });
+await page.waitForTimeout(400);
+
+/* A button that says Excel, carries a spreadsheet icon and announces "Export
+   Excel OK" used to hand over a semicolon-separated .csv — a file a phone
+   often cannot open at all, and a dialog about separators before it is a
+   table in Excel. PK is the signature of the real thing. */
+{
+  const dl = page.waitForEvent('download', {timeout: 15000});
+  await page.click('#excel-inv-btn');
+  const d = await dl;
+  const name = d.suggestedFilename();
+  const bytes = await readFile(await d.path());
+  check('the Excel button produces an .xlsx', /\.xlsx$/.test(name), name);
+  check('and the file is a real workbook, not a csv named xlsx',
+        bytes.slice(0, 2).toString('latin1') === 'PK', bytes.slice(0, 4).toString('hex'));
+  check('with more in it than a header row', bytes.length > 3000, String(bytes.length));
+}
+
+/* Every other hover in styles.css has its dark counterpart; this one did not,
+   so the tapped button went near-white while the text stayed near-white with
+   it. On a phone the hover state survives the tap, which makes the button a
+   merchant just pressed the one they can no longer read. */
+const lum = (c) => {
+  const [r, g, b] = c.match(/\d+/g).map(Number).slice(0, 3).map(v => {
+    v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const hov = await page.evaluate(() => {
+  document.documentElement.classList.add('dark');
+  const b = document.getElementById('excel-inv-btn');
+  const rest = getComputedStyle(b).backgroundColor;
+  /* :hover cannot be forced from script, so the rule itself is read back. */
+  let hoverBg = '';
+  for (const sheet of document.styleSheets) {
+    let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
+    for (const r of rules) {
+      if (r.selectorText === '.dark .btn-secondary:hover') hoverBg = r.style.background || r.style.backgroundColor;
+    }
+  }
+  return {rest, hoverBg, text: getComputedStyle(b).color};
+});
+check('a dark-mode hover is defined for secondary buttons', !!hov.hoverBg, hov.hoverBg);
+if (hov.hoverBg) {
+  const bg = hov.hoverBg.startsWith('#')
+    ? `rgb(${parseInt(hov.hoverBg.slice(1,3),16)},${parseInt(hov.hoverBg.slice(3,5),16)},${parseInt(hov.hoverBg.slice(5,7),16)})`
+    : hov.hoverBg;
+  const ratio = (Math.max(lum(bg), lum(hov.text)) + 0.05) / (Math.min(lum(bg), lum(hov.text)) + 0.05);
+  check('and the label stays readable on it', ratio >= 4.5, `contrast ${ratio.toFixed(1)}:1`);
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

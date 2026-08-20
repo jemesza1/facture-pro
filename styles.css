@@ -95,6 +95,12 @@ body {
 }
 .dark .btn-secondary { background:#0f172a;color:#e2e8f0;border-color:#334155; }
 .btn-secondary:hover { background:#f8fafc; }
+/* Without this the hover lightened the button to near-white while .dark kept
+   the text near-white with it, and the label vanished. On a phone it is worse
+   than on a desktop: a tap leaves the hover state behind, so the button a
+   merchant just pressed is the one they can no longer read. Every other hover
+   in this file already had its dark counterpart; this one was missed. */
+.dark .btn-secondary:hover { background:#1e293b; }
 .btn-danger {
   display:inline-flex;align-items:center;gap:0.5rem;border-radius:0.75rem;
   padding:0.625rem 1rem;min-height:44px;font-size:0.875rem;font-weight:500;

@@ -212,8 +212,14 @@
     a.click();
   }
 
+  /* The four "Excel" buttons produce a real workbook when excel.js is loaded,
+     which in the application it always is — the CSV below stays as the floor
+     for a page that loads commerce.js alone. */
   window.exportExcel=function(kind){
     ensure();
+    if(typeof exportListXlsx==='function' && typeof XLSX!=='undefined'){
+      return exportListXlsx(kind);
+    }
     var day=new Date().toISOString().slice(0,10);
     if(kind==='products'){
       downloadCSV('produits-'+day+'.csv', [[ar()?'\u0627\u0644\u0648\u0635\u0641':'D\u00e9signation',ar()?'\u0633\u0639\u0631':'Prix HT','TVA',ar()?'\u0645\u062e\u0632\u0648\u0646':'Stock',ar()?'\u062d\u062f':'Seuil']].concat((state.products||[]).map(function(p){return [p.name,p.price,p.tva!=null?p.tva:19,p.stock||0,p.minStock||0];})));
