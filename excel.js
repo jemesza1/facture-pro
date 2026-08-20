@@ -201,7 +201,7 @@
 
     XLSX.build([
       {name: 'Journal des ventes', cols: [16, 12, 30, 20, 14, 13, 14, 14, 15, 14, 18],
-       rows: rows, merges: merges, freeze: 4, autofilter: 'A4:J' + rows.length,
+       rows: rows, merges: merges, freeze: 4, autofilter: 'A4:K' + rows.length,
        heights: {1: 26, 4: 30}},
       {name: 'Récapitulatif TVA',  cols: [26, 16, 16], rows: rec, merges: recMerges,
        heights: {1: 26}}

@@ -226,10 +226,16 @@
       views = '<sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews>';
     }
     var filter = sheet.autofilter ? '<autoFilter ref="' + sheet.autofilter + '"/>' : '';
+    /* autoFilter before mergeCells, and not the other way round. A worksheet's
+       children are a fixed sequence in ECMA-376, not a set: written in the
+       wrong order Excel calls the file unreadable and "repairs" it by emptying
+       the sheet. That is what a merchant saw — a Journal du mois with nothing
+       in it, next to a Récapitulatif TVA that opened fine because it carries no
+       filter and so could not be out of order. */
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + views +
       '<sheetFormatPr defaultRowHeight="15"/>' + cols +
-      '<sheetData>' + out.join('') + '</sheetData>' + merges + filter +
+      '<sheetData>' + out.join('') + '</sheetData>' + filter + merges +
       '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>' +
       '</worksheet>';
   }

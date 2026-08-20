@@ -490,6 +490,23 @@ console.log('\nExcel export');
   /* 6x78 000 @19 % + 45 000 @9 % + 200 000 @19 %  ->  713 000 HT */
   check('the month total is the sum of the two real invoices', jText.includes('>713000<'));
   check('and the VAT is split by rate', jText.includes('>4050<') && jText.includes('>126920<'));
+  /* A worksheet's children are a fixed sequence in ECMA-376, not a set:
+     autoFilter comes before mergeCells. Written the other way round, Excel
+     declares the file unreadable and "repairs" it by emptying the sheet —
+     which is exactly what was reported: a Journal du mois with nothing in it,
+     beside a Récapitulatif TVA that opened fine because it carries no filter
+     and so could not be out of order. The register is the document a
+     declaration is written from; an empty one is worse than no file. */
+  const sheet1 = jText.slice(jText.indexOf('<worksheet'), jText.indexOf('</worksheet>'));
+  check('the register sheet still carries its invoices', sheet1.includes('FAC-2026-'));
+  check('it declares an autofilter over the table', sheet1.includes('<autoFilter'));
+  check('written before the merged cells, as the format requires',
+        sheet1.indexOf('<autoFilter') < sheet1.indexOf('<mergeCells'),
+        `autoFilter@${sheet1.indexOf('<autoFilter')} mergeCells@${sheet1.indexOf('<mergeCells')}`);
+  check('and the filter reaches the last column, not one short of it',
+        /<autoFilter ref="A4:K\d+"\/>/.test(sheet1),
+        (sheet1.match(/<autoFilter ref="[^"]*"/) || ['none'])[0]);
+
 
   const emptyMonth = await page.evaluate(() => {
     let said = ''; const real = window.toast; window.toast = m => { said = m; };
