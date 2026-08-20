@@ -2,6 +2,12 @@
 <html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    try {
+      if (localStorage.getItem('facturepro_dark') === '1')
+        document.documentElement.classList.add('dark');
+    } catch (e) {}
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#006233" />
   <title>FacturePro Algérie — Facturation gratuite et conforme — فاتورة برو</title>
@@ -32,6 +38,26 @@
       --line: #e2e8f0;
       --paper: #f8fafc;
       --white: #fff;
+      --card: #fff;
+      --nav-bg: rgba(255,255,255,.92);
+      --chip-bg: #ecfdf5;
+      --chip-line: #a7f3d0;
+      --row-line: #f1f5f9;
+      --invoice: #fff;
+    }
+    html.dark {
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --line: #1e293b;
+      --paper: #020617;
+      --white: #020617;
+      --card: #0f172a;
+      --nav-bg: rgba(2,6,23,.88);
+      --chip-bg: #064e3b;
+      --chip-line: #065f46;
+      --row-line: #1e293b;
+      --invoice: #0f172a;
+      color-scheme: dark;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -48,7 +74,7 @@
     .wrap { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
     .nav {
       position: sticky; top: 0; z-index: 20;
-      background: rgba(255,255,255,.92);
+      background: var(--nav-bg);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--line);
     }
@@ -67,6 +93,15 @@
       border: 1px solid var(--line); border-radius: 9px;
       padding: 7px 11px; font-size: 12px; font-weight: 700;
     }
+    .icon-btn {
+      width: 38px; height: 38px; border-radius: 9px; border: 1px solid var(--line);
+      display: grid; place-items: center; color: var(--ink);
+    }
+    .icon-btn:hover { background: var(--paper); }
+    .icon-btn .sun { display: none; }
+    html.dark .icon-btn .moon { display: none; }
+    html.dark .icon-btn .sun { display: block; }
+    html.dark .eyebrow { color: #6ee7b7; }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       border-radius: 999px; font-weight: 650; white-space: nowrap;
@@ -81,7 +116,7 @@
     .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
     .eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
-      background: #ecfdf5; color: var(--green); border: 1px solid #a7f3d0;
+      background: var(--chip-bg); color: var(--green-2); border: 1px solid var(--chip-line);
       font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-bottom: 18px;
     }
     h1 { font-size: clamp(32px, 4.4vw, 52px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin-bottom: 16px; }
@@ -90,7 +125,7 @@
     .chips { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 13.5px; }
     .chips span { display: inline-flex; align-items: center; gap: 6px; }
     .paper {
-      background: var(--white); border: 1px solid var(--line); border-radius: 16px;
+      background: var(--invoice); border: 1px solid var(--line); border-radius: 16px;
       box-shadow: 0 24px 60px rgba(15,23,42,.12); overflow: hidden; transform: rotate(1.4deg);
     }
     .paper-bar { height: 10px; background: linear-gradient(90deg, var(--green), var(--green-2)); }
@@ -104,7 +139,7 @@
     }
     table.inv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     table.inv th { text-align: start; color: var(--muted); font-weight: 600; padding: 8px 0; border-bottom: 1px solid var(--line); }
-    table.inv td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+    table.inv td { padding: 8px 0; border-bottom: 1px solid var(--row-line); }
     table.inv td:last-child, table.inv th:last-child { text-align: end; }
     .tot { display: flex; justify-content: space-between; margin-top: 12px; font-weight: 800; }
     .tot span:last-child { color: var(--green); }
@@ -113,17 +148,17 @@
     h2 { font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -.025em; text-align: center; margin-bottom: 10px; }
     .sub { text-align: center; color: var(--muted); max-width: 40rem; margin: 0 auto 36px; }
     .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
     .card h3 { font-size: 16px; margin: 10px 0 6px; }
     .card p { font-size: 14px; color: var(--muted); }
-    .ico { width: 40px; height: 40px; border-radius: 12px; background: #ecfdf5; color: var(--green); display: grid; place-items: center; }
+    .ico { width: 40px; height: 40px; border-radius: 12px; background: var(--chip-bg); color: var(--green-2); display: grid; place-items: center; }
     .mods { padding: 64px 0; }
     .mods-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .mod { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fff; }
+    .mod { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--card); }
     .mod b { display: block; font-size: 14.5px; }
     .mod span { font-size: 12.5px; color: var(--muted); }
     .faq { padding: 20px 0 72px; }
-    details { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+    details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
     summary { font-weight: 650; cursor: pointer; }
     details p { margin-top: 8px; color: var(--muted); font-size: 14.5px; }
     .band {
@@ -165,6 +200,10 @@
       </div>
       <div class="nav-cta">
         <button type="button" class="lang" id="langBtn" aria-label="Langue">العربية</button>
+        <button type="button" class="icon-btn" id="themeBtn" aria-label="Thème">
+          <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 14.3A8.5 8.5 0 1 1 9.7 3 7 7 0 0 0 21 14.3z"/></svg>
+          <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
         <a class="btn btn-ghost" href="index.html?app=1" data-fr="Ouvrir l'app" data-ar="فتح التطبيق">Ouvrir l'app</a>
         <a class="btn btn-green" href="index.html?app=1" data-fr="Commencer" data-ar="ابدأ مجاناً">Commencer</a>
       </div>
@@ -325,6 +364,17 @@
       var b = document.getElementById('langBtn');
       if (b) b.addEventListener('click', function () {
         apply(loc() === 'ar' ? 'fr' : 'ar');
+      });
+      function setDark(on) {
+        document.documentElement.classList.toggle('dark', on);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', on ? '#020617' : '#006233');
+        try { localStorage.setItem('facturepro_dark', on ? '1' : '0'); } catch (e) {}
+      }
+      setDark(document.documentElement.classList.contains('dark'));
+      var th = document.getElementById('themeBtn');
+      if (th) th.addEventListener('click', function () {
+        setDark(!document.documentElement.classList.contains('dark'));
       });
     })();
   </script>
