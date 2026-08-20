@@ -102,8 +102,18 @@
       parCategorie[k]=(parCategorie[k]||0)+expenseTotals(x).ht;
     });
 
+    /* The amount nets an avoir off and a bon de livraison contributes
+       nothing, but both are stored as 'payee' and both were being counted as
+       "factures payées" underneath the figure. The caption has to describe
+       the same documents the figure is made of. */
+    var nVentes=sold.filter(function(i){
+      var bl=(typeof isBl==='function')&&isBl(i);
+      var av=(typeof isAvoir==='function')&&isAvoir(i);
+      return !bl && !av;
+    }).length;
+
     return {ventes:ventes, depenses:depenses, resultat:ventes-depenses,
-            nVentes:sold.length, nDepenses:spent.length,
+            nVentes:nVentes, nDepenses:spent.length,
             parCategorie:parCategorie, prefix:p};
   };
 
@@ -154,10 +164,14 @@
       '<div class="space-y-2">'+keys.map(function(k){
         var v=r.parCategorie[k];
         var pct=Math.max(2,Math.round(v/top*100));
+        /* The bar needs a track of its own. Left as a direct flex child its
+           percentage was measured against the whole row and then shrunk to
+           fit, so 30 000 and 20 000 came out 690px and 631px — a chart that
+           reports 0,91 where the figures say 0,67 is worse than no chart. */
         return '<div class="flex items-center gap-3">'+
           '<span class="text-xs w-40 shrink-0 truncate">'+esc(catLabel(k))+'</span>'+
-          '<span class="h-2 rounded-full bg-amber-400/70" style="width:'+pct+'%"></span>'+
-          '<span class="text-xs font-semibold ms-auto shrink-0">'+moneyUI(v)+'</span></div>';
+          '<span class="flex-1 min-w-0"><span class="block h-2 rounded-full bg-amber-400/70" style="width:'+pct+'%"></span></span>'+
+          '<span class="text-xs font-semibold shrink-0">'+moneyUI(v)+'</span></div>';
       }).join('')+'</div></div>';
   }
 
@@ -286,13 +300,29 @@
 
   /* Outermost wrapper: this file is last in the core list, so 'expenses' is
      caught before the chain below has a chance to fall through to "page not
-     found". */
+     found".
+
+     Returning early here means the base renderPage never runs, and the two
+     things it does around its own painting have to be done by hand. Missing
+     them is not theoretical: the backup banner writes its text imperatively,
+     so on this page alone it kept the language it had been painted in, and a
+     French banner sat on an Arabic screen — the same fault the install bar
+     already had once. updateOverdue is the other one: an invoice that fell
+     due while the merchant was reading this page stayed 'envoyée' until they
+     navigated somewhere else. animateCounters is deliberately absent, as
+     nothing here carries .count[data-v]. */
   var _render=window.renderPage;
   window.renderPage=function(){
     ensure();
     if(typeof state!=='undefined' && state.currentPage==='expenses'){
       var c=document.getElementById('main-content');
-      if(c){ c.innerHTML=renderExpenses(); try{lucide.createIcons();}catch(e){} return; }
+      if(c){
+        try{if(typeof updateOverdue==='function')updateOverdue();}catch(e){}
+        c.innerHTML=renderExpenses();
+        try{lucide.createIcons();}catch(e){}
+        try{if(typeof paintBackupNotice==='function')paintBackupNotice();}catch(e){}
+        return;
+      }
     }
     if(typeof _render==='function') return _render.apply(this,arguments);
   };

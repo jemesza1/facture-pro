@@ -242,7 +242,7 @@ link in Aide, and nothing else. The application stays a single-country product.
 
 ## Tests
 
-`cd tests && npm install && npm test` — 292 checks against a real headless
+`cd tests && npm install && npm test` — 298 checks against a real headless
 browser. Run `npm run build` in the root first: the last group drives
 `public/`, the built site, because what it proves is that the international
 generator renders and exports with every off-origin request blocked. Run them before every deploy; the suite prints `Safe to deploy.` or

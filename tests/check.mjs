@@ -1462,6 +1462,65 @@ console.log('\nDépenses et résultat approximatif');
   check('with no key showing through', !arabic.keys);
   check('and the interface still mirrors', arabic.dir === 'rtl', arabic.dir);
 
+  /* The banner is written imperatively, so nothing in applyLocale reaches it —
+     the base renderPage repaints it, and this page returns before that. It
+     showed a French banner on an Arabic screen, on this page and no other. */
+  const relang = await page.evaluate(() => {
+    localStorage.removeItem('fp_last_export');
+    localStorage.removeItem('fp_backup_snoozed_until');
+    state.clients = [{id: 'cr', name: 'Client réel'}];
+    state.invoices = [{id: 'ir', number: 'FAC-2026-750', clientId: 'cr', template: 'algerie',
+                       date: '2026-05-20', status: 'payee', paymentMode: 'virement',
+                       items: [{description: 'Vente', qty: 1, unitPrice: 1000, tva: 19}]}];
+    saveData();
+
+    const read = () => {
+      const h = document.getElementById('backup-warn');
+      return h && !h.classList.contains('hidden') ? (h.innerText || '') : '';
+    };
+    const out = {};
+    ['dashboard', 'expenses'].forEach(page => {
+      if (locale !== 'fr') toggleLocale();
+      navigate(page);
+      out[page + 'Fr'] = read();
+      toggleLocale();
+      out[page + 'Ar'] = read();
+      if (locale !== 'fr') toggleLocale();
+    });
+    return out;
+  });
+  const arText = s => /[\u0600-\u06FF]/.test(s) && !/Sauvegardez/.test(s);
+  check('the backup banner is up to be read at all',
+        !!relang.dashboardFr && !!relang.expensesFr,
+        JSON.stringify(relang).slice(0, 120));
+  check('and it follows the language on the dashboard', arText(relang.dashboardAr),
+        relang.dashboardAr.replace(/\s+/g, ' ').slice(0, 60));
+  check('and on the dépenses page too, which returns before the base render',
+        arText(relang.expensesAr), relang.expensesAr.replace(/\s+/g, ' ').slice(0, 60));
+
+  /* The caption under the figure has to describe the documents the figure is
+     made of: an avoir subtracts and a bon de livraison adds nothing, and
+     neither is a facture payée. */
+  const counted = await page.evaluate(() => {
+    state.invoices = [
+      {id: 'n1', number: 'FAC-2026-760', clientId: 'cr', template: 'algerie', date: '2026-05-10',
+       status: 'payee', paymentMode: 'virement',
+       items: [{description: 'Vente', qty: 1, unitPrice: 100000, tva: 19}]},
+      {id: 'n2', number: 'AV-2026-001', type: 'avoir', refNumber: 'FAC-2026-760', clientId: 'cr',
+       template: 'algerie', date: '2026-05-11', status: 'payee', paymentMode: 'virement',
+       items: [{description: 'Retour', qty: 1, unitPrice: 20000, tva: 19}]},
+      {id: 'n3', number: 'BL-2026-001', type: 'bl', clientId: 'cr', template: 'algerie',
+       date: '2026-05-12', status: 'payee', paymentMode: 'virement',
+       items: [{description: 'Livraison', qty: 1, unitPrice: 30000, tva: 19}]}];
+    state.expenses = []; saveData();
+    const r = resultatApprox('2026-05');
+    return {n: r.nVentes, ventes: r.ventes};
+  });
+  check('an avoir still comes off the sales figure',
+        near(counted.ventes, 80000), String(counted.ventes));
+  check('but only the factures are counted underneath it',
+        counted.n === 1, String(counted.n));
+
   await page.evaluate(() => {
     state.invoices = []; state.expenses = []; state.currentPage = 'invoices';
     saveData(); navigate('invoices');
@@ -1783,6 +1842,30 @@ console.log('\nThe international generator');
     check('nothing the page asked for left this origin, apart from the font',
           strayed.length === 0, strayed.slice(0, 3).join(' '));
     check('no script error on the generator', intlErrors.length === 0, intlErrors.join(' | '));
+
+    /* The dépenses bar chart, checked here because it is the only place the
+       built stylesheet is served: a bar twice as long has to stand for twice
+       the money, and without Tailwind loaded a width in per cent measures
+       nothing. Left as a direct flex child the bar was sized against the whole
+       row and then shrunk to fit, so 15 000 drew almost as wide as 30 000. */
+    const app = await ctx.newPage();
+    await app.goto(`${SITE}/index.html`);
+    await app.waitForFunction(() => typeof resultatApprox === 'function', {timeout: 20000});
+    const bars = await app.evaluate(() => {
+      state.invoices = [];
+      state.expenses = [
+        {id: 'b1', date: '2026-05-02', label: 'Loyer', category: 'loyer',
+         amount: 30000, tva: 0, mode: 'virement'},
+        {id: 'b2', date: '2026-05-04', label: 'Ciment', category: 'achats',
+         amount: 15000, tva: 0, mode: 'especes'}];
+      saveData(); navigate('expenses'); setExpensePeriod('all');
+      return [...document.querySelectorAll('#main-content .h-2')]
+        .map(e => e.getBoundingClientRect().width);
+    });
+    check('the category bars are drawn in proportion to the amounts',
+          bars.length === 2 && bars[0] > 20 && Math.abs(bars[1] / bars[0] - 0.5) < 0.05,
+          bars.map(Math.round).join(' / '));
+    await app.close();
 
     await ctx.close();
     site.close();
