@@ -2,6 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <!-- New visitors see accueil.html. Returning merchants (saved data,
+       installed PWA, or ?app=1) stay here. Invoice logic is untouched. -->
+  <script>
+  (function () {
+    try {
+      var q = location.search || '';
+      if (/(?:^|[?&])app=1(?:&|$)/.test(q)) {
+        localStorage.setItem('fp_entered', '1');
+        return;
+      }
+      if (localStorage.getItem('fp_entered') === '1') return;
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
+      if (localStorage.getItem('facturepro_dz_v24')) return;
+      var path = location.pathname || '/';
+      if (path !== '/' && path !== '') return;
+      location.replace('accueil.html');
+    } catch (e) {}
+  })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#006233" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
