@@ -220,6 +220,33 @@ has already fixed once for the tool pages.
 **Accepted when:** the page is in the sitemap, reports its own visits, and its
 canonical resolves.
 
+## What the page does not compute, and says so
+
+No droit de timbre is computed for any country. Algeria's belongs to the
+application, and Algeria issues nothing here — but the rule turned out to be
+wider than Algeria, and this is where it was nearly missed.
+
+**Tunisia puts a timbre fiscal on its invoices.** It shipped without one: a
+Tunisian invoice made here was short a mandatory line, which is the exact
+fault the Algerian block exists to prevent, in a country that had been let
+through. **Morocco charges a stamp duty on cash settlements.** Both are fixed
+by finance laws that move, and neither can be sourced from inside this
+repository.
+
+The wrong fix is to hard-code a figure. A number printed under an
+official-looking label is believed, and a stale one is worse than an absent
+one — the same reasoning that keeps `timbreFor` in the application anchored to
+art. 100 and the LF barème rather than to a remembered rate.
+
+So the invoice carries **one optional line, empty, labelled by whoever fills
+it**, added after the tax. Tunisia and Morocco say, in the interface language,
+that they need one and that the amount must be checked. A country with nothing
+to add says nothing.
+
+This is also the answer for whatever is found next: a country whose invoice
+needs a line this page does not know about is not a reason to hard-code it, or
+to drop the country. It is a hint and an empty line.
+
 ## Checks to add
 
 The existing suite drives the application and never loads this page, so these

@@ -1415,6 +1415,69 @@ console.log('\nThe international generator');
     check('and it never touches the application’s ledger', kept.ledger === null, String(kept.ledger));
     check('there is no Save button, because nothing is saved', !kept.save);
 
+    /* The line for what the page cannot compute.
+
+       Tunisia puts a timbre fiscal on its invoices and Morocco a stamp duty on
+       cash settlements, and both are fixed by finance laws that move. The page
+       computes neither — it carries an empty line the visitor labels and fills
+       themselves, and tells the two countries known to need one to use it. A
+       figure printed under an official label would be believed, which is
+       exactly why none is supplied. */
+    /* Pin the interface language: the notice is written in it, and a check
+       asserting English while the page is in Arabic tests the tester. */
+    await intl.click('[data-lang="en"]');
+    await intl.waitForTimeout(200);
+    await intl.selectOption('#country', 'TN');
+    await intl.waitForTimeout(250);
+    const tnHint = await intl.$eval('#hint', e => e.className.includes('hidden') ? '' : e.textContent);
+    check('Tunisia is told it carries a timbre fiscal', /timbre fiscal/i.test(tnHint), tnHint.slice(0, 60));
+    check('and told to check the amount rather than trust one',
+          /check the amount/i.test(tnHint), tnHint.slice(-40));
+    const tnAr = await intl.evaluate(() => {
+      document.querySelector('[data-lang="ar"]').click();
+      return document.getElementById('hint').textContent;
+    });
+    check('and says it in Arabic too', /\u0637\u0627\u0628\u0639/.test(tnAr), tnAr.slice(0, 40));
+    await intl.click('[data-lang="en"]');
+    await intl.waitForTimeout(200);
+
+    const preset = await intl.evaluate(() =>
+      ({ label: document.getElementById('extraLabel').value,
+         amount: document.getElementById('extraAmount').value }));
+    check('the line starts empty, with no figure supplied',
+          preset.label === '' && (preset.amount === '' || Number(preset.amount) === 0),
+          preset.label + '/' + preset.amount);
+
+    const withDuty = await intl.evaluate(() => {
+      const set = (sel, v) => { const e = document.querySelector(sel);
+        e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+      set('[data-f="desc"]', 'Prestation'); set('[data-f="qty"]', '1'); set('[data-f="price"]', '100');
+      set('#extraLabel', 'Timbre fiscal'); set('#extraAmount', '1');
+      return { total: document.getElementById('total').textContent,
+               paper: document.getElementById('preview').innerText.replace(/\s+/g, ' ') };
+    });
+    check('a duty the visitor enters reaches the total',
+          /120[.,]00/.test(withDuty.total), withDuty.total);
+    check('and prints on the invoice under their own label',
+          /Timbre fiscal/.test(withDuty.paper) && /1[.,]00/.test(withDuty.paper));
+
+    const mo = await intl.evaluate(() => {
+      document.getElementById('country').value = 'MA';
+      document.getElementById('country').dispatchEvent(new Event('change', { bubbles: true }));
+      return document.getElementById('hint').textContent;
+    });
+    check('Morocco is warned about cash settlements', /timbre|cash|espèces/i.test(mo), mo.slice(0, 60));
+
+    const clean = await intl.evaluate(() => {
+      document.getElementById('country').value = 'GB';
+      document.getElementById('country').dispatchEvent(new Event('change', { bubbles: true }));
+      return document.getElementById('hint').className.includes('hidden');
+    });
+    check('a country with nothing to add says nothing', clean);
+
+    await intl.selectOption('#country', 'TN');
+    await intl.waitForTimeout(200);
+
     /* The export, with the network still blocked. */
     const wait = intl.waitForEvent('download');
     await intl.click('#btn-pdf');

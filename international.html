@@ -153,6 +153,18 @@
               <input id="taxName" class="fld w-28" />
             </div>
           </div>
+          <!-- A line for whatever else the country puts on an invoice. Empty,
+               and never filled in for you: a wrong figure printed under an
+               official-looking label is worse than no line at all. -->
+          <div class="sm:col-span-2">
+            <label id="t-lextra" class="block text-xs font-medium text-slate-500 mb-1" for="extraLabel">Other charge (optional)</label>
+            <div class="flex gap-2">
+              <input id="extraLabel" class="fld" />
+              <input id="extraAmount" type="number" step="0.001" class="fld w-36" />
+            </div>
+            <p id="hint" class="hidden mt-2 text-xs leading-relaxed rounded-xl px-3 py-2"
+               style="background:#fffbeb;color:#92400e;border:1px solid #fcd34d"></p>
+          </div>
         </div>
       </div>
 
@@ -255,6 +267,9 @@
 var COUNTRIES = {
   MA: {code:'MA', flag:'🇲🇦', name:{en:'Morocco', fr:'Maroc', ar:'المغرب'},
        currency:'MAD', taxRate:20, taxName:'TVA', docLang:'fr', title:'FACTURE',
+       hint:{en:'Settling in cash? Check whether a droit de timbre applies to the amount. This page does not compute it — add it as the other charge above.',
+             fr:'Règlement en espèces ? Vérifiez si un droit de timbre s\'applique au montant. Cette page ne le calcule pas : ajoutez-le en autre frais ci-dessus.',
+             ar:'الدفع نقداً؟ تحقق إن كان رسم الطابع ينطبق على المبلغ. هذه الصفحة لا تحسبه — أضفه في خانة الرسم الإضافي أعلاه.'},
        legal:{fr:'TVA marocaine au taux indiqué. Paiement à réception, sauf accord écrit contraire.',
               en:'Moroccan VAT at the rate shown. Payment on receipt unless otherwise agreed in writing.'},
        fields:[{key:'ice', label:{en:'ICE', fr:'ICE', ar:'ICE'}, code:true},
@@ -265,6 +280,9 @@ var COUNTRIES = {
        currency:'TND', taxRate:19, taxName:'TVA', docLang:'fr', title:'FACTURE',
        legal:{fr:'TVA tunisienne au taux indiqué. Paiement à réception, sauf accord écrit contraire.',
               en:'Tunisian VAT at the rate shown. Payment on receipt unless otherwise agreed in writing.'},
+       hint:{en:'A Tunisian invoice carries a timbre fiscal. This page does not compute it — add it as the other charge above, and check the amount currently in force.',
+             fr:'Une facture tunisienne porte un timbre fiscal. Cette page ne le calcule pas : ajoutez-le en autre frais ci-dessus, après avoir vérifié le montant en vigueur.',
+             ar:'الفاتورة التونسية تحمل طابعاً جبائياً. هذه الصفحة لا تحسبه — أضفه في خانة الرسم الإضافي أعلاه بعد التحقق من المبلغ الجاري به العمل.'},
        fields:[{key:'mf', label:{en:'Tax ID', fr:'Matricule fiscal', ar:'المعرّف الجبائي'}, code:true}]},
 
   AE: {code:'AE', flag:'🇦🇪', name:{en:'United Arab Emirates', fr:'Émirats arabes unis', ar:'الإمارات'},
@@ -319,10 +337,10 @@ var ORDER = ['MA','TN','AE','GB','US','INT','DZ','FR','SA'];
 var DOC = {
   en:{billTo:'Bill to', number:'Invoice no.', issued:'Issue date', due:'Due date',
       desc:'Description', qty:'Qty', price:'Unit price', amount:'Amount',
-      subtotal:'Subtotal', total:'Total', notes:'Notes', company:'Your company'},
+      subtotal:'Subtotal', total:'Total', notes:'Notes', company:'Your company', other:'Other charge'},
   fr:{billTo:'Facturé à', number:'N° de facture', issued:"Date d'émission", due:"Date d'échéance",
       desc:'Désignation', qty:'Qté', price:'P.U.', amount:'Montant',
-      subtotal:'Sous-total', total:'Total', notes:'Notes', company:'Votre entreprise'}
+      subtotal:'Sous-total', total:'Total', notes:'Notes', company:'Votre entreprise', other:'Autre'}
 };
 
 var UI = {
@@ -335,7 +353,7 @@ var UI = {
       tr3t:'PDF export', tr3d:'A4, one click',
       tr4t:'No account', tr4d:'Nothing to sign up to',
       back:'Countries', country:'Country', doclang:'Invoice language', currency:'Currency',
-      tax:'Tax rate and name', seller:'Your business', client:'Client',
+      tax:'Tax rate and name', extra:'Other charge (optional)', seller:'Your business', client:'Client',
       name:'Business name', address:'Address',
       cname:'Client name', caddr:'Address', ctax:'Client tax number',
       num:'Invoice number', issue:'Issue date', due:'Due date',
@@ -355,7 +373,7 @@ var UI = {
       tr3t:'Export PDF', tr3d:'A4, en un clic',
       tr4t:'Sans compte', tr4d:"Rien à créer",
       back:'Pays', country:'Pays', doclang:'Langue de la facture', currency:'Devise',
-      tax:'Taux et nom de la taxe', seller:'Votre entreprise', client:'Client',
+      tax:'Taux et nom de la taxe', extra:'Autre frais (facultatif)', seller:'Votre entreprise', client:'Client',
       name:'Raison sociale', address:'Adresse',
       cname:'Nom du client', caddr:'Adresse', ctax:'N° fiscal du client',
       num:'N° de facture', issue:"Date d'émission", due:"Date d'échéance",
@@ -375,7 +393,7 @@ var UI = {
       tr3t:'تصدير PDF', tr3d:'مقاس A4 بنقرة واحدة',
       tr4t:'بدون حساب', tr4d:'لا شيء تسجّله',
       back:'البلدان', country:'البلد', doclang:'لغة الفاتورة', currency:'العملة',
-      tax:'نسبة الضريبة واسمها', seller:'مؤسستك', client:'العميل',
+      tax:'نسبة الضريبة واسمها', extra:'رسم إضافي (اختياري)', seller:'مؤسستك', client:'العميل',
       name:'التسمية التجارية', address:'العنوان',
       cname:'اسم العميل', caddr:'العنوان', ctax:'الرقم الضريبي للعميل',
       num:'رقم الفاتورة', issue:'تاريخ الإصدار', due:'تاريخ الاستحقاق',
@@ -392,6 +410,7 @@ var DRAFT_KEY = 'facturedz_intl_draft';   /* one draft, overwritten. Not an arch
 
 var state = {
   lang:'en', country:'INT', docLang:'en', currency:'USD', taxRate:0, taxName:'Tax',
+  extraLabel:'', extraAmount:0,
   biz:{}, clientName:'', clientAddress:'', clientTaxId:'',
   invoiceNumber:'', issueDate:'', dueDate:'', notes:'', legal:'',
   items:[{desc:'', qty:1, price:0}]
@@ -412,15 +431,26 @@ function money(n){
 }
 function amount(n){ return money(n) + ' ' + state.currency; }
 
-/* Totals. Subtotal, one tax, total — and nothing else. No droit de timbre:
-   it is Algerian, and Algeria issues nothing here. */
+/* Totals. Subtotal, one tax, one optional line the visitor writes themselves,
+   total.
+
+   No droit de timbre is computed, for any country. Algeria's is the
+   application's and Algeria issues nothing here — but Tunisia puts a timbre
+   fiscal on its invoices too, and Morocco a stamp duty on cash settlements,
+   and both are fixed by finance laws that move. Printing a figure we cannot
+   source under an official-looking label is the one mistake worth more than
+   the convenience: it would be believed. So the line is empty, it is labelled
+   by whoever fills it, and the countries known to need one say so. */
 function totals(){
   var sub = state.items.reduce(function(s, it){
     return s + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0);
   var tax = sub * ((Number(state.taxRate) || 0) / 100);
+  var extra = Number(state.extraAmount) || 0;
   sub = Math.round(sub * 100) / 100;
   tax = Math.round(tax * 100) / 100;
-  return {sub:sub, tax:tax, total:Math.round((sub + tax) * 100) / 100};
+  extra = Math.round(extra * 1000) / 1000;
+  return {sub:sub, tax:tax, extra:extra,
+          total:Math.round((sub + tax + extra) * 1000) / 1000};
 }
 
 /* ---------------------------------------------------------------- *
@@ -440,6 +470,7 @@ function setLang(lang){
   paintCountries();
   paintBizFields();
   paintItems();
+  paintHint();
   if (!$('app').classList.contains('hidden')) paintBlocked();
   render();
   save();
@@ -451,7 +482,7 @@ function paintText(){
     't-tr1t':s.tr1t,'t-tr1d':s.tr1d,'t-tr2t':s.tr2t,'t-tr2d':s.tr2d,
     't-tr3t':s.tr3t,'t-tr3d':s.tr3d,'t-tr4t':s.tr4t,'t-tr4d':s.tr4d,
     't-back':s.back,'t-lcountry':s.country,'t-ldoclang':s.doclang,'t-lcurrency':s.currency,
-    't-ltax':s.tax,'t-seller':s.seller,'t-client':s.client,'t-cname':s.cname,'t-caddr':s.caddr,
+    't-ltax':s.tax,'t-lextra':s.extra,'t-seller':s.seller,'t-client':s.client,'t-cname':s.cname,'t-caddr':s.caddr,
     't-ctax':s.ctax,'t-num':s.num,'t-issue':s.issue,'t-due':s.due,'t-lines':s.lines,
     't-add':s.add,'t-sub':s.sub,'t-total':s.total,'t-notes':s.notes,'t-draft':s.draft,
     't-foot':s.foot,'t-dz':s.dz};
@@ -466,6 +497,16 @@ function paintChips(){
     return '<button type="button" class="chip" data-country="' + code + '">' +
            c.flag + ' ' + esc(cname(c)) + '</button>';
   }).join('');
+}
+
+/* The warning under the other-charge line. It belongs to the country and is
+   written in the interface language, so it is repainted from both places that
+   can change either. */
+function paintHint(){
+  var el = $('hint'), c = COUNTRIES[state.country];
+  var txt = c && c.hint ? (c.hint[state.lang] || c.hint.en) : '';
+  el.textContent = txt;
+  el.classList.toggle('hidden', !txt);
 }
 
 function paintCountries(){
@@ -501,6 +542,7 @@ function applyCountry(code){
   paintBizFields();
   paintBlocked();
   render();
+  paintHint();
 }
 
 /* Three countries are listed and issue nothing. The form, the preview and
@@ -633,6 +675,8 @@ function render(){
           esc(d.subtotal) + '</span><span class="num">' + amount(tt.sub) + '</span></div>' +
         '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#475569">' +
           esc(state.taxName) + ' (' + esc(state.taxRate) + ' %)</span><span class="num">' + amount(tt.tax) + '</span></div>' +
+        (tt.extra ? '<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="color:#475569">' +
+          esc(state.extraLabel || d.other) + '</span><span class="num">' + amount(tt.extra) + '</span></div>' : '') +
         '<div style="display:flex;justify-content:space-between;padding:6px 0;margin-top:4px;' +
           'border-top:1px solid #cbd5e1;font-weight:700"><span>' + esc(d.total) +
           '</span><span class="num">' + amount(tt.total) + '</span></div>' +
@@ -741,6 +785,8 @@ function init(){
   $('taxRate').value = state.taxRate;
   $('taxName').value = state.taxName;
   $('doclang').value = state.docLang;
+  $('extraLabel').value = state.extraLabel;
+  $('extraAmount').value = state.extraAmount || '';
   paintBizFields();
   paintItems();
   setLang(state.lang);
@@ -750,6 +796,8 @@ function init(){
     if (b) openForm(b.dataset.country);
   });
   $('country').addEventListener('change', function(){ applyCountry($('country').value); save(); });
+  $('extraLabel').addEventListener('input', function(){ state.extraLabel = $('extraLabel').value; render(); save(); });
+  $('extraAmount').addEventListener('input', function(){ state.extraAmount = parseFloat($('extraAmount').value) || 0; render(); save(); });
   $('doclang').addEventListener('change', function(){
     state.docLang = $('doclang').value;
     var c = COUNTRIES[state.country];
