@@ -205,9 +205,27 @@ belongs in the file where every visitor can read it; the client secret shown
 on the same page is not used by browser applications and must never be pasted
 here.
 
-Two things it does not do yet: it does not sync on its own (the merchant
-presses the button), and with one file per account, two devices editing the
-same day means the second save overwrites the first.
+Once the merchant has connected in a session, every write goes up on its own
+about five seconds after the last keystroke — a ten-line invoice is one copy,
+not ten. **The timer never asks Google for anything.** It writes only while a
+token is already in memory, and gives up quietly when it is not, marking the
+work unsynced instead. A timer that can open a consent window opens it with no
+click behind it: the browser blocks it, and the merchant reads it as the
+application doing something on its own.
+
+That leaves the sessions where nobody clicked, and it is why the two notices
+that already tell people their data lives in this browser now offer the copy
+as well — the storage banner and the thirty-day reminder. And once the Drive
+is connected the reminder switches to asking **daily**, because the protection
+it is asking for costs one click rather than a download, a filename and
+somewhere to keep it. "Later" buys a day instead of a week.
+
+One file per account, and no merge. So the stamp Drive reports for the copy we
+wrote is kept, and compared before writing again: if the file no longer carries
+it, another device did. On the button, that asks. On the timer, it **stops** —
+nothing silent ever overwrites a copy it does not recognise, and the card says
+so until somebody decides.
+
 
 ## Guide
 
@@ -296,7 +314,7 @@ link in Aide, and nothing else. The application stays a single-country product.
 
 ## Tests
 
-`cd tests && npm install && npm test` — 321 checks against a real headless
+`cd tests && npm install && npm test` — 339 checks against a real headless
 browser. Run `npm run build` in the root first: the last group drives
 `public/`, the built site, because what it proves is that the international
 generator renders and exports with every off-origin request blocked. Run them before every deploy; the suite prints `Safe to deploy.` or

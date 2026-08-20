@@ -2049,6 +2049,119 @@ check('the Drive card stays hidden until an OAuth client is configured',
 check('and the two functions a Drive restore goes through are reachable',
       drive.hasBuild && drive.hasApply);
 
+/* ---------------------------------------------------------------- *
+ * Automatic sync, and the promise that a timer never opens a window.
+ * ---------------------------------------------------------------- */
+console.log('\nAutomatic sync and the conflict guard');
+
+const conflict = await page.evaluate(() => {
+  const K = 'fp_drive_mtime';
+  const out = {};
+  localStorage.removeItem(K);
+  out.unknown = driveMovedUnderUs('2026-08-20T10:00:00.000Z');
+  localStorage.setItem(K, '2026-08-20T10:00:00.000Z');
+  out.same = driveMovedUnderUs('2026-08-20T10:00:00.000Z');
+  out.moved = driveMovedUnderUs('2026-08-20T12:30:00.000Z');
+  out.silent = driveMovedUnderUs(null);
+  localStorage.removeItem(K);
+  return out;
+});
+check('a copy we have never written is not a conflict', conflict.unknown === false);
+check('our own stamp is not a conflict', conflict.same === false);
+check('a stamp we did not write is a conflict', conflict.moved === true);
+check('an unreadable stamp does not invent a conflict', conflict.silent === false);
+
+/* The rule the whole automatic half rests on: writing an invoice must never
+   summon a Google window. Without a token in memory the save is marked and
+   left, and nothing is fetched. */
+const auto = await page.evaluate(() => {
+  localStorage.setItem('fp_drive_connected', '1');
+  driveToken = null;
+  driveDirty = false;
+  saveData();
+  return {dirty: driveDirty,
+          gsi: !!document.querySelector('script[src*="accounts.google.com"]')};
+});
+check('a save with no live token is marked unsynced', auto.dirty === true);
+check('and still fetches nothing from Google', !auto.gsi);
+
+const restoreQuiet = await page.evaluate(() => {
+  driveDirty = false;
+  driveRestoring = true;
+  saveData();
+  driveRestoring = false;
+  return driveDirty;
+});
+check('a restore writing state does not queue itself back up', restoreQuiet === false);
+
+/* Both notices offer the copy now that there is somewhere to put it. */
+const notices = await page.evaluate(() => {
+  applyLocale();
+  const b = document.getElementById('lw-drive');
+  localStorage.setItem('fp_last_export', String(Date.now() - 90 * 86400000));
+  localStorage.removeItem('fp_backup_snoozed_until');
+  state.clients = [{id: 'cR', name: 'Client réel'}];
+  navigate('dashboard');
+  paintBackupNotice();
+  const host = document.getElementById('backup-warn');
+  return {banner: !!b && !b.className.includes('hidden'),
+          label: b ? b.textContent.trim() : '',
+          reminder: !!host && host.innerHTML.includes('driveSaveNow')};
+});
+check('the storage banner offers the Drive copy', notices.banner);
+check('and the offer is worded, not an empty button', notices.label.length > 3, notices.label);
+check('the thirty-day reminder offers it too', notices.reminder);
+
+const ar = await page.evaluate(() => {
+  if (locale !== 'ar') toggleLocale();
+  applyLocale();
+  const b = document.getElementById('lw-drive');
+  const label = b ? b.textContent.trim() : '';
+  navigate('settings');
+  const card = document.getElementById('drive-card');
+  const text = card ? card.textContent : '';
+  if (locale !== 'fr') toggleLocale();
+  return {label, text};
+});
+check('the banner offer is translated in Arabic', /Drive/.test(ar.label) && /[؀-ۿ]/.test(ar.label), ar.label);
+check('and so is the card in Paramètres', /[؀-ۿ]/.test(ar.text) && !/drive\./.test(ar.text));
+
+/* A file download is a monthly habit. One click is a daily one — and a day of
+   invoices is worth more than the nuisance of asking. */
+const cadence = await page.evaluate(() => {
+  const set = (days) => localStorage.setItem('fp_last_export',
+                          String(Date.now() - days * 86400000));
+  localStorage.removeItem('fp_backup_snoozed_until');
+  state.clients = [{id: 'cR', name: 'Client réel'}];
+
+  localStorage.removeItem('fp_drive_connected');
+  set(2);
+  const fileTwoDays = backupDue();
+  set(40);
+  const fileForty = backupDue();
+
+  localStorage.setItem('fp_drive_connected', '1');
+  set(2);
+  const driveTwoDays = backupDue();
+  set(0);
+  const driveToday = backupDue();
+
+  snoozeBackup();
+  const snoozed = backupDue();
+  const buys = parseInt(localStorage.getItem('fp_backup_snoozed_until'), 10) - Date.now();
+
+  localStorage.removeItem('fp_backup_snoozed_until');
+  localStorage.removeItem('fp_drive_connected');
+  return {fileTwoDays, fileForty, driveTwoDays, driveToday, snoozed, buys};
+});
+check('without Drive, two days is not yet worth asking about', cadence.fileTwoDays === false);
+check('without Drive, forty days is', cadence.fileForty === true);
+check('with Drive connected, two days is asked about', cadence.driveTwoDays === true);
+check('and a copy made today is left alone', cadence.driveToday === false);
+check('"later" still silences it', cadence.snoozed === false);
+check('but buys a day rather than a week',
+      cadence.buys > 0 && cadence.buys <= 86400000 + 5000, String(cadence.buys));
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

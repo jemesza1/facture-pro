@@ -46,6 +46,15 @@ function hasRealData() {
   } catch (e) { return false; }
 }
 
+/* Thirty days is the interval for a habit that costs a download, a file to
+   name and somewhere to keep it. Once the Drive is connected the same
+   protection costs one click, and a day of invoices is worth more than the
+   nuisance of asking — so it is asked for daily, and "later" buys a day
+   instead of a week. */
+function backupInterval() {
+  return (typeof driveConnected === 'function' && driveConnected()) ? 1 : BACKUP_AFTER_DAYS;
+}
+
 function backupSnoozed() {
   try {
     return parseInt(localStorage.getItem(BACKUP_SNOOZE) || '0', 10) > Date.now();
@@ -53,14 +62,15 @@ function backupSnoozed() {
 }
 
 function snoozeBackup() {
-  try { localStorage.setItem(BACKUP_SNOOZE, String(Date.now() + 7 * DAY)); } catch (e) {}
+  var buys = backupInterval() === 1 ? DAY : 7 * DAY;
+  try { localStorage.setItem(BACKUP_SNOOZE, String(Date.now() + buys)); } catch (e) {}
   paintBackupNotice();
 }
 
 function backupDue() {
   if (!hasRealData() || backupSnoozed()) return false;
   var d = daysSinceBackup();
-  return d === null || d >= BACKUP_AFTER_DAYS;
+  return d === null || d >= backupInterval();
 }
 
 /* "il y a 3 jours" — the figure stays latin in Arabic, like every other
@@ -95,6 +105,10 @@ function paintBackupNotice() {
           '<button type="button" onclick="exportData()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">' +
             '<i data-lucide="download" class="w-3.5 h-3.5"></i>' + esc(t('backup.cta')) +
           '</button>' +
+          (typeof driveConfigured === 'function' && driveConfigured() ?
+            '<button type="button" onclick="driveSaveNow()" class="inline-flex items-center gap-1.5 rounded-lg border border-amber-600 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-400/50 dark:text-amber-200 dark:hover:bg-amber-500/10">' +
+              '<i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>' + esc(t('drive.save')) +
+            '</button>' : '') +
           '<button type="button" onclick="snoozeBackup()" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-500/10">' +
             esc(t('backup.snooze')) +
           '</button>' +
@@ -133,7 +147,7 @@ function paintBackupNotice() {
 /* The line under Export/Import in Paramètres, so the state is legible before
    the reminder ever has to appear. */
 function renderBackupStatus() {
-  var due = daysSinceBackup() === null || daysSinceBackup() >= BACKUP_AFTER_DAYS;
+  var due = daysSinceBackup() === null || daysSinceBackup() >= backupInterval();
   var tone = due ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400';
   var badge = due ? t('backup.statusDue') : t('backup.statusOk');
   return '<p class="text-xs mt-3 flex items-center gap-1.5 ' + tone + '">' +

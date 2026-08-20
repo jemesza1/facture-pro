@@ -51,11 +51,19 @@ var DRIVE_FILE_NAME = 'facturepro-sauvegarde.json';
 var DRIVE_FILE_KEY = 'fp_drive_file_id';
 var DRIVE_SYNC_KEY = 'fp_drive_last_sync';
 var DRIVE_SEEN_KEY = 'fp_drive_connected';
+/* The modifiedTime Drive reported for the copy we ourselves last wrote. What
+   makes a second device detectable: if the file up there no longer carries
+   this stamp, somebody else wrote it. */
+var DRIVE_MTIME_KEY = 'fp_drive_mtime';
 
 var driveToken = null;      /* en mémoire seulement, une heure */
 var driveClient = null;
 var driveGsiLoading = null;
 var driveBusy = false;
+var driveDirty = false;      /* edited since the last copy went up */
+var driveConflict = false;   /* the copy up there moved under us */
+var driveTimer = null;
+var driveRestoring = false;  /* a restore writes state; that write is not news */
 
 function driveConfigured() { return !!DRIVE_CLIENT_ID; }
 
@@ -130,21 +138,30 @@ var driveReject = function () {};
 /* Un jeton dure une heure et l'onglet d'un commerçant reste ouvert la journée.
    Le 401 n'est donc pas une erreur : c'est l'heure passée. On le jette, on en
    redemande un, et on rejoue l'appel une fois. */
-function driveCall(url, opts, retried) {
-  return driveAuth().then(function (tok) {
+function driveCall(url, opts, o) {
+  o = o || {};
+  /* A silent call never asks Google for anything. The automatic sync runs on a
+     timer, and a timer that can open a consent window opens it with no click
+     behind it — which browsers block and merchants read as the application
+     doing something on its own. Without a live token the silent path simply
+     does not run. */
+  var tok = o.silent
+    ? (driveToken ? Promise.resolve(driveToken) : Promise.reject(new Error('silent')))
+    : driveAuth();
+  return tok.then(function (t) {
     opts = opts || {};
-    opts.headers = Object.assign({}, opts.headers || {}, {Authorization: 'Bearer ' + tok});
+    opts.headers = Object.assign({}, opts.headers || {}, {Authorization: 'Bearer ' + t});
     return fetch(url, opts);
   }).then(function (res) {
-    if (res.status === 401 && !retried) {
+    if (res.status === 401 && !o.retried) {
       driveToken = null;
-      return driveCall(url, opts, true);
+      return driveCall(url, opts, {silent: o.silent, retried: true});
     }
     return res;
   });
 }
 
-function driveUpload(payload) {
+function driveUpload(payload, o) {
   var id = driveFileId();
   var meta = {name: DRIVE_FILE_NAME, mimeType: 'application/json'};
   var b = 'fp' + String(Date.now()) + 'x';
@@ -164,13 +181,14 @@ function driveUpload(payload) {
     method: id ? 'PATCH' : 'POST',
     headers: {'Content-Type': 'multipart/related; boundary=' + b},
     body: body
-  }).then(function (res) {
+  }, o).then(function (res) {
     /* L'identifiant mémorisé peut désigner un fichier supprimé du Drive, ou le
        fichier d'un autre compte Google si le commerçant en a changé. Dans les
        deux cas on ne le retrouve pas : on l'oublie et on en écrit un neuf. */
     if ((res.status === 404 || res.status === 403) && id) {
       driveForget(DRIVE_FILE_KEY);
-      return driveUpload(payload);
+      driveForget(DRIVE_MTIME_KEY);
+      return driveUpload(payload, o);
     }
     if (!res.ok) throw new Error('upload ' + res.status);
     return res.json();
@@ -188,6 +206,28 @@ function driveFind() {
   }).then(function (j) {
     return (j.files || [])[0] || null;
   });
+}
+
+/* Reads the stamp on the copy in the Drive without downloading it. */
+function driveRemoteMtime(o) {
+  var id = driveFileId();
+  if (!id) return Promise.resolve(null);
+  var url = 'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(id) +
+            '?fields=modifiedTime';
+  return driveCall(url, {}, o).then(function (res) {
+    if (!res.ok) return null;      /* a file we cannot read is handled by the upload */
+    return res.json();
+  }).then(function (j) { return j ? j.modifiedTime : null; });
+}
+
+/* Two devices, one file, and no merge: the second save would carry away the
+   first one's day of work. So the stamp we wrote is compared with the stamp up
+   there, and a difference stops the write rather than resolving it. Nothing is
+   guessed and nothing is lost — the merchant is told, and decides. */
+function driveMovedUnderUs(remote) {
+  var mine = driveLocal(DRIVE_MTIME_KEY);
+  if (!mine || !remote) return false;
+  return remote !== mine;
 }
 
 function driveDownload(id) {
@@ -209,27 +249,54 @@ function driveFail(e) {
   return t('drive.failed');
 }
 
-function driveSaveNow() {
-  if (!driveConfigured() || driveBusy) return;
-  if (!navigator.onLine) return toast(t('drive.offline'), 'err');
+/* One writer, two callers. explicit is the button: it may open Google's
+   window, it may ask a question, and it says what happened. The silent caller
+   is the timer: it writes only when everything is already in place, and gives
+   up quietly the moment it is not — leaving the work marked as unsynced rather
+   than interrupting somebody who is writing an invoice. */
+function drivePush(explicit) {
+  if (!driveConfigured() || driveBusy) return Promise.resolve(false);
+  if (!navigator.onLine) {
+    driveDirty = true;
+    if (explicit) toast(t('drive.offline'), 'err');
+    return Promise.resolve(false);
+  }
+  var o = explicit ? {} : {silent: true};
   driveBusy = true;
-  drivePaint();
-  driveUpload(window.buildBackup()).then(function (f) {
-    if (f && f.id) driveStore(DRIVE_FILE_KEY, f.id);
-    driveStore(DRIVE_SYNC_KEY, String(Date.now()));
-    /* Une copie déposée dans le Drive est une sauvegarde. Le rappel de
-       backup.js compte les jours depuis la dernière : celle-ci en fait
-       partie, sans quoi il réclamerait un export à quelqu'un qui vient de
-       sauvegarder. */
-    if (typeof markBackup === 'function') markBackup();
-    toast(t('drive.saved'));
+  if (explicit) drivePaint();
+
+  return driveRemoteMtime(o).then(function (remote) {
+    if (driveMovedUnderUs(remote)) {
+      driveConflict = true;
+      if (!explicit) return false;          /* never overwrite on a timer */
+      var when = String(remote).slice(0, 10);
+      if (!confirm(t('drive.conflictAsk').replace('{d}', when))) return false;
+    }
+    return driveUpload(window.buildBackup(), o).then(function (f) {
+      if (f && f.id) driveStore(DRIVE_FILE_KEY, f.id);
+      if (f && f.modifiedTime) driveStore(DRIVE_MTIME_KEY, f.modifiedTime);
+      driveStore(DRIVE_SYNC_KEY, String(Date.now()));
+      driveDirty = false;
+      driveConflict = false;
+      /* A copy laid down in the Drive is a backup. backup.js counts the days
+         since the last one, and this is one of them — otherwise it would ask
+         for an export from somebody who just saved. */
+      if (typeof markBackup === 'function') markBackup();
+      if (explicit) toast(t('drive.saved'));
+      return true;
+    });
   }).catch(function (e) {
-    toast(driveFail(e), 'err');
-  }).then(function () {
+    driveDirty = true;
+    if (explicit) toast(driveFail(e), 'err');
+    return false;
+  }).then(function (ok) {
     driveBusy = false;
-    if (state.currentPage === 'settings') renderPage(); else drivePaint();
+    if (explicit && state.currentPage === 'settings') renderPage(); else drivePaint();
+    return ok;
   });
 }
+
+function driveSaveNow() { drivePush(true); }
 
 function driveRestoreNow() {
   if (!driveConfigured() || driveBusy) return;
@@ -239,6 +306,9 @@ function driveRestoreNow() {
   driveFind().then(function (f) {
     if (!f) { toast(t('drive.none'), 'err'); return; }
     driveStore(DRIVE_FILE_KEY, f.id);
+    /* The copy we just read is now the one we know about. Without this the
+       first save after a restore reports a conflict with itself. */
+    if (f.modifiedTime) driveStore(DRIVE_MTIME_KEY, f.modifiedTime);
     return driveDownload(f.id).then(function (d) {
       if (window.validBackup(d)) { toast(t('toast.badFile'), 'err'); return; }
 
@@ -256,8 +326,13 @@ function driveRestoreNow() {
                              localStorage.getItem(STORAGE_KEY) || '');
       } catch (e) {}
 
-      if (!window.applyBackup(d)) { toast(t('toast.badFile'), 'err'); return; }
+      driveRestoring = true;
+      var applied = window.applyBackup(d);
+      driveRestoring = false;
+      if (!applied) { toast(t('toast.badFile'), 'err'); return; }
       driveStore(DRIVE_SYNC_KEY, String(Date.now()));
+      driveDirty = false;
+      driveConflict = false;
       toast(t('toast.importOk'));
     });
   }).catch(function (e) {
@@ -270,6 +345,9 @@ function driveRestoreNow() {
 
 function driveDisconnect() {
   driveToken = null;
+  driveDirty = false;
+  driveConflict = false;
+  clearTimeout(driveTimer);
   driveForget(DRIVE_SEEN_KEY);
   /* L'identifiant du fichier survit : se déconnecter d'un appareil ne veut pas
      dire jeter la sauvegarde, et la retrouver au prochain clic vaut mieux que
@@ -316,7 +394,13 @@ function renderDriveCard() {
         (on ? '<button type="button" onclick="driveDisconnect()" class="btn-ghost text-xs">' +
                 esc(t('drive.disconnect')) + '</button>' : '') +
       '</div>' +
-      '<p class="text-xs mt-3 opacity-70">' + esc(driveSyncLabel()) + '</p>' +
+      '<p class="text-xs mt-3 ' +
+        (driveConflict ? 'text-amber-700 dark:text-amber-400'
+       : driveDirty ? 'opacity-90' : 'opacity-70') + '">' +
+        esc(driveConflict ? t('drive.conflict')
+          : driveDirty ? t('drive.pending')
+          : driveSyncLabel()) +
+      '</p>' +
     '</div>';
 }
 
@@ -329,3 +413,35 @@ function drivePaint() {
   if (wrap.firstChild) host.replaceWith(wrap.firstChild);
   try { lucide.createIcons(); } catch (e) {}
 }
+
+/* ------------------------------------------------------------------ *
+ * La synchronisation automatique
+ *
+ * Elle ne s'arme que dans une session où le commerçant a lui-même cliqué,
+ * parce que c'est là — et seulement là — qu'un jeton vit en mémoire. Sans
+ * jeton, une écriture est notée comme non synchronisée et attend le prochain
+ * clic. C'est le prix à payer pour qu'aucune minuterie n'ouvre jamais une
+ * fenêtre Google toute seule.
+ * ------------------------------------------------------------------ */
+(function () {
+  var prev = window.saveData;
+  if (typeof prev !== 'function') return;
+  window.saveData = function () {
+    var out = prev.apply(this, arguments);
+    try {
+      if (driveRestoring || !driveConfigured() || !driveConnected()) return out;
+      driveDirty = true;
+      if (!driveToken) { drivePaint(); return out; }
+      /* Cinq secondes après la dernière frappe, pas à chaque ligne saisie :
+         une facture de dix lignes est une sauvegarde, pas dix. */
+      clearTimeout(driveTimer);
+      driveTimer = setTimeout(function () { drivePush(false); }, 5000);
+    } catch (e) {}
+    return out;
+  };
+})();
+
+/* Ce qui n'est pas parti attend le réseau, et non le prochain clic. */
+window.addEventListener('online', function () {
+  if (driveConfigured() && driveToken && driveDirty && !driveConflict) drivePush(false);
+});

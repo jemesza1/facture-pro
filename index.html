@@ -114,6 +114,9 @@
               <button type="button" onclick="exportData()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
                 <i data-lucide="download" class="w-3.5 h-3.5"></i><span id="lw-cta"></span>
               </button>
+              <button type="button" id="lw-drive" onclick="driveSaveNow()" class="hidden inline-flex items-center gap-1.5 rounded-lg border border-amber-600 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-400/50 dark:text-amber-200 dark:hover:bg-amber-500/10">
+                <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i><span id="lw-drive-label"></span>
+              </button>
               <button type="button" onclick="dismissWarn()" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-500/10"><span id="lw-hide"></span></button>
             </div>
           </div>
@@ -151,10 +154,10 @@
     var LW = {
       fr:{t:"Vos données sont enregistrées dans ce navigateur uniquement.",
           b:"Si vous videz le cache ou changez d'appareil, vos données seront perdues. Exportez régulièrement (fichier .json).",
-          c:"Exporter maintenant", h:"Plus tard"},
+          c:"Exporter maintenant", h:"Plus tard", d:"Sauvegarder dans Drive"},
       ar:{t:"بياناتك محفوظة في هذا المتصفح فقط.",
           b:"إذا مسحت ذاكرة التخزين أو استخدمت جهازاً آخر ستفقد بياناتك. صدّر نسخة JSON بانتظام.",
-          c:"تصدير الآن", h:"لاحقاً"}
+          c:"تصدير الآن", h:"لاحقاً", d:"احفظ في Drive"}
     };
     function paintWarn(){
       var l = (typeof locale !== 'undefined' && LW[locale]) ? locale : 'fr', d = LW[l];
@@ -163,6 +166,18 @@
       if(q('lw-body'))  q('lw-body').textContent  = d.b;
       if(q('lw-cta'))   q('lw-cta').textContent   = d.c;
       if(q('lw-hide'))  q('lw-hide').textContent  = d.h;
+      /* The banner has always said "your data lives in this browser, export
+         it". There is now somewhere for it to go, so the banner offers that
+         too — this is the one place every merchant already reads. It appears
+         only once drive.js has loaded and an OAuth client is configured;
+         applyLocale repaints this notice, and by then it has. */
+      var b = q('lw-drive');
+      if (b) {
+        var on = typeof driveConfigured === 'function' && driveConfigured();
+        if (on) { q('lw-drive-label').textContent = d.d; b.classList.remove('hidden'); }
+        else b.classList.add('hidden');
+        try{ lucide.createIcons(); }catch(e){}
+      }
     }
     /* Shown once to a browser that asks for neither French nor Arabic, and
        never again after it is closed. It is deliberately not a redirect: a
