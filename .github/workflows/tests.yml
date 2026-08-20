@@ -21,6 +21,13 @@ jobs:
         with:
           node-version: '22'
 
+      # The international generator is checked against the built site: half of
+      # what that group proves is that the page renders and exports with every
+      # off-origin request blocked, which is only true once the vendored
+      # libraries and the compiled stylesheet sit next to it in public/.
+      - name: Build the site
+        run: npm ci && npm run build
+
       - name: Install the test runner
         working-directory: tests
         run: npm ci

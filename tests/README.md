@@ -43,6 +43,14 @@ The suite prints `Safe to deploy.` or lists the failing checks and exits 1.
    marked and removable; unreadable storage is put aside rather than overwritten
    with demo invoices.
 
+11. **The international generator** — driven against `public/`, the built site,
+   with every off-origin request aborted: the page must keep its layout, total
+   each country's own tax and no droit de timbre, refuse to issue anything for
+   DZ, FR and SA while saying why, keep its amounts in latin digits in all
+   three interface languages, hold one draft and no archive, and still export a
+   PDF. Run `npm run build` in the repository root before the suite, or that
+   group fails on its first check.
+
 The tailwind and lucide CDN scripts fail offline; that is expected and ignored.
 
 ## Adding a check

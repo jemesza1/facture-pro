@@ -1176,6 +1176,288 @@ console.log('\nBon de livraison');
   await page.evaluate(() => { state.invoices = []; saveData(); });
 }
 
+/* ---------------------------------------------------------------- *
+ * 11. The international generator.
+ *
+ * A separate product on the same domain: a form that prints one invoice
+ * for a merchant invoicing at home in Morocco, Tunisia, the UAE, Britain
+ * or the United States. It keeps no ledger, and it must not be mistaken
+ * for the Algerian application.
+ *
+ * These checks run against public/ — the built site — because half of
+ * what they prove is the dependency work: the page has to render and
+ * export with every off-origin request blocked, which is only true once
+ * `npm run build` has put the vendored libraries next to it. A missing
+ * stylesheet leaves a page that still *works*, which is exactly how the
+ * CDN outage went unnoticed until it reached users.
+ * ---------------------------------------------------------------- */
+console.log('\nThe international generator');
+{
+  const BUILT = join(ROOT, 'public');
+  let built = true;
+  try { await readFile(join(BUILT, 'vendor', 'tailwind.css')); } catch { built = false; }
+  check('the build has been run, so the page is checked as it ships',
+        built, 'run `npm run build` in the repository root first');
+
+  if (built) {
+    const site = createServer(async (req, res) => {
+      const p = join(BUILT, normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+      try {
+        const body = await readFile(p);
+        res.writeHead(200, {'Content-Type': TYPES[extname(p)] || 'application/octet-stream'});
+        res.end(body);
+      } catch { res.writeHead(404); res.end('not found'); }
+    });
+    await new Promise(r => site.listen(0, '127.0.0.1', r));
+    const SITE = `http://127.0.0.1:${site.address().port}`;
+
+    const ctx = await browser.newContext({acceptDownloads: true});
+    const intl = await ctx.newPage();
+    const intlErrors = [];
+    intl.on('pageerror', e => intlErrors.push(String(e)));
+
+    /* Everything that is not this origin is aborted, and remembered. */
+    const offOrigin = [];
+    await intl.route('**/*', route => {
+      const u = route.request().url();
+      if (u.startsWith(SITE) || u.startsWith('data:') || u.startsWith('blob:') || u.startsWith('file://')) {
+        return route.continue();
+      }
+      offOrigin.push(u);
+      return route.abort();
+    });
+
+    await intl.goto(`${SITE}/international.html`);
+    await intl.waitForFunction(() => !!document.querySelector('#chips button'), {timeout: 20000});
+
+    /* The stylesheet is served from here, so the layout survives the block. */
+    const width = await intl.evaluate(() =>
+      getComputedStyle(document.querySelector('.max-w-6xl')).maxWidth);
+    check('the page keeps its layout with every off-origin request blocked',
+          width === '1152px', width);
+
+    /* The hero once read "Subtotal": the landing sentence and the totals label
+       had both claimed the id `t-sub`, and the second one painted over the
+       first. Two elements sharing an id is the shape of that bug. */
+    const dupIds = await intl.evaluate(() => {
+      const seen = {}, dup = [];
+      document.querySelectorAll('[id]').forEach(el => {
+        if (seen[el.id]) dup.push(el.id); else seen[el.id] = 1;
+      });
+      return dup;
+    });
+    check('no two elements share an id', dupIds.length === 0, dupIds.join(','));
+
+    const ledes = [];
+    for (const lang of ['en', 'fr', 'ar']) {
+      await intl.click(`button.seg[data-lang="${lang}"]`);
+      ledes.push(await intl.evaluate(() => ({
+        lede: document.getElementById('t-lede').textContent.trim(),
+        subtotal: document.getElementById('t-sub').textContent.trim(),
+      })));
+    }
+    check('the landing says what the page does, in all three languages',
+          ledes.every(l => l.lede.length > 40 && l.lede !== l.subtotal),
+          JSON.stringify(ledes.map(l => l.lede.slice(0, 30))));
+    await intl.click('button.seg[data-lang="en"]');
+
+    await intl.click('[data-country="MA"]');
+    await intl.waitForSelector('#biz-ice');
+    const ma = await intl.evaluate(() => ({
+      currency: document.getElementById('currency').value,
+      rate: document.getElementById('taxRate').value,
+      tax: document.getElementById('taxName').value,
+      ids: [...document.querySelectorAll('[data-biz]')].map(i => i.dataset.biz),
+    }));
+    check('choosing Morocco sets its currency and rate',
+          ma.currency === 'MAD' && ma.rate === '20' && ma.tax === 'TVA', JSON.stringify(ma));
+    check('and asks for the identifiers a Moroccan invoice carries',
+          ma.ids.includes('ice') && ma.ids.includes('if'), ma.ids.join(','));
+
+    await intl.selectOption('#country', 'AE');
+    await intl.waitForSelector('#biz-trn');
+    const ae = await intl.evaluate(() => ({
+      currency: document.getElementById('currency').value,
+      rate: document.getElementById('taxRate').value,
+      ids: [...document.querySelectorAll('[data-biz]')].map(i => i.dataset.biz),
+    }));
+    check('the Emirates bring their own rate and the TRN',
+          ae.currency === 'AED' && ae.rate === '5' && ae.ids.includes('trn'), JSON.stringify(ae));
+
+    /* The three that issue nothing. */
+    for (const [code, name] of [['DZ', 'Algeria'], ['FR', 'France'], ['SA', 'Saudi Arabia']]) {
+      await intl.selectOption('#country', code);
+      const off = await intl.evaluate(() => ({
+        form: document.getElementById('work').classList.contains('hidden'),
+        pdf: document.getElementById('btn-pdf').classList.contains('hidden'),
+        why: document.getElementById('blocked-why').textContent.trim(),
+        paper: document.getElementById('preview').innerHTML.trim(),
+        picker: !document.getElementById('country').closest('.hidden'),
+      }));
+      check(`${name} issues no invoice`, off.form && off.pdf && !off.paper, JSON.stringify(off).slice(0, 120));
+      check(`and says why`, off.why.length > 40, off.why.slice(0, 60));
+      check(`and the country picker stays reachable`, off.picker);
+    }
+
+    await intl.selectOption('#country', 'DZ');
+    const home = await intl.evaluate(() => {
+      const a = document.getElementById('blocked-link');
+      return {shown: !a.classList.contains('hidden'), href: a.getAttribute('href'),
+              why: document.getElementById('blocked-why').textContent};
+    });
+    check('Algeria is sent to the application, which is where the stamp duty is',
+          home.shown && home.href === '/', JSON.stringify(home).slice(0, 80));
+    check('and told why this page cannot serve it',
+          /timbre/i.test(home.why) && /G50/.test(home.why), home.why.slice(0, 80));
+
+    /* No string may claim a conformity the page does not deliver. It may
+       say the opposite as loudly as it likes. */
+    const strings = await intl.evaluate(() => document.documentElement.innerHTML);
+    check('no string claims ZATCA conformity',
+          !/(compliant with ZATCA|ZATCA[- ]compliant|conforme (à|aux) (la )?ZATCA|وفقاً لهيئة الزكاة)/i.test(strings));
+    check('nor French conformity',
+          !/conforme à la (réglementation|législation) française/i.test(strings));
+    check('the Saudi notice says the QR code is missing, which is the reason',
+          /QR/.test(strings) && /TLV/.test(strings));
+
+    /* Arithmetic. Six countries, one tax, and never a droit de timbre. */
+    await intl.selectOption('#country', 'GB');
+    await intl.fill('[data-i="0"][data-f="desc"]', 'Consulting');
+    await intl.fill('[data-i="0"][data-f="qty"]', '2');
+    await intl.fill('[data-i="0"][data-f="price"]', '500');
+    const sums = [];
+    for (const code of ['MA', 'TN', 'AE', 'GB', 'US', 'INT']) {
+      await intl.selectOption('#country', code);
+      sums.push(await intl.evaluate(c => ({
+        code: c,
+        rate: parseFloat(document.getElementById('taxRate').value),
+        sub: document.getElementById('subtotal').textContent,
+        tax: document.getElementById('tax-amount').textContent,
+        total: document.getElementById('total').textContent,
+      }), code));
+    }
+    const asNum = s => parseFloat(String(s).replace(/[^0-9.]/g, ''));
+    const arithmetic = sums.every(r =>
+      near(asNum(r.sub), 1000) &&
+      near(asNum(r.tax), 1000 * r.rate / 100, 0.01) &&
+      near(asNum(r.total), asNum(r.sub) + asNum(r.tax), 0.01));
+    check('every country totals its own tax and nothing else — no droit de timbre anywhere',
+          arithmetic, JSON.stringify(sums));
+    check('the currency follows the country',
+          sums.map(r => r.total.split(' ')[1]).join(',') === 'MAD,TND,AED,GBP,USD,USD',
+          sums.map(r => r.total).join(' | '));
+    check('and the page never loaded the Algerian arithmetic',
+          await intl.evaluate(() => typeof window.timbreFor === 'undefined' &&
+                                    typeof window.amountInWords === 'undefined' &&
+                                    ![...document.scripts].some(s => /lib-calc/.test(s.src))));
+
+    /* The document is written in the language its country invoices in. */
+    await intl.selectOption('#country', 'MA');
+    const frDoc = await intl.textContent('#preview');
+    await intl.selectOption('#country', 'GB');
+    const enDoc = await intl.textContent('#preview');
+    await intl.selectOption('#country', 'AE');
+    const aeDoc = await intl.textContent('#preview');
+    check('a Moroccan invoice is written in French',
+          /FACTURE/.test(frDoc) && /Facturé à/.test(frDoc), frDoc.slice(0, 60));
+    check('a British one in English',
+          /INVOICE/.test(enDoc) && /Bill to/.test(enDoc), enDoc.slice(0, 60));
+    check('and an Emirati one says what it is',
+          /TAX INVOICE/.test(aeDoc), aeDoc.slice(0, 60));
+
+    /* Money and codes stay latin, whatever the interface language does. */
+    const arabicDigits = /[٠-٩۰-۹]/;
+    const perLang = [];
+    for (const lang of ['en', 'fr', 'ar']) {
+      await intl.click(`button.seg[data-lang="${lang}"]`);
+      perLang.push(await intl.evaluate(() => ({
+        dir: document.documentElement.dir,
+        total: document.getElementById('total').textContent,
+        paper: document.getElementById('preview').textContent,
+      })));
+    }
+    check('the interface speaks all three languages',
+          perLang[2].dir === 'rtl' && perLang[0].dir === 'ltr', perLang.map(p => p.dir).join(','));
+    check('and every amount stays in latin digits in all three',
+          perLang.every(p => !arabicDigits.test(p.total) && !arabicDigits.test(p.paper)),
+          perLang.map(p => p.total).join(' | '));
+    /* An address that starts with a number reordered inside its own field
+       when the interface went right to left — the fields take their direction
+       from what is in them now. */
+    const bidi = await intl.evaluate(() => {
+      const addr = document.getElementById('biz-address');
+      addr.value = '14 Cheapside, London EC2V 6DN';
+      const code = document.getElementById('invoiceNumber');
+      return {addr: getComputedStyle(addr).unicodeBidi, code: getComputedStyle(code).direction};
+    });
+    check('a latin address keeps its order in an Arabic interface',
+          bidi.addr === 'plaintext', bidi.addr);
+    check('while codes stay left to right whatever is around them',
+          bidi.code === 'ltr', bidi.code);
+
+    check('the document itself stays left to right',
+          await intl.evaluate(() => getComputedStyle(document.getElementById('preview')).direction) === 'ltr');
+
+    /* One draft, no archive, and no button that says otherwise. */
+    await intl.fill('#biz-name', 'Atlas Ltd');
+    await intl.waitForTimeout(500);
+    await intl.reload();
+    await intl.waitForFunction(() => !!document.querySelector('#biz-name'), {timeout: 20000});
+    const kept = await intl.evaluate(() => ({
+      name: document.getElementById('biz-name').value,
+      keys: Object.keys(localStorage),
+      ledger: localStorage.getItem('facturepro_dz_v24'),
+      save: [...document.querySelectorAll('button')]
+              .some(b => /^(save|enregistrer|sauvegarder|حفظ)$/i.test(b.textContent.trim())),
+    }));
+    check('a refresh does not cost the typing', kept.name === 'Atlas Ltd', kept.name);
+    check('it is one draft and not an archive', kept.keys.length === 1, kept.keys.join(','));
+    check('and it never touches the application’s ledger', kept.ledger === null, String(kept.ledger));
+    check('there is no Save button, because nothing is saved', !kept.save);
+
+    /* The export, with the network still blocked. */
+    const wait = intl.waitForEvent('download');
+    await intl.click('#btn-pdf');
+    const dl = await wait;
+    const pdf = await readFile(await dl.path());
+    check('it exports a PDF offline', pdf.slice(0, 5).toString() === '%PDF-', pdf.slice(0, 5).toString());
+    check('named after the invoice', /\.pdf$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+
+    /* The point of the whole group. */
+    const strayed = offOrigin.filter(u => !/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(u));
+    check('nothing the page asked for left this origin, apart from the font',
+          strayed.length === 0, strayed.slice(0, 3).join(' '));
+    check('no script error on the generator', intlErrors.length === 0, intlErrors.join(' | '));
+
+    await ctx.close();
+    site.close();
+  }
+
+  /* The mirror case, inside the application: an Algerian merchant invoicing a
+     foreign client. One line in Aide, and nothing else — no button in the
+     invoice editor, no country selector. The application stays a
+     single-country product. */
+  const aide = await page.evaluate(() => {
+    navigate('help');
+    const a = document.querySelector('#main-content a[href="international.html"]');
+    return {href: !!a, label: a ? a.textContent.trim() : '',
+            editor: !!document.querySelector('#invoice-form [name="country"]')};
+  });
+  check('Aide points a merchant invoicing abroad at the generator', aide.href);
+  check('and the link is worded, not empty', aide.label.length > 5, aide.label);
+  check('while the invoice editor gains no country selector', !aide.editor);
+
+  const aideAr = await page.evaluate(() => {
+    if (locale !== 'ar') toggleLocale();
+    navigate('help');
+    const a = document.querySelector('#main-content a[href="international.html"]');
+    const label = a ? a.textContent.trim() : '';
+    if (locale !== 'fr') toggleLocale();
+    return label;
+  });
+  check('and it is translated in Arabic too', aideAr.length > 5 && !/tools\.intl/.test(aideAr), aideAr);
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
