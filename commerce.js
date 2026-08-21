@@ -22,6 +22,30 @@
     return Math.max(0, due - paidOnUnpaid);
   };
 
+  /* The message is plain text and nothing else: formatMoney, not moneyUI —
+     the latter wraps its result in <bdi> so the interface can mirror it, and
+     those tags arrived at the client as literal characters in the middle of
+     the total. The same mistake was already made once, in shareInvoiceWhatsApp.
+
+     No button without a number. A wa.me link built on a blank field opens
+     WhatsApp on "this number does not exist", which reads as a broken
+     application rather than as a missing field. */
+  function relanceButton(c, debt, unpaid){
+    if(!waNumber(c.phone)) return '';
+    var co=(state.company&&state.company.name)||'';
+    var msg=ar()
+      ? '\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u064a\u0643\u0645 '+(c.name||'')+'\u060c\n'+
+        '\u062a\u0630\u0643\u064a\u0631 \u0648\u062f\u0651\u064a: \u0644\u062f\u064a\u0643\u0645 '+unpaid+' \u0641\u0627\u062a\u0648\u0631\u0629 \u063a\u064a\u0631 \u0645\u062f\u0641\u0648\u0639\u0629 \u0628\u0645\u062c\u0645\u0648\u0639 '+formatMoney(debt)+'.\n'+
+        '\u0634\u0643\u0631\u064b\u0627 \u0644\u0643\u0645.'+(co?'\n'+co:'')
+      : 'Bonjour '+(c.name||'')+',\n'+
+        'Rappel amical : '+unpaid+' facture(s) en attente, pour un total de '+formatMoney(debt)+'.\n'+
+        'Merci.'+(co?'\n'+co:'');
+    return '<a href="'+waLink(c.phone, msg)+'" target="_blank" rel="noopener" '+
+      'class="btn-secondary text-xs py-1 px-2 me-2" title="WhatsApp">'+
+      '<i data-lucide="message-circle" class="w-3.5 h-3.5"></i>'+
+      (ar()?'\u062a\u0630\u0643\u064a\u0631':'Relancer')+'</a>';
+  }
+
   window.renderDebts=function(){
     ensure();
     var rows=(state.clients||[]).map(function(c){
@@ -50,7 +74,8 @@
                 '<td class="p-3 font-medium">'+esc(r.c.name)+'</td>'+
                 '<td class="p-3">'+r.unpaid+'</td>'+
                 '<td class="p-3 font-bold text-amber-600">'+moneyUI(r.debt)+'</td>'+
-                '<td class="p-3 text-end"><button onclick="navigate(\'invoices\')" class="btn-secondary text-xs py-1 px-2">'+(ar()?'\u0627\u0644\u0641\u0648\u0627\u062a\u064a\u0631':'Factures')+'</button></td></tr>';
+                '<td class="p-3 text-end whitespace-nowrap">'+relanceButton(r.c, r.debt, r.unpaid)+
+                '<button onclick="navigate(\'invoices\')" class="btn-secondary text-xs py-1 px-2">'+(ar()?'\u0627\u0644\u0641\u0648\u0627\u062a\u064a\u0631':'Factures')+'</button></td></tr>';
             }).join('')+'</tbody></table></div>'
         : '<div class="empty-state"><p class="font-medium">'+(ar()?'\u0644\u0627 \u062a\u0648\u062c\u062f \u062f\u064a\u0648\u0646':'Aucune cr\u00e9ance')+'</p></div>');
   };

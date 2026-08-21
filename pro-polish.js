@@ -169,7 +169,10 @@
     var msg=(ar()
       ? head+(inv.number||'')+'\n\u0627\u0644\u0639\u0645\u064a\u0644: '+(cl.name||'')+'\n\u0627\u0644\u062a\u0627\u0631\u064a\u062e: '+(inv.date||'')+'\n\n'+lines+'\n\n'+totalLabel+': '+formatMoney(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:'')
       : head+(inv.number||'')+'\nClient: '+(cl.name||'')+'\nDate: '+(inv.date||'')+'\n\n'+lines+'\n\n'+totalLabel+': '+formatMoney(tot.net)+'\n'+(state.company&&state.company.name?state.company.name:''));
-    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+    /* With the client's number the chat opens on them; without it, WhatsApp
+       asks the merchant to choose, which is what it always did. */
+    var direct=(typeof waLink==='function')&&waLink(cl.phone,msg);
+    window.open(direct||('https://wa.me/?text='+encodeURIComponent(msg)),'_blank');
   };
 
   /* Buttons the list did not have, injected in front of the delete button.

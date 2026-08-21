@@ -2353,6 +2353,86 @@ check('the home page proves ownership to Search Console', owners.length > 0);
 check('and to both accounts that administer it, not only the last one added',
       owners.length === 2, owners.length + ' tag(s)');
 
+/* ---------------------------------------------------------------- *
+ * Relancer un client sur WhatsApp.
+ *
+ * The number is the whole feature: merchants write 0555 12 34 56, some paste
+ * +213, some type 00213, and wa.me accepts exactly one of those forms. Get it
+ * wrong and the chat opens on a stranger, or on nobody — and the merchant
+ * finds out in front of their client.
+ * ---------------------------------------------------------------- */
+console.log('\nWhatsApp reminders');
+
+const nums = await page.evaluate(() => ({
+  local:   waNumber('0555 12 34 56'),
+  dotted:  waNumber('05.55.12.34.56'),
+  plus:    waNumber('+213 555 12 34 56'),
+  double0: waNumber('00213555123456'),
+  bare:    waNumber('213555123456'),
+  landline:waNumber('021 00 00 01'),
+  empty:   waNumber(''),
+  blank:   waNumber('   '),
+  nully:   waNumber(null),
+  junk:    waNumber('pas de numéro'),
+  short:   waNumber('0555'),
+}));
+check('a number as merchants write it', nums.local === '213555123456', nums.local);
+check('written with dots', nums.dotted === '213555123456', nums.dotted);
+check('written international', nums.plus === '213555123456', nums.plus);
+check('written with 00', nums.double0 === '213555123456', nums.double0);
+check('already bare', nums.bare === '213555123456', nums.bare);
+check('a landline too', nums.landline === '21321000001', nums.landline);
+for (const [k, v] of [['empty', nums.empty], ['blank', nums.blank], ['null', nums.nully],
+                      ['text', nums.junk], ['too short', nums.short]]) {
+  check(`${k} yields no number, so no button is offered`, v === '', JSON.stringify(v));
+}
+
+const relance = await page.evaluate(() => {
+  state.company = Object.assign({}, state.company, {name: 'Mon Entreprise SARL'});
+  state.clients = [
+    {id: 'cw', name: 'SARL Atlas', phone: '0555 12 34 56'},
+    {id: 'cn', name: 'EURL Sans Tel', phone: ''}
+  ];
+  state.invoices = [
+    {id: 'w1', number: 'FAC-2026-500', clientId: 'cw', date: '2026-07-01', dueDate: '2026-07-10',
+     status: 'enretard', paymentMode: 'virement',
+     items: [{description: 'Prestation', qty: 1, unitPrice: 100000, tva: 19}]},
+    {id: 'w2', number: 'FAC-2026-501', clientId: 'cn', date: '2026-07-01', dueDate: '2026-07-10',
+     status: 'enretard', paymentMode: 'virement',
+     items: [{description: 'Prestation', qty: 1, unitPrice: 50000, tva: 19}]}
+  ];
+  state.payments = [];
+  saveData();
+  navigate('debts');
+  const links = [...document.querySelectorAll('#main-content a[href^="https://wa.me/"]')];
+  const href = links[0] ? links[0].getAttribute('href') : '';
+  return {count: links.length, href, text: decodeURIComponent((href.split('?text=')[1] || ''))};
+});
+check('a debtor with a number gets a reminder button', relance.count === 1, relance.count + ' button(s)');
+check('and the debtor without one does not', relance.count === 1);
+check('the link carries the client, not a contact picker',
+      relance.href.startsWith('https://wa.me/213555123456?text='), relance.href.slice(0, 40));
+check('the message names the client', /SARL Atlas/.test(relance.text));
+check('and carries the amount owed', /119\s?000/.test(relance.text), relance.text.slice(0, 90));
+check('and signs with the company', /Mon Entreprise SARL/.test(relance.text));
+/* moneyUI wraps its result in <bdi> so the interface can mirror it; those tags
+   reached the client as literal characters the last time this was missed. */
+check('the amount is plain text, not interface markup', !/<bdi|<\/bdi/.test(relance.text),
+      relance.text.slice(0, 90));
+
+const relanceAr = await page.evaluate(() => {
+  if (locale !== 'ar') toggleLocale();
+  navigate('debts');
+  const a = document.querySelector('#main-content a[href^="https://wa.me/"]');
+  const t = decodeURIComponent((a.getAttribute('href').split('?text=')[1] || ''));
+  if (locale !== 'fr') toggleLocale();
+  return t;
+});
+check('the reminder is written in Arabic for an Arabic interface',
+      /[؀-ۿ]/.test(relanceAr) && !/Rappel amical/.test(relanceAr), relanceAr.slice(0, 60));
+check('and still carries the figure in latin digits',
+      /119\s?000/.test(relanceAr), relanceAr.slice(0, 80));
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

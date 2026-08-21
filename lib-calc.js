@@ -109,3 +109,30 @@ function irgFor(monthly, reduced){
 /* Primes, rappels, gratifications: treated as a separate month and withheld
    flat, so they never push the salary into a higher bracket. */
 function irgOnBonus(amount){ return (Number(amount)||0)*0.10; }
+
+/* ---- WhatsApp ----
+ *
+ * A relance costs a stamp, an envelope and a week by post, and a merchant who
+ * has to look up the number, open WhatsApp and type the figures does it once.
+ * wa.me turns it into a tap: the chat opens on the right contact with the
+ * message already written, and the merchant presses send. No API, no server,
+ * no per-message fee — and nothing is sent without a human doing it.
+ *
+ * An Algerian number as a merchant writes it — 0555 12 34 56, 05.55.12.34.56,
+ * +213 555…, 00213 555… — reduced to the one form wa.me accepts: country code,
+ * digits, nothing else. Anything too short to be a number comes back empty, so
+ * the caller hides the button rather than opening a chat with nobody. */
+function waNumber(phone){
+  var n = String(phone == null ? '' : phone).replace(/[^\d+]/g, '');
+  if (n.charAt(0) === '+') n = n.slice(1);
+  else if (n.slice(0, 2) === '00') n = n.slice(2);
+  else if (n.charAt(0) === '0') n = '213' + n.slice(1);
+  else if (n.length && n.slice(0, 3) !== '213') n = '213' + n;
+  /* 213 followed by nine digits is the shortest real one. */
+  return /^\d{11,15}$/.test(n) ? n : '';
+}
+
+function waLink(phone, text){
+  var n = waNumber(phone);
+  return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(text) : '';
+}
