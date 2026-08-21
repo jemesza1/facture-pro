@@ -215,11 +215,26 @@ const stock = await page.evaluate(() => {
   saveInvoice('');
   const afterFail = state.products[0].stock;
   document.getElementById('inv-client').value = 'c1';
+  /* Set explicitly rather than trusted: what the form opens on is a separate
+     question from what a draft does to the shelf, and only one of them is
+     being checked here. */
+  document.getElementById('inv-status').value = 'brouillon';
   saveInvoice('');
-  return {afterFail, afterOk: state.products[0].stock};
+  const saved = state.invoices[state.invoices.length - 1];
+  /* Driven through setStatus rather than trusting what the form saved: what a
+     draft does to the shelf is the question here, not what the form opens on.
+     A draft used to take the goods anyway, and one abandoned the next morning
+     took them for good. */
+  setStatus(saved.id, 'brouillon');
+  const afterSave = state.products[0].stock;
+  setStatus(saved.id, 'envoyee');
+  return {afterFail, afterSave, savedStatus: saved.status,
+          afterIssue: state.products[0].stock};
 });
 check('a refused invoice does not touch the stock', stock.afterFail === 10, String(stock.afterFail));
-check('an accepted invoice deducts it once', stock.afterOk === 6, String(stock.afterOk));
+
+check('and a draft leaves the shelf alone', stock.afterSave === 10, String(stock.afterSave));
+check('issuing it deducts once', stock.afterIssue === 6, String(stock.afterIssue));
 
 const pay = await page.evaluate(() => {
   const inv = state.invoices.find(i => i.id === 'i1');
@@ -2483,6 +2498,61 @@ const empty = await page.evaluate(() => {
   return !!document.querySelector('#main-content button[onclick*="exportExcel"]');
 });
 check('an empty client list offers no export', empty === false);
+
+/* ---------------------------------------------------------------- *
+ * Stock, in both directions.
+ *
+ * It went down when an invoice was written and never came back up — not on a
+ * cancellation, not on a deletion, not when an avoir sent the goods back. The
+ * products page shows that figure, the threshold warning is drawn from it and
+ * the Excel sheet carries it, so a merchant ordered against a number that
+ * drifted further from the shelf every month, and nothing said so.
+ * ---------------------------------------------------------------- */
+console.log('\nStock follows the document');
+
+const shelf = await page.evaluate(() => {
+  const o = {}, stk = () => Number(state.products[0].stock);
+  const fresh = () => {
+    state.clients = [{id: 'c1', name: 'Client'}];
+    state.products = [{id: 'p1', name: 'Ciment', price: 900, tva: 19, stock: 90, minStock: 5}];
+    state.invoices = [{id: 'i1', number: 'FAC-2026-001', clientId: 'c1', date: '2026-08-01',
+      dueDate: '2026-08-10', status: 'envoyee', paymentMode: 'virement', stockTaken: true,
+      items: [{description: 'Ciment', qty: 10, unitPrice: 900, tva: 19, productId: 'p1'}]}];
+    state.payments = []; delete state.nextAvoirNumber; saveData();
+  };
+  fresh(); setStatus('i1', 'annulee');   o.cancelled = stk();
+  setStatus('i1', 'envoyee');            o.reissued  = stk();
+  fresh(); deleteInvoice('i1');          o.deleted   = stk();
+  fresh(); createAvoir('i1');            o.credited  = stk();
+  fresh(); reconcileStock(); reconcileStock(); o.twice = stk();
+  /* A ledger written before any of this exists carries no flags. Adopting it
+     must move nothing: reconciling two hundred invoices on first load would
+     otherwise deduct every one of them a second time. */
+  state.invoices.forEach(i => { delete i.stockTaken; });
+  reconcileStock(); reconcileStock();    o.legacy    = stk();
+  return o;
+});
+check('a cancelled invoice puts its goods back', shelf.cancelled === 100, String(shelf.cancelled));
+check('and takes them again if it is reissued', shelf.reissued === 90, String(shelf.reissued));
+check('a deleted invoice puts them back too', shelf.deleted === 100, String(shelf.deleted));
+check('an avoir is goods returning, so the shelf grows', shelf.credited === 100, String(shelf.credited));
+check('reconciling twice moves nothing the second time', shelf.twice === 90, String(shelf.twice));
+check('and a ledger with no flags is adopted, not deducted again',
+      shelf.legacy === 90, String(shelf.legacy));
+
+/* A draft was never issued. Same rule as the debts page and the dépenses. */
+const draft = await page.evaluate(() => {
+  state.products = [{id: 'p2', name: 'Sable', price: 500, tva: 19, stock: 50, minStock: 1}];
+  state.invoices = [{id: 'd1', number: 'FAC-2026-900', clientId: 'c1', date: '2026-08-01',
+    dueDate: '2026-08-10', status: 'brouillon', paymentMode: 'virement', stockTaken: false,
+    items: [{description: 'Sable', qty: 5, unitPrice: 500, tva: 19, productId: 'p2'}]}];
+  saveData(); reconcileStock();
+  const asDraft = Number(state.products[0].stock);
+  setStatus('d1', 'envoyee');
+  return {asDraft, once: Number(state.products[0].stock)};
+});
+check('a draft takes nothing off the shelf', draft.asDraft === 50, String(draft.asDraft));
+check('and issuing it takes it exactly once', draft.once === 45, String(draft.once));
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 

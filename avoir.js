@@ -66,6 +66,13 @@ function createAvoir(invoiceId){
   });
 
   state.nextAvoirNumber++;
+  /* An avoir is goods coming back. commerce.js owns the shelf and cannot wrap
+     this function — it is loaded first — so the new document is declared here
+     and reconciled there, by the one rule that governs every other movement. */
+  if(typeof markStockNew==='function'){
+    markStockNew(state.invoices[state.invoices.length-1]);
+    if(typeof reconcileStock==='function') reconcileStock();
+  }
   saveData();
   toast(t('avoir.created').replace('{n}',number));
   navigate('invoices');

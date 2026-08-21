@@ -169,7 +169,36 @@
     saveData(); closeModal(); toast(t('toast.saved')); renderPage();
   };
 
-  function deductStockFromItems(items){
+  /* ---------------------------------------------------------------- *
+   * Stock is a promise about a shelf.
+   *
+   * It went down when an invoice was written and never came back up — not
+   * when the invoice was cancelled, not when it was deleted, not when an
+   * avoir sent the goods back. The products page shows the figure, the
+   * threshold warning is drawn from it and the Excel sheet carries it, so a
+   * merchant orders against a number that drifts further from the shelf every
+   * month, and nothing ever says so.
+   *
+   * A movement is not an event here, it is a consequence: a document holds
+   * stock while it is a live commitment, and releases it when it stops being
+   * one. Every path — save, status change, delete, avoir — reconciles instead
+   * of adding a movement of its own, so no path can be forgotten and none can
+   * apply twice.
+   *
+   * The sign follows the document, exactly as it does in calcInvoiceTotals: an
+   * avoir is goods coming back, so holding one adds to the shelf.
+   * ---------------------------------------------------------------- */
+  function stockHeldBy(inv){
+    /* A draft was never issued and a cancelled invoice has no effect: neither
+       has taken anything off a shelf. Same rule as everywhere else. */
+    return !!inv && inv.status !== 'brouillon' && inv.status !== 'annulee';
+  }
+
+  function isCredit(inv){
+    return (typeof isAvoir === 'function') && isAvoir(inv);
+  }
+
+  function moveStock(items, dir){
     ensure();
     (items||[]).forEach(function(it){
       var qty=Number(it.qty)||0;
@@ -180,9 +209,45 @@
         var n=String(it.description).trim().toLowerCase();
         p=state.products.find(function(x){return String(x.name||'').trim().toLowerCase()===n;});
       }
-      if(p) p.stock=Math.max(0,(Number(p.stock)||0)-qty);
+      if(p) p.stock=Math.max(0,(Number(p.stock)||0)+dir*qty);
     });
   }
+
+  /* Idempotent by construction: an invoice records whether its lines are
+     currently applied, so reconciling twice changes nothing. */
+  function syncStock(inv, want){
+    if(!inv) return false;
+    if(want === undefined) want = stockHeldBy(inv);
+
+    /* A document written before this existed carries no flag, and its stock
+       was already taken at the time. Adopting it as settled — without moving
+       anything — is the whole migration: reconciling a ledger of two hundred
+       invoices on first load would otherwise deduct every one of them a
+       second time. */
+    if(inv.stockTaken === undefined) inv.stockTaken = stockHeldBy(inv);
+
+    if(want === !!inv.stockTaken) return false;
+    moveStock(inv.items, (isCredit(inv) ? 1 : -1) * (want ? 1 : -1));
+    inv.stockTaken = want;
+    return true;
+  }
+
+  window.reconcileStock=function(){
+    var moved=false;
+    (state.invoices||[]).forEach(function(i){ if(syncStock(i)) moved=true; });
+    return moved;
+  };
+
+  /* A document about to be removed releases what it holds first. */
+  function releaseStock(id){
+    var inv=(state.invoices||[]).find(function(i){return i.id===id;});
+    if(inv) syncStock(inv, false);
+  }
+
+  /* Anything that creates a document declares it as holding nothing yet, so
+     the reconcile that follows applies its lines exactly once. */
+  window.markStockNew=function(inv){ if(inv) inv.stockTaken=false; };
+  var markNew=window.markStockNew;
 
   var _addP=window.addProductToInvoice;
   if(typeof _addP==='function'){
@@ -219,7 +284,45 @@
       /* saveInvoice returns early when no client is chosen. Deducting before
          checking that meant a validation mistake ate the stock — twice, since
          the user then fixed it and saved again. */
-      if(wasNew && (state.invoices||[]).length>before){ deductStockFromItems(items); saveData(); }
+      if(wasNew && (state.invoices||[]).length>before) markNew(state.invoices[state.invoices.length-1]);
+      /* An edit can change the lines or the status of a document that already
+         holds stock, so both cases end in the same reconcile. */
+      if(reconcileStock()) saveData();
+    };
+  }
+
+  /* Every other door onto the shelf. Each one reconciles; none of them
+     computes a movement itself. */
+  var _setStatus=window.setStatus;
+  if(typeof _setStatus==='function'){
+    window.setStatus=function(){
+      _setStatus.apply(this,arguments);
+      if(reconcileStock()){ saveData(); renderPage(); }
+    };
+  }
+
+  var _delInv=window.deleteInvoice;
+  if(typeof _delInv==='function'){
+    window.deleteInvoice=function(id){
+      var before=(state.invoices||[]).length;
+      /* Released before the call, not after: afterwards the document is gone
+         and there is nothing left to read the lines from. If the merchant
+         answers no to the confirmation, the count is unchanged and we put it
+         back exactly as it was. */
+      releaseStock(id);
+      _delInv.apply(this,arguments);
+      if((state.invoices||[]).length===before) reconcileStock();
+      saveData();
+    };
+  }
+
+  var _dup=window.duplicateInvoice;
+  if(typeof _dup==='function'){
+    window.duplicateInvoice=function(){
+      var before=(state.invoices||[]).length;
+      _dup.apply(this,arguments);
+      if((state.invoices||[]).length>before) markNew(state.invoices[state.invoices.length-1]);
+      if(reconcileStock()) saveData();
     };
   }
 
