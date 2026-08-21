@@ -2342,11 +2342,16 @@ check('robots points at the sitemap on that host',
       /Sitemap: https:\/\/www\.facturedz\.com\/sitemap\.xml/.test(
         await readFile(join(ROOT, 'robots.txt'), 'utf8')));
 
-/* Removing the tag after validation drops the property, and with it the
-   coverage reports and the sitemap submission. */
-check('the home page keeps its Search Console proof of ownership',
-      /name="google-site-verification" content="[A-Za-z0-9_-]{20,}"/.test(home),
-      (home.match(/content="[A-Za-z0-9_-]{20,}"/) || ['missing'])[0].slice(0, 30) + '…');
+/* Removing a tag after validation drops that account's ownership, and with it
+   the coverage reports and the sitemap submission. There are two because the
+   project is spread over two Google accounts — the one holding the Cloud
+   project behind the Drive backup, and the one this site is administered
+   from. Neither is the spare, and a tag that looks redundant is somebody's
+   access. */
+const owners = home.match(/name="google-site-verification" content="[A-Za-z0-9_-]{20,}"/g) || [];
+check('the home page proves ownership to Search Console', owners.length > 0);
+check('and to both accounts that administer it, not only the last one added',
+      owners.length === 2, owners.length + ' tag(s)');
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
