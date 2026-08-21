@@ -64,7 +64,9 @@
       '<div class="stat-card"><p class="text-sm text-slate-500">'+(ar()?'\u0639\u0645\u0644\u0627\u0621 \u0645\u062f\u064a\u0646\u0648\u0646':'Clients d\u00e9biteurs')+'</p>'+
         '<p class="text-2xl font-bold mt-1">'+rows.length+'</p></div></div>'+
       (rows.length
-        ? '<div class="card overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-start text-slate-500 border-b border-slate-200 dark:border-slate-700">'+
+        ? '<div class="flex justify-end mb-3"><button onclick="exportExcel(\'debts\')" class="btn-secondary">'+
+            '<i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</button></div>'+
+          '<div class="card overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-start text-slate-500 border-b border-slate-200 dark:border-slate-700">'+
             '<th class="p-3">'+(ar()?'\u0627\u0644\u0639\u0645\u064a\u0644':'Client')+'</th>'+
             '<th class="p-3">'+(ar()?'\u0641\u0648\u0627\u062a\u064a\u0631 \u063a\u064a\u0631 \u0645\u062f\u0641\u0648\u0639\u0629':'Factures ouvertes')+'</th>'+
             '<th class="p-3">'+(ar()?'\u0627\u0644\u0645\u0628\u0644\u063a \u0627\u0644\u0645\u0633\u062a\u062d\u0642':'Montant d\u00fb')+'</th>'+

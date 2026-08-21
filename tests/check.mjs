@@ -2433,6 +2433,57 @@ check('the reminder is written in Arabic for an Arabic interface',
 check('and still carries the figure in latin digits',
       /119\s?000/.test(relanceAr), relanceAr.slice(0, 80));
 
+/* ---------------------------------------------------------------- *
+ * An export nobody can reach.
+ *
+ * exportListXlsx has written a Clients sheet and a Créances sheet since the
+ * day the four "Excel" buttons were pointed at the workbook writer. Two of
+ * those buttons were never drawn: the code worked, the page offered no way
+ * to run it. Nothing fails in that state — which is why it lasted.
+ * ---------------------------------------------------------------- */
+console.log('\nEvery sheet has a button that reaches it');
+
+async function sheetFrom(pageName, label) {
+  await page.evaluate(p => navigate(p), pageName);
+  await page.waitForTimeout(200);
+  const btn = await page.$('#main-content button[onclick*="exportExcel"]');
+  check(`${label} offers an Excel button`, !!btn);
+  if (!btn) return null;
+  const wait = page.waitForEvent('download', {timeout: 15000});
+  await btn.click();
+  const dl = await wait;
+  const buf = await readFile(await dl.path());
+  check(`and it hands over a real workbook`, buf[0] === 0x50 && buf[1] === 0x4b,
+        dl.suggestedFilename());
+  return {name: dl.suggestedFilename(), text: buf.toString('latin1')};
+}
+
+await page.evaluate(() => {
+  state.clients = [{id: 'cx', name: 'SARL Exportable', phone: '0555 12 34 56', nif: '099'}];
+  state.invoices = [{id: 'ix', number: 'FAC-2026-700', clientId: 'cx', date: '2026-08-01',
+                     dueDate: '2026-08-10', status: 'enretard', paymentMode: 'virement',
+                     items: [{description: 'Prestation', qty: 1, unitPrice: 100000, tva: 19}]}];
+  state.payments = [];
+  saveData();
+});
+
+const cli = await sheetFrom('clients', 'the clients page');
+check('the clients sheet is named for clients', cli && /^clients-/.test(cli.name), cli && cli.name);
+check('and carries the client', cli && cli.text.includes('SARL Exportable'));
+
+const deb = await sheetFrom('debts', 'the créances page');
+check('the créances sheet is named for créances', deb && /^creances-/.test(deb.name), deb && deb.name);
+check('and carries the phone number beside the amount, which is why it exists',
+      deb && deb.text.includes('0555 12 34 56'));
+
+/* No rows, no sheet to offer. */
+const empty = await page.evaluate(() => {
+  state.clients = []; state.invoices = []; saveData();
+  navigate('clients');
+  return !!document.querySelector('#main-content button[onclick*="exportExcel"]');
+});
+check('an empty client list offers no export', empty === false);
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
