@@ -299,8 +299,18 @@ rest — and stays LTR, like every other invoice here. Money is formatted with
 one fixed locale in all three languages, so a total never renders as `١٢٣`.
 Arabic is a UI language here, not a document language.
 
-An Algerian merchant invoicing a foreign client is the benign mirror case: one
-link in Aide, and nothing else. The application stays a single-country product.
+The generator used to be reachable by one link in Aide and, for a browser
+asking for neither French nor Arabic, one sentence at the top of the page.
+That was right while it was a courtesy. It is now a second front door: the
+presentation page offers it to everybody, in all three languages, because an
+Algerian merchant invoicing a client in Casablanca needs it as much as the
+Moroccan does and neither was going to find it behind a word in a navigation
+bar.
+
+**The application still does not move.** What changed is who is told the
+generator exists, not what either product is: no country selector in the
+invoice editor, no foreign currency in a dashboard counted in dinars, no
+shared state. The line in "The international generator" above is the line.
 
 ## Features
 - Dashboard, invoices, devis, produits, paiements, dépenses, créances, clients (DA, NIF, NIN, NIS, RC, AI)

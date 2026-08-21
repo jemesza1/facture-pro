@@ -2623,6 +2623,47 @@ for (const [loc, expected] of [['en-GB', true], ['fr-FR', false], ['ar-DZ', fals
   await ctx.close();
 }
 
+/* The generator is a second front door now, not a courtesy for browsers that
+   ask for English: an Algerian invoicing a client in Casablanca needs it as
+   much as the Moroccan does, and neither was going to find it behind a word
+   in a navigation bar. What must not change is the application — this is
+   about who is told the page exists. */
+console.log('\nThe second front door');
+{
+  const ctx = await browser.newContext({locale: 'fr-FR'});
+  const q = await ctx.newPage();
+  await q.goto(`${BASE}/`);
+  await q.waitForTimeout(1000);
+  const cta = await q.evaluate(() => {
+    const a = [...document.querySelectorAll('a[href="international.html"]')]
+      .find(x => x.className && x.className.indexOf('btn') === 0 || /btn/.test(x.className || ''));
+    return a ? {text: a.textContent.trim(), ar: a.getAttribute('data-ar') || ''} : null;
+  });
+  check('a French visitor is offered the other-country invoice too', !!cta);
+  check('and the offer is worded in Arabic as well', !!cta && cta.ar.length > 3, cta && cta.ar);
+  await ctx.close();
+}
+
+const intl = await readFile(join(ROOT, 'international.html'), 'utf8');
+const ild = (intl.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/) || [])[1];
+let iparsed = null;
+try { iparsed = JSON.parse(ild); } catch (e) { iparsed = null; }
+check('the generator carries structured data of its own', !!ild);
+check('and it is valid JSON, not a rich result silently dropped', iparsed !== null);
+check('it declares a free application in three languages', iparsed &&
+      String(iparsed.offers && iparsed.offers.price) === '0' &&
+      Array.isArray(iparsed.inLanguage) && iparsed.inLanguage.includes('ar'),
+      iparsed ? JSON.stringify(iparsed.inLanguage) : 'unparsed');
+
+/* The application itself must not have moved. */
+const stillDz = await page.evaluate(() => {
+  navigate('invoices');
+  return {country: !!document.querySelector('#main-content [name="country"]'),
+          currency: !!document.querySelector('#main-content [name="currency"]')};
+});
+check('and the invoice editor still gains no country selector', !stillDz.country);
+check('nor a currency selector', !stillDz.currency);
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
