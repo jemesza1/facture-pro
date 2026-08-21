@@ -27,7 +27,12 @@ function check(name, ok, detail) {
 const near = (a, b, eps = 0.001) => Math.abs(a - b) <= eps;
 
 const server = createServer(async (req, res) => {
-  const p = join(ROOT, normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+  /* Vercel serves index.html at the root, and the entry script only redirects
+     a visitor to the presentation when the path is exactly "/" — so a harness
+     that 404s there cannot see the door a stranger comes through. */
+  let url = req.url.split('?')[0];
+  if (url === '/' || url === '') url = '/index.html';
+  const p = join(ROOT, normalize(decodeURI(url)).replace(/^(\.\.[/\\])+/, ''));
   try {
     const body = await readFile(p);
     res.writeHead(200, {'Content-Type': TYPES[extname(p)] || 'application/octet-stream'});
@@ -2553,6 +2558,70 @@ const draft = await page.evaluate(() => {
 });
 check('a draft takes nothing off the shelf', draft.asDraft === 50, String(draft.asDraft));
 check('and issuing it takes it exactly once', draft.once === 45, String(draft.once));
+
+/* ---------------------------------------------------------------- *
+ * From the domain root to a written invoice.
+ *
+ * "Commencer" landed on a dashboard of empty cards, and somebody who arrived
+ * to write one invoice then had to find the button that writes it. And the
+ * landing page — now the first thing a stranger sees — said nothing at all to
+ * a browser asking for neither French nor Arabic: an Algerian pitch in two
+ * languages they may not read, with the way out four taps deep.
+ * ---------------------------------------------------------------- */
+console.log('\nWhat a stranger meets at the door');
+{
+  const ctx = await browser.newContext();
+  const q = await ctx.newPage();
+  await q.goto(`${BASE}/`);
+  await q.waitForTimeout(1200);
+  check('a first visit lands on the presentation, not the ledger',
+        /accueil\.html$/.test(new URL(q.url()).pathname), new URL(q.url()).pathname);
+
+  const cta = await q.$('a[href*="new=1"]');
+  check('and its call to action asks for an invoice, not for the app', !!cta);
+  if (cta) {
+    await cta.click();
+    await q.waitForFunction(() => typeof state !== 'undefined' && typeof renderPage === 'function',
+                            {timeout: 30000});
+    await q.waitForTimeout(900);
+    const opened = await q.evaluate(() => ({
+      lines: !!document.getElementById('items-container'),
+      client: !!document.getElementById('inv-client')
+    }));
+    check('the form opens on arrival, ready to type into', opened.lines && opened.client,
+          JSON.stringify(opened));
+  }
+  await ctx.close();
+}
+
+for (const [loc, expected] of [['en-GB', true], ['fr-FR', false], ['ar-DZ', false]]) {
+  const ctx = await browser.newContext({locale: loc});
+  const q = await ctx.newPage();
+  await q.goto(`${BASE}/`);
+  await q.waitForTimeout(1200);
+  const seen = await q.evaluate(() => {
+    const el = document.getElementById('foreign-note');
+    return {shown: !!el && getComputedStyle(el).display !== 'none',
+            href: el && el.querySelector('a') ? el.querySelector('a').getAttribute('href') : null};
+  });
+  check(`a ${loc} browser ${expected ? 'is told' : 'is not told'} this app is for Algeria`,
+        seen.shown === expected, String(seen.shown));
+  if (expected) {
+    check('and is pointed at the generator that serves their country',
+          seen.href === 'international.html', String(seen.href));
+    /* Clicked, not called: the close button is what a visitor uses, and it is
+       the button that has to be wired. */
+    await q.click('#foreign-note button');
+    await q.reload();
+    await q.waitForTimeout(900);
+    const again = await q.evaluate(() => {
+      const el = document.getElementById('foreign-note');
+      return !!el && getComputedStyle(el).display !== 'none';
+    });
+    check('closed once is closed for good, here as in the application', again === false);
+  }
+  await ctx.close();
+}
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
