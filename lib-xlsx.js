@@ -9,6 +9,10 @@
  * Public API:
  *   XLSX.build([{name, cols, rows, merges}], filename)  -> triggers a download
  * A cell is a value, or {v, s} where s is a style name from STYLES below.
+ * A cell may also carry {f} — an Excel formula, written without the leading
+ * "=". A downloadable template lives or dies on this: a sheet where the
+ * totals are numbers somebody typed is a sheet that goes wrong the first time
+ * a quantity changes.
  */
 (function(global){
   'use strict';
@@ -192,6 +196,15 @@
         var v = (typeof cell === 'object' && 'v' in cell) ? cell.v : cell;
         var st = (typeof cell === 'object' && cell.s) ? (S[cell.s] || 0) : 0;
         var ref = colName(c) + (r + 1);
+
+        /* A formula cell carries no cached value on purpose: Excel and
+           LibreOffice both compute one on open, and a stale number written
+           beside a formula is the thing that makes a template distrusted. */
+        if (typeof cell === 'object' && cell.f) {
+          cs.push('<c r="' + ref + '" s="' + st + '"><f>' + esc(cell.f) + '</f></c>');
+          continue;
+        }
+
         if (v === null || v === undefined || v === '') {
           if (st) cs.push('<c r="' + ref + '" s="' + st + '"/>');
           continue;

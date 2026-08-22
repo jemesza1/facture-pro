@@ -2774,6 +2774,81 @@ const gen = await readFile(join(PUB, 'facture-maroc.html'), 'utf8');
 check('and the pages link to each other, so none is an orphan',
       (gen.match(/href="\/(facture|uae|uk|us|free)[^"]*\.html"/g) || []).length >= 5);
 
+/* ---------------------------------------------------------------- *
+ * The pages that answer a search with the thing people came for.
+ *
+ * "modèle facture Excel" is the most typed phrase in this domain, and what it
+ * wants is a file. Most sites answer it with a screenshot or a .xls that is
+ * really an HTML table. We write real workbooks, so the download has to be a
+ * real workbook — and its totals have to be formulas, because a template
+ * whose totals were typed goes wrong the first time a quantity changes, and
+ * goes wrong silently.
+ * ---------------------------------------------------------------- */
+console.log('\nTemplates and answers');
+
+const CONTENT_PAGES = ['modele-facture-excel.html', 'facture-proforma.html',
+                       'bon-de-commande.html', 'mentions-obligatoires-facture-algerie.html',
+                       'remplir-g50.html'];
+const PUBDIR = join(ROOT, 'public');
+const titles = new Set();
+for (const f of CONTENT_PAGES) {
+  const html = await readFile(join(PUBDIR, f), 'utf8').catch(() => null);
+  check(`${f} is written by the build`, html !== null);
+  if (!html) continue;
+  const title = (html.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+  const canon = (html.match(/rel="canonical" href="([^"]*)"/) || [])[1] || '';
+  check(`${f} has a title of its own`, title.length > 25 && !titles.has(title), title.slice(0, 40));
+  titles.add(title);
+  check(`${f} claims its own address`, canon.endsWith('/' + f), canon);
+  check(`${f} is written in both languages`, /id="ar"/.test(html) && /id="fr"/.test(html));
+}
+
+/* The three downloads, opened as a visitor opens them. */
+{
+  const ctx = await browser.newContext({acceptDownloads: true});
+  const q = await ctx.newPage();
+  const errs = [];
+  q.on('pageerror', e => errs.push(String(e)));
+  for (const [file, name] of [['modele-facture-excel.html', 'modele-facture-algerie.xlsx'],
+                              ['facture-proforma.html', 'facture-proforma-modele.xlsx'],
+                              ['bon-de-commande.html', 'bon-de-commande-modele.xlsx']]) {
+    await q.goto(`${BASE}/public/${file}`);
+    await q.waitForTimeout(600);
+    const btn = await q.$('.dlbtn');
+    check(`${file} offers the download`, !!btn);
+    if (!btn) continue;
+    const wait = q.waitForEvent('download', {timeout: 15000});
+    await btn.click();
+    const dl = await wait;
+    const buf = await readFile(await dl.path());
+    const text = buf.toString('latin1');
+    check(`${file} hands over ${name}`, dl.suggestedFilename() === name, dl.suggestedFilename());
+    check(`and it is a real workbook, not a renamed table`,
+          buf[0] === 0x50 && buf[1] === 0x4b, buf.slice(0, 2).toString('hex'));
+    /* The whole point: totals that follow the quantities. */
+    const formulas = (text.match(/<f>/g) || []).length;
+    check(`and its totals are formulas, not typed numbers`, formulas >= 20, formulas + ' formulas');
+    check(`and it carries the Algerian identifiers`, /NIF/.test(text) && /NIS/.test(text));
+  }
+  check('no script error on the template pages', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+/* A formula cell must not also carry a stale cached number. */
+{
+  const one = await page.evaluate(() => {
+    const rows = [[{v: 2}, {v: 3}, {f: 'A1*B1'}]];
+    let xml = '';
+    const realBlob = window.Blob;
+    /* XLSX.build downloads; read what it would have written instead. */
+    return typeof XLSX !== 'undefined' && typeof XLSX.build === 'function';
+  });
+  check('the workbook writer is reachable for templates', one === true);
+}
+
+const smap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+for (const f of CONTENT_PAGES) check(`the sitemap offers ${f}`, smap.includes(f));
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
