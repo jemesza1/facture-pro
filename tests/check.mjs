@@ -2362,6 +2362,34 @@ check('robots points at the sitemap on that host',
       /Sitemap: https:\/\/www\.facturedz\.com\/sitemap\.xml/.test(
         await readFile(join(ROOT, 'robots.txt'), 'utf8')));
 
+/* The sitemap tells a crawler a page exists; the footer is what gives it a
+   link to follow and a visitor a way to reach it. When they disagree the
+   sitemap is the one that loses — a page nothing links to is a page Google
+   treats as an afterthought. So the landing footer has to name every address
+   the sitemap claims, and name nothing the build does not produce. */
+const sitemapPaths = [...map.matchAll(/<loc>https:\/\/www\.facturedz\.com\/([^<]*)<\/loc>/g)]
+  .map(m => m[1]).filter(Boolean);
+const accueil = await readFile(join(ROOT, 'accueil.html'), 'utf8');
+const footer = accueil.slice(accueil.indexOf('<footer>'));
+const unlinked = sitemapPaths.filter(f => !footer.includes('href="' + f + '"'));
+check('the footer links every page the sitemap offers', unlinked.length === 0,
+      unlinked.join(', ') || sitemapPaths.length + ' pages');
+
+const footHrefs = [...footer.matchAll(/href="([a-z0-9./-]+\.html)"/g)].map(m => m[1]);
+const dead = [];
+for (const h of new Set(footHrefs)) {
+  if (!await readFile(join(ROOT, 'public', h), 'utf8').catch(() => null)) dead.push(h);
+}
+check('and every footer link is a page the build actually writes', dead.length === 0,
+      dead.join(', ') || footHrefs.length + ' links');
+
+/* Bilingual by the same mechanism as the rest of the page: a label the switch
+   cannot translate stays French for an Arabic reader. The country names are
+   deliberately exempt — "UK invoice template" is the search term. */
+const untranslated = [...footer.matchAll(/<h3([^>]*)>/g)].filter(m => !/data-ar=/.test(m[1]));
+check('every footer heading carries its Arabic', untranslated.length === 0,
+      untranslated.length + ' without data-ar');
+
 /* Removing a tag after validation drops that account's ownership, and with it
    the coverage reports and the sitemap submission. There are two because the
    project is spread over two Google accounts — the one holding the Cloud

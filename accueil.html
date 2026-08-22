@@ -173,9 +173,22 @@
     .band h2 { color: #fff; }
     .band p { color: #d1fae5; margin: 8px auto 22px; }
     .band .btn-green { background: #fff; color: var(--green); }
-    footer { background: #0b1220; color: #94a3b8; padding: 40px 0 24px; font-size: 14px; }
-    .f-in { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    footer { background: #0b1220; color: #94a3b8; padding: 48px 0 28px; font-size: 14px; }
+    .f-in { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 28px 24px; }
+    .f-brand img { width: 36px; height: 36px; display: block; }
+    .f-brand b { display: block; color: #fff; font-size: 16px; margin-top: 10px; }
+    .f-col h3 { color: #e2e8f0; font-size: 13px; font-weight: 700; letter-spacing: .04em;
+                text-transform: uppercase; margin: 0 0 10px; }
+    .f-col a { display: block; padding: 3px 0; }
+    /* The country pages keep their English word order — "UK invoice template"
+       is the search term — but a Latin label inside an Arabic column still
+       belongs on the column's side, not adrift on the other one. */
+    :root[dir="rtl"] .f-col a[dir="ltr"] { text-align: right; }
     footer a:hover { color: #fff; }
+    .f-base { border-top: 1px solid #1e293b; margin-top: 32px; padding-top: 16px;
+              display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 13px; }
+    @media (max-width: 900px) { .f-in { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .f-in { grid-template-columns: 1fr; } }
     @media (max-width: 900px) {
       .hero-grid, .grid4, .mods-list { grid-template-columns: 1fr; }
       .nav-links { display: none; }
@@ -373,21 +386,53 @@
     </div>
   </div>
 
+  <!-- The footer is the one block on every page a crawler always reaches, and
+       the only map a visitor gets when the page they landed on was not the one
+       they wanted. With nineteen pages, six links in a row stopped being that
+       map: each section below names a real search intent, and every page the
+       site publishes is reachable from here in one click. -->
   <footer>
     <div class="wrap f-in">
-      <div>
-        <b style="color:#fff">FacturePro</b>
-        <p style="margin-top:8px;max-width:28rem" data-fr="Facturation pour l'Algérie. Created by CheMs SoUu." data-ar="فوترة للجزائر. إعداد CheMs SoUu.">Facturation pour l'Algérie. Created by CheMs SoUu.</p>
+      <div class="f-brand">
+        <img src="/icon.svg" width="36" height="36" alt="FacturePro" loading="lazy">
+        <b>FacturePro</b>
+        <p style="margin-top:8px;max-width:22rem" data-fr="Facturation pour l'Algérie. Created by CheMs SoUu." data-ar="فوترة للجزائر. إعداد CheMs SoUu.">Facturation pour l'Algérie. Created by CheMs SoUu.</p>
+        <p style="margin-top:10px"><a href="index.html?app=1" style="color:#34d399;font-weight:600" data-fr="Ouvrir l'application" data-ar="فتح التطبيق">Ouvrir l'application</a></p>
       </div>
-      <div>
-        <a href="guide.html">Guide</a> ·
-        <a href="droit-de-timbre.html">Droit de timbre</a> ·
-        <a href="calcul-tva.html">TVA</a> ·
-        <a href="international.html">International</a> ·
-        <a href="modele-facture-excel.html" data-fr="Modèle Excel" data-ar="نموذج Excel">Modèle Excel</a> ·
-        <a href="mentions-obligatoires-facture-algerie.html" data-fr="Mentions obligatoires" data-ar="البيانات الإجبارية">Mentions obligatoires</a> ·
+      <div class="f-col">
+        <h3 data-fr="Calculateurs" data-ar="حاسبات">Calculateurs</h3>
+        <a href="droit-de-timbre.html" data-fr="Droit de timbre" data-ar="حق الطابع">Droit de timbre</a>
+        <a href="calcul-tva.html" data-fr="Calcul TVA" data-ar="حساب TVA">Calcul TVA</a>
+        <a href="calcul-salaire.html" data-fr="Calcul de salaire" data-ar="حساب الأجر">Calcul de salaire</a>
+        <a href="montant-en-lettres.html" data-fr="Montant en lettres" data-ar="المبلغ بالحروف">Montant en lettres</a>
+      </div>
+      <div class="f-col">
+        <h3 data-fr="Modèles" data-ar="نماذج">Modèles</h3>
+        <a href="modele-facture-excel.html" data-fr="Modèle facture Excel" data-ar="نموذج فاتورة Excel">Modèle facture Excel</a>
+        <a href="facture-proforma.html" data-fr="Facture proforma" data-ar="الفاتورة الأولية">Facture proforma</a>
+        <a href="bon-de-commande.html" data-fr="Bon de commande" data-ar="وصل الطلبية">Bon de commande</a>
+      </div>
+      <div class="f-col">
+        <h3 data-fr="Guides" data-ar="أدلة">Guides</h3>
+        <a href="guide.html" data-fr="Guide d'utilisation" data-ar="دليل الاستعمال">Guide d'utilisation</a>
+        <a href="mentions-obligatoires-facture-algerie.html" data-fr="Mentions obligatoires" data-ar="البيانات الإجبارية">Mentions obligatoires</a>
+        <a href="remplir-g50.html" data-fr="Remplir le G50" data-ar="ملء G50">Remplir le G50</a>
         <a href="conditions.html" data-fr="Conditions et confidentialité" data-ar="الشروط والخصوصية">Conditions et confidentialité</a>
       </div>
+      <div class="f-col">
+        <h3 data-fr="International" data-ar="دول أخرى">International</h3>
+        <a href="international.html" data-fr="Autres pays" data-ar="بلدان أخرى">Autres pays</a>
+        <a href="facture-maroc.html" data-fr="Facture Maroc" data-ar="فاتورة المغرب">Facture Maroc</a>
+        <a href="facture-tunisie.html" data-fr="Facture Tunisie" data-ar="فاتورة تونس">Facture Tunisie</a>
+        <a href="uae-tax-invoice.html" dir="ltr">UAE tax invoice</a>
+        <a href="uk-invoice-template.html" dir="ltr">UK invoice template</a>
+        <a href="us-invoice-template.html" dir="ltr">US invoice template</a>
+        <a href="free-invoice-generator.html" dir="ltr">Free invoice generator</a>
+      </div>
+    </div>
+    <div class="wrap f-base">
+      <span data-fr="Gratuit, sans inscription — vos données restent sur votre appareil." data-ar="مجاني، بلا تسجيل — بياناتك تبقى على جهازك.">Gratuit, sans inscription — vos données restent sur votre appareil.</span>
+      <span dir="ltr">&copy; 2026 FacturePro</span>
     </div>
   </footer>
 
