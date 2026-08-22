@@ -7,8 +7,14 @@ Static SPA — **Created by CheMs SoUu**
 - Build Command: `npm run build` (or leave default)
 - Output Directory: **public**
 
-`public/` is build output and is not tracked. `npm run build` regenerates it:
-the stylesheet first, then a copy of the site into it.
+`public/` is build output and is not tracked. `npm run build` regenerates it
+in four steps: the vendored libraries, the stylesheet, a copy of the site, then
+the eleven generated pages — six country pages from `international.html` and
+five content pages from a table. See **Generated pages**.
+
+The site answers on `www.facturedz.com`; the apex redirects there. Every
+canonical, every `og:url` and every sitemap entry names the www host, because
+a canonical that points at a redirect is a canonical Google may ignore.
 
 ## No CDN
 
@@ -227,6 +233,129 @@ nothing silent ever overwrites a copy it does not recognise, and the card says
 so until somebody decides.
 
 
+## Stock
+
+Every product carries a stock figure. The products page shows it, the
+threshold warning is drawn from it and the Excel sheet exports it — so it has
+to be right, and for a long time it was not: stock went down when an invoice
+was written and never came back up. Not on a cancellation, not on a deletion,
+not when an avoir sent the goods back. A merchant ordered against a number
+that drifted further from the shelf every month, silently, in one direction.
+
+**A movement is not an event here, it is a consequence.** A document holds
+stock while it is a live commitment and releases it when it stops being one,
+and every path — save, edit, status change, delete, duplicate, avoir —
+calls `reconcileStock()` rather than computing a movement of its own. No path
+can be forgotten, and none can apply twice: each document records in
+`stockTaken` whether its lines are currently applied, which makes reconciling
+idempotent.
+
+- **A draft holds nothing.** It was never issued — the same rule as the debts
+  page, the dépenses and the journal. Before this, a draft abandoned the next
+  morning took its goods for good.
+- **An avoir adds.** The sign follows the document exactly as it does in
+  `calcInvoiceTotals`: goods coming back grow the shelf.
+- **A document with no flag is adopted, not applied.** A ledger written before
+  this carries no `stockTaken`, and its stock was already taken at the time.
+  Reconciling two hundred invoices on first load would otherwise deduct every
+  one of them a second time. That migration is two lines and the most
+  important two in the file.
+
+`commerce.js` owns the shelf and is loaded before `avoir.js`, so it cannot
+wrap `createAvoir`. The avoir declares itself through `markStockNew` where it
+is created and is reconciled by the same rule as everything else.
+
+## Relance on WhatsApp
+
+Créances knew who owed what and offered one button: go and look at the
+invoices. Finding the number, opening WhatsApp and typing the figures was left
+to the merchant, so it happened once.
+
+`waLink` in `lib-calc.js` builds a `wa.me` link with the message already
+written; the chat opens on that client and the merchant presses send. No API,
+no server, no per-message fee — and nothing leaves without a human doing it,
+which is also the honest limit: this prepares a message, it does not send one.
+
+`waNumber` is the whole feature and lives beside the other shared arithmetic.
+Merchants write `0555 12 34 56`, some paste `+213`, some type `00213`, and
+`wa.me` accepts exactly one of those forms. Get it wrong and the chat opens on
+a stranger, or on nobody, and the merchant finds out in front of their client.
+Anything too short comes back empty and **no button is drawn**: a link built
+on a blank field opens WhatsApp on "this number does not exist", which reads
+as a broken application rather than as a missing field.
+
+The message uses `formatMoney`, never `moneyUI` — the latter wraps its result
+in `<bdi>` so the interface can mirror it, and those tags reached a client as
+literal characters in the middle of a total the last time this was missed.
+
+## Generated pages
+
+Eleven of the site's pages are written by the build, not stored in the
+repository. `npm run build` runs `tools-build-countries.mjs` and
+`tools-build-pages.mjs` after copying the site into `public/`.
+
+**Six country pages** come from `international.html`. Six countries sharing
+one address competed for nothing: a search engine indexes URLs, and "facture
+Maroc" and "UAE tax invoice" are not the same page to it. Each generated file
+changes only the head and a `data-country` attribute — edit the generator once
+and all six follow. The generator honours that attribute at boot, and **the
+address wins over a stored draft**: the draft is one per origin, so somebody
+who wrote a Moroccan invoice and then followed the footer to the UAE page used
+to arrive on a Moroccan one. What they typed is kept; the country is not.
+
+**Five content pages** come from the table in `tools-build-pages.mjs` — the
+Excel template, the proforma, the bon de commande, the mentions obligatoires
+and the G50. Five pages that must share a head, a language switch and a footer
+are five chances to get one of them subtly wrong, so the shell is written once
+and the prose lives in the table.
+
+Consequences worth knowing:
+
+- **They exist only in `public/`.** Editing them there is editing build output.
+- **A new page needs a sitemap entry too** — `sitemap.xml` is hand-kept.
+- The suite reads them from `public/`, so it runs after a build.
+
+## The downloadable template
+
+`template-xlsx.js` writes the workbook the Excel pages hand over. "Modèle de
+facture Excel" is the most typed phrase in this domain and what it wants is a
+file; most sites answer with a screenshot, a dead link, or a `.xls` that is
+really an HTML table. We already write real workbooks, so the honest answer is
+a real one.
+
+**The totals are formulas.** `lib-xlsx.js` grew a `{f}` cell for it. A template
+whose totals were typed goes wrong the first time somebody changes a quantity,
+and it goes wrong silently. A formula cell carries no cached value on purpose:
+Excel and LibreOffice both compute one on open, and a stale number written
+beside a formula is what makes a template distrusted.
+
+**The droit de timbre box is left empty on purpose.** Its barème moves with the
+finance law, and a stale figure printed on a fiscal document is worse than an
+empty box.
+
+The file also has to look like a document rather than a grid, which is why the
+style sheet carries a banner, boxed fields, an amount format ending in DA and
+a page setup that fits one page across. Those counts are declared in the XML,
+not implied — `fonts`, `fills`, `numFmts` and `cellXfs` are updated together
+or Excel refuses the file. And `sheetPr` goes first in a worksheet: the same
+fixed ordering that emptied the Journal du mois when `autoFilter` sat after
+`mergeCells`.
+
+## Terms and privacy
+
+`conditions.html` exists because Google's Branding form asks for a privacy
+policy URL and there was none to give: the terms lived on a page inside the
+application, reachable by a merchant who navigates to it and invisible to
+anyone who needs a link. Filling that field with a URL that 404s fails the
+OAuth verification weeks later, quietly.
+
+It says what the application does rather than what a template would say — the
+ledger in `localStorage`, the Drive scope by name, the JSON export going
+straight to disk, Vercel Analytics and Google Fonts as the two third parties
+there are, and how to delete everything on the device and in the Drive. Keep
+it that way: a policy that describes a different application is worse than
+none, because it is believed.
+
 ## Guide
 
 `guide.html` is the manual: eight steps from the fiscal identifiers to the
@@ -318,16 +447,21 @@ shared state. The line in "The international generator" above is the line.
 - Droit de timbre (art. 100, barème LF 2025) sur les règlements en espèces
 - 29 templates, PDF, dark mode
 - Logo upload (Paramètres)
+- Stock : déduit à l'émission, rendu à l'annulation, à la suppression et sur avoir
+- Relance WhatsApp depuis Créances, message prérempli, envoi par le commerçant
 - Sauvegarde dans le Google Drive du commerçant (optionnelle, hors ligne intacte)
+- Modèles Excel téléchargeables : facture, proforma, bon de commande
+- Six pages pays pour le générateur international, une adresse chacune
 - FR / العربية + RTL
 - localStorage only (privacy)
 
 ## Tests
 
-`cd tests && npm install && npm test` — 380 checks against a real headless
-browser. Run `npm run build` in the root first: the last group drives
-`public/`, the built site, because what it proves is that the international
-generator renders and exports with every off-origin request blocked. Run them before every deploy; the suite prints `Safe to deploy.` or
+`cd tests && npm install && npm test` — 542 checks against a real headless
+browser. **Run `npm run build` in the root first**, and not only for the
+international generator: eleven pages are written by the build, and the groups
+that check them read `public/`. A stale `public/` fails checks that have
+nothing wrong with them. Run them before every deploy; the suite prints `Safe to deploy.` or
 lists what broke. The first group verifies that data written by the *previous*
 version survives the update, which is what lets us ship without losing anyone's
 work. When you fix a bug, add the check that would have caught it.
