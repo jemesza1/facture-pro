@@ -2664,6 +2664,53 @@ const stillDz = await page.evaluate(() => {
 check('and the invoice editor still gains no country selector', !stillDz.country);
 check('nor a currency selector', !stillDz.currency);
 
+/* Google will not save a Branding page without a privacy policy that opens,
+   and OAuth verification checks it. The terms lived inside the application,
+   on a page with no URL — reachable by a merchant, invisible to anyone asking
+   for a link. */
+console.log('\nTerms and privacy, at an address');
+{
+  const ctx = await browser.newContext();
+  const q = await ctx.newPage();
+  const errs = [];
+  q.on('pageerror', e => errs.push(String(e)));
+  const res = await q.goto(`${BASE}/conditions.html`);
+  await q.waitForTimeout(700);
+  check('the policy answers at its own URL', res.status() === 200, String(res.status()));
+
+  const fr = await q.evaluate(() => ({
+    title: document.title,
+    h1: document.querySelector('h1').textContent.trim(),
+    mail: !!document.querySelector('a[href^="mailto:"]'),
+    canonical: (document.querySelector('link[rel=canonical]') || {}).href,
+    body: document.body.textContent
+  }));
+  check('and names itself in the tab', /Conditions|confidentialité/i.test(fr.title), fr.title);
+  check('it gives a way to reach a human', fr.mail);
+  check('it points at its own canonical address',
+        /conditions\.html$/.test(fr.canonical || ''), fr.canonical);
+
+  /* The three claims a reviewer checks, and the three the merchant relies on. */
+  check('it says where the data actually lives', /localStorage/.test(fr.body));
+  check('it names the Drive scope rather than describing it vaguely',
+        /drive\.file/.test(fr.body));
+  check('it states that the data is not sold', /ne sont ni vendues|Nous ne vendons/.test(fr.body));
+
+  await q.click('#lang');
+  await q.waitForTimeout(300);
+  const ar = await q.evaluate(() => ({dir: document.documentElement.dir,
+                                      h1: document.querySelector('h1').textContent.trim()}));
+  check('it reads in Arabic too, right to left', ar.dir === 'rtl' && /[؀-ۿ]/.test(ar.h1), ar.h1);
+  check('no script error on the policy page', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+const policyMap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+check('the sitemap offers it to Google', /conditions\.html/.test(policyMap));
+const land = await readFile(join(ROOT, 'accueil.html'), 'utf8');
+check('and the site links to it, so it is not an orphan',
+      /href="conditions\.html"/.test(land));
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
