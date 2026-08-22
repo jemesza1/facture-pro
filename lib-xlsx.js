@@ -91,7 +91,7 @@
 
   /* ---------- styles ----------
      Index order matters: it is the order they are written into styles.xml. */
-  var GREEN = '006233', LIGHT = 'F1F5F9', SOFT = 'F8FAFC';
+  var GREEN = '006233', LIGHT = 'F1F5F9', SOFT = 'F8FAFC', DARK = '004321';
   var STYLES = [
     'default',      // 0
     'title',        // 1  company name
@@ -107,7 +107,17 @@
     'grand',        // 11 white on green, big number
     'note',         // 12 italic grey, wrapped
     'date',         // 13 dd/mm/yyyy
-    'sectionTitle'  // 14
+    'sectionTitle', // 14
+    /* A downloadable template is judged in the first second, before anybody
+       types in it: these are the styles that make it look like a document
+       rather than a grid. */
+    'banner',       // 15 white on dark green, the document title
+    'bannerSub',    // 16 white on dark green, the line under it
+    'fieldLabel',   // 17 bold small on grey, bordered — the left of a form row
+    'fieldValue',   // 18 bordered, empty, waiting to be filled
+    'moneyDA',      // 19 bordered amount suffixed DA
+    'totalDA',      // 20 bold amount on grey, suffixed DA
+    'grandDA'       // 21 white on green, suffixed DA
   ];
   var S = {};
   STYLES.forEach(function(n, i){ S[n] = i; });
@@ -115,13 +125,14 @@
   var STYLES_XML =
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-      '<numFmts count="3">' +
+      '<numFmts count="4">' +
+        '<numFmt numFmtId="167" formatCode="#,##0.00&quot; DA&quot;"/>' +
         '<numFmt numFmtId="164" formatCode="#,##0.00"/>' +
         '<numFmt numFmtId="165" formatCode="0.0&quot; %&quot;"/>' +
         /* numFmtId 14 renders as mm-dd-yy on an English Excel. Spell it out. */
         '<numFmt numFmtId="166" formatCode="dd/mm/yyyy"/>' +
       '</numFmts>' +
-      '<fonts count="7">' +
+      '<fonts count="10">' +
         '<font><sz val="11"/><name val="Calibri"/></font>' +
         '<font><b/><sz val="18"/><color rgb="FF' + GREEN + '"/><name val="Calibri"/></font>' +
         '<font><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/></font>' +
@@ -129,13 +140,17 @@
         '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
         '<font><b/><sz val="11"/><name val="Calibri"/></font>' +
         '<font><i/><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/></font>' +
+        '<font><b/><sz val="20"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
+        '<font><sz val="10"/><color rgb="FFD7E8DE"/><name val="Calibri"/></font>' +
+        '<font><b/><sz val="9"/><color rgb="FF475569"/><name val="Calibri"/></font>' +
       '</fonts>' +
-      '<fills count="5">' +
+      '<fills count="6">' +
         '<fill><patternFill patternType="none"/></fill>' +
         '<fill><patternFill patternType="gray125"/></fill>' +
         '<fill><patternFill patternType="solid"><fgColor rgb="FF' + GREEN + '"/><bgColor indexed="64"/></patternFill></fill>' +
         '<fill><patternFill patternType="solid"><fgColor rgb="FF' + LIGHT + '"/><bgColor indexed="64"/></patternFill></fill>' +
         '<fill><patternFill patternType="solid"><fgColor rgb="FF' + SOFT + '"/><bgColor indexed="64"/></patternFill></fill>' +
+        '<fill><patternFill patternType="solid"><fgColor rgb="FF' + DARK + '"/><bgColor indexed="64"/></patternFill></fill>' +
       '</fills>' +
       '<borders count="2">' +
         '<border><left/><right/><top/><bottom/><diagonal/></border>' +
@@ -147,7 +162,7 @@
           '<diagonal/></border>' +
       '</borders>' +
       '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-      '<cellXfs count="15">' +
+      '<cellXfs count="22">' +
         '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +                                                   // default
         '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +                                    // title
         '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +                                    // subtitle
@@ -163,6 +178,13 @@
         '<xf numFmtId="0" fontId="6" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1"/></xf>' + // note
         '<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' + // date
         '<xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +                                    // sectionTitle
+        '<xf numFmtId="0" fontId="7" fillId="5" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' + // banner
+        '<xf numFmtId="0" fontId="8" fillId="5" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' + // bannerSub
+        '<xf numFmtId="0" fontId="9" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>' + // fieldLabel
+        '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>' + // fieldValue
+        '<xf numFmtId="167" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>' + // moneyDA
+        '<xf numFmtId="167" fontId="5" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>' + // totalDA
+        '<xf numFmtId="167" fontId="4" fillId="2" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>' + // grandDA
       '</cellXfs>' +
       '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
     '</styleSheet>';
@@ -246,10 +268,12 @@
        in it, next to a Récapitulatif TVA that opened fine because it carries no
        filter and so could not be out of order. */
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + views +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      (sheet.fitToPage ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '') + views +
       '<sheetFormatPr defaultRowHeight="15"/>' + cols +
       '<sheetData>' + out.join('') + '</sheetData>' + filter + merges +
       '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>' +
+      (sheet.fitToPage ? '<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>' : '') +
       '</worksheet>';
   }
 
