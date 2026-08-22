@@ -17,6 +17,7 @@ const HOST = 'https://www.facturedz.com';
 const V = (readFileSync(join(ROOT, 'app.js'), 'utf8').match(/var V="([^"]+)"/) || [])[1] || '1';
 
 const SIBLINGS = [
+  ['plan-comptable-scf.html', 'Plan comptable SCF', 'دليل الحسابات SCF'],
   ['modele-facture-excel.html', 'Modèle de facture Excel', 'نموذج فاتورة Excel'],
   ['facture-proforma.html', 'Facture proforma', 'الفاتورة الأولية'],
   ['bon-de-commande.html', 'Bon de commande', 'وصل الطلبية'],
@@ -31,7 +32,61 @@ const dl = (kind, fr, ar) =>
   ` data-ar="ملف .xlsx — يفتح في Excel وLibreOffice وWPS وGoogle Sheets. والمجاميع صيغ حيّة.">` +
   `Fichier .xlsx — s'ouvre dans Excel, LibreOffice, WPS et Google Sheets. Les totaux sont des formules.</p>`;
 
+/* dl() fabrique le classeur dans le navigateur ; celui-ci pointe un fichier
+   que le build a deja copie. Le systeme comptable fait huit feuilles et trois
+   mille formules — l'ecrire a la volee couterait plus que de le livrer. */
+const dlfile = (href, fr, ar, note_fr, note_ar) =>
+  `<p class="mt-4"><a href="${href}" download class="dlbtn">` +
+  `<span data-fr="${fr}" data-ar="${ar}">${fr}</span></a></p>` +
+  `<p class="mt-2 text-xs opacity-70" data-fr="${note_fr}" data-ar="${note_ar}">${note_fr}</p>`;
+
 const PAGES = [
+  {
+    file: 'plan-comptable-scf.html',
+    title: 'Plan comptable SCF Algérie — les comptes et un classeur Excel gratuit | دليل الحسابات',
+    desc: "Le plan comptable algérien (Système Comptable Financier) expliqué : les sept classes, les comptes qu'un commerçant utilise vraiment, et un classeur Excel gratuit — journal, grand livre, balance, compte de résultat et bilan, calculés par formules.",
+    og: 'Plan comptable SCF — les comptes, et un classeur Excel gratuit',
+    h1fr: 'Le plan comptable algérien (SCF)',
+    h1ar: 'دليل الحسابات الجزائري (SCF)',
+    leadfr: "Le Système Comptable Financier remplace l'ancien PCN depuis 2010. Sept classes, des comptes numérotés, et une règle : chaque opération s'écrit deux fois, au débit d'un compte et au crédit d'un autre, pour le même montant.",
+    leadar: 'النظام المحاسبي المالي حلّ محلّ المخطّط الوطني القديم منذ 2010. سبعة أصناف، وحسابات مرقّمة، وقاعدة واحدة: كلّ عملية تُكتب مرّتين، في مدين حساب وفي دائن حساب آخر، وبنفس المبلغ.',
+    body: [
+      {h: ['Les sept classes', 'الأصناف السبعة'],
+       ul: [
+         ['Classe 1 — les capitaux : ce que l\u2019entreprise doit à ses propriétaires et à ses prêteurs', 'الصنف 1 — الأموال: ما تدين به المؤسسة لمُلّاكها ومُقرضيها'],
+         ['Classe 2 — les immobilisations : ce qui sert plusieurs années (local, véhicule, matériel)', 'الصنف 2 — التثبيتات: ما يخدم سنوات (محلّ، سيارة، عتاد)'],
+         ['Classe 3 — les stocks : la marchandise qui n\u2019est pas encore vendue', 'الصنف 3 — المخزونات: البضاعة التي لم تُبَع بعد'],
+         ['Classe 4 — les tiers : les clients qui doivent, les fournisseurs à payer, l\u2019État, le personnel', 'الصنف 4 — الغير: الزبائن المدينون، والموردون، والدولة، والمستخدمون'],
+         ['Classe 5 — la trésorerie : la banque et la caisse', 'الصنف 5 — الخزينة: البنك والصندوق'],
+         ['Classe 6 — les charges : ce qui sort et ne revient pas', 'الصنف 6 — الأعباء: ما يخرج ولا يعود'],
+         ['Classe 7 — les produits : ce qui entre — d\u2019abord les ventes', 'الصنف 7 — المنتجات: ما يدخل — وأوّله المبيعات'],
+       ]},
+      {h: ['Les comptes qu\u2019un commerçant utilise vraiment', 'الحسابات التي يستعملها التاجر فعلاً'],
+       p: [['La nomenclature complète tient dans un arrêté. En pratique, une petite affaire tourne avec une dizaine de comptes : 411 clients, 401 fournisseurs, 512 banque, 530 caisse, 4456 TVA déductible, 4457 TVA collectée, 600 achats de marchandises, 631 rémunérations du personnel, 700 ventes de marchandises, 706 prestations de services.',
+            'التسمية الكاملة تسع مرسوماً كاملاً. أمّا عملياً فالمحلّ الصغير يدور بعشرة حسابات: 411 الزبائن، 401 الموردون، 512 البنك، 530 الصندوق، 4456 الرسم القابل للخصم، 4457 الرسم المحصّل، 600 مشتريات البضائع، 631 أجور المستخدمين، 700 مبيعات البضائع، 706 تقديم الخدمات.']]},
+      {h: ['Comment se lit une écriture', 'كيف يُقرأ القيد'],
+       p: [['Une vente de 100 000 DA hors taxe à 19 % s\u2019écrit sur trois lignes : le client doit 119 000 (débit 411), la vente vaut 100 000 (crédit 700), et la TVA de 19 000 appartient à l\u2019État (crédit 4457). Les débits font 119 000, les crédits aussi : l\u2019écriture est équilibrée.',
+            'بيع بـ100 000 دج خارج الرسم بنسبة 19٪ يُكتب في ثلاثة سطور: الزبون مدين بـ119 000 (مدين 411)، والبيع 100 000 (دائن 700)، والرسم 19 000 للدولة (دائن 4457). المدين 119 000 والدائن مثله: القيد متوازن.'],
+           ['Quand le client paie par virement, une deuxième écriture solde sa dette : débit 512 banque, crédit 411 client. Le compte 411 revient à zéro, et c\u2019est ainsi qu\u2019on sait qui doit encore.',
+            'وكي يدفع الزبون بتحويل، قيد ثانٍ يصفّي دينه: مدين 512 البنك، دائن 411 الزبون. فيعود الحساب 411 إلى الصفر، وبهذا يُعرف من بقي مديناً.']]},
+      {h: ['Le classeur Excel : ce qu\u2019il fait', 'ملفّ Excel: ماذا يفعل'],
+       ul: [
+         ['Vous ne remplissez qu\u2019une feuille : le journal', 'لا تملأ إلا ورقة واحدة: اليومية'],
+         ['Le grand livre, la balance, le compte de résultat et le bilan se calculent seuls', 'دفتر الأستاذ والميزان وحساب النتائج والميزانية تُحسب وحدها'],
+         ['Le compte se choisit dans une liste : son libellé s\u2019écrit tout seul', 'الحساب يُختار من قائمة: وتسميته تُكتب وحدها'],
+         ['Trois contrôles d\u2019équilibre : le journal, la balance et le bilan se vérifient eux-mêmes', 'ثلاثة فحوص للتوازن: اليومية والميزان والميزانية تتحقّق من نفسها'],
+         ['Une analyse par centre de coût : magasin, chantier, administration', 'تحليل حسب مركز التكلفة: محلّ، ورشة، إدارة'],
+         ['Aucune macro : il s\u2019ouvre dans Excel, LibreOffice, WPS et Google Sheets', 'بلا ماكرو: يفتح في Excel وLibreOffice وWPS وGoogle Sheets'],
+       ]},
+      {h: ['À vérifier avec votre comptable', 'ما يُراجَع مع محاسبك'],
+       p: [['Le plan livré dans le classeur est le sous-ensemble courant, pas la nomenclature entière : complétez-le selon votre activité. Et les taux — TVA, TAP, IBS — sont fixés par la loi de finances et changent : le fichier n\u2019en écrit aucun d\u2019avance, pour ne pas figer un chiffre périmé dans vos comptes.',
+            'الدليل المرفق بالملف هو الجزء الشائع، لا التسمية كاملة: أكمله حسب نشاطك. أمّا النسب — الرسم على القيمة المضافة، والرسم على النشاط المهني، والضريبة على الأرباح — فيحدّدها قانون المالية وتتغيّر: والملف لا يكتب أياً منها مسبقاً، حتى لا يجمّد رقماً قديماً في حساباتك.']]},
+    ],
+    extra: dlfile('comptabilite-scf-algerie.xlsx',
+      'Télécharger le classeur comptable (.xlsx)', 'حمّل الملفّ المحاسبي (.xlsx)',
+      'Huit feuilles, plus de trois mille formules, aucune macro. Gratuit et sans inscription.',
+      'ثماني أوراق، وأكثر من ثلاثة آلاف صيغة، وبلا ماكرو. مجاني وبلا تسجيل.'),
+  },
   {
     file: 'modele-facture-excel.html', kind: 'facture',
     title: 'Modèle de facture Excel Algérie — gratuit, avec formules | نموذج فاتورة',
@@ -207,6 +262,9 @@ const shell = (page) => {
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="${HOST}/og.png" />
+<link rel="icon" href="/icon-48.png" sizes="48x48" type="image/png" />
+<link rel="icon" href="/icon-96.png" sizes="96x96" type="image/png" />
+<link rel="icon" href="/icon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
