@@ -2401,6 +2401,36 @@ check('the home page proves ownership to Search Console', owners.length > 0);
 check('and to both accounts that administer it, not only the last one added',
       owners.length === 2, owners.length + ' tag(s)');
 
+/* Google takes the whole site's favicon from the home page, and wants a
+   square whose side is a multiple of 48. The site declared 32 and 512 —
+   neither qualifies — so the results showed a generic globe where the mark
+   should be. The identity graph is the other half: a result cannot carry a
+   site name and a logo the page never claims. */
+for (const f of ['index.html', 'accueil.html']) {
+  const html = await readFile(join(ROOT, f), 'utf8');
+  check(`${f} offers Google a favicon at a size it accepts`,
+        /rel="icon" href="\/icon-48\.png" sizes="48x48"/.test(html));
+  const ld = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map(m => { try { return JSON.parse(m[1]); } catch (e) { return null; } });
+  check(`${f} — every structured-data block parses`, ld.every(Boolean),
+        ld.length + ' block(s)');
+  const flat = ld.filter(Boolean).flatMap(o => o['@graph'] || [o]);
+  const org = flat.find(o => o['@type'] === 'Organization');
+  check(`${f} names who publishes it`, !!org);
+  check(`${f} gives that publisher a logo a crawler can fetch`,
+        !!org && /^https:\/\/www\.facturedz\.com\/.+\.png$/.test(org.logo?.url || ''),
+        org?.logo?.url || 'missing');
+  check(`${f} claims a site name`, flat.some(o => o['@type'] === 'WebSite' && o.name));
+}
+
+/* The mark itself has to reach the site root: the build copied static/*.png
+   and the manifest, and for a while nothing else — the footer asked for a
+   logo that was never deployed. */
+for (const f of ['icon-48.png', 'icon-96.png', 'icon-144.png', 'icon-512.png', 'icon.svg']) {
+  const bytes = await readFile(join(ROOT, 'public', f)).catch(() => null);
+  check(`the build ships ${f}`, bytes !== null && bytes.length > 0);
+}
+
 /* ---------------------------------------------------------------- *
  * Relancer un client sur WhatsApp.
  *

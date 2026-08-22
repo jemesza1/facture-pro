@@ -87,9 +87,52 @@
     "areaServed": { "@type": "Country", "name": "Algérie" }
   }
   </script>
+  <!-- Who publishes this. SoftwareApplication above says what the thing is;
+       this says the site has a name and a mark, which is what a search engine
+       needs before it will show either one beside a result. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.facturedz.com/#organization",
+        "name": "FacturePro",
+        "alternateName": "\u0641\u0627\u062a\u0648\u0631\u0629 \u0628\u0631\u0648",
+        "url": "https://www.facturedz.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.facturedz.com/icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "image": "https://www.facturedz.com/og.png",
+        "email": "mrkorichi.a@gmail.com",
+        "areaServed": { "@type": "Country", "name": "Alg\u00e9rie" }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.facturedz.com/#website",
+        "name": "FacturePro",
+        "alternateName": "FacturePro Alg\u00e9rie",
+        "url": "https://www.facturedz.com/",
+        "inLanguage": ["fr", "ar"],
+        "publisher": { "@id": "https://www.facturedz.com/#organization" }
+      }
+    ]
+  }
+  </script>
   <link rel="manifest" href="/manifest.webmanifest" />
+  <!-- Google reads the site's favicon from the home page and wants a square
+       whose side is a multiple of 48: a 32 px icon is rejected in silence and
+       the results show a generic globe instead of the mark. The 48 comes
+       first for that reason; the rest are for the browser tab and the
+       installed application. -->
+  <link rel="icon" href="/icon-48.png" sizes="48x48" type="image/png" />
+  <link rel="icon" href="/icon-96.png" sizes="96x96" type="image/png" />
+  <link rel="icon" href="/icon-144.png" sizes="144x144" type="image/png" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
-  <link rel="icon" href="/icon-512.png" sizes="512x512" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <!-- Served from this domain, not from a CDN. A blocked or slow
        cdn.tailwindcss.com used to leave the app an unstyled column of links,
