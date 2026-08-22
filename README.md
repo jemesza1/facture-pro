@@ -341,6 +341,70 @@ or Excel refuses the file. And `sheetPr` goes first in a worksheet: the same
 fixed ordering that emptied the Journal du mois when `autoFilter` sat after
 `mergeCells`.
 
+## Le classeur comptable SCF
+
+`npm run compta` écrit `comptabilite-scf-dz.xlsx` : un système de comptabilité
+générale complet, en un seul fichier Excel, **séparé du site**. Il ne se
+connecte à rien, n'exporte rien depuis l'application et ne suppose aucune
+donnée : on l'ouvre, on saisit ses écritures, il en tire le grand livre, la
+balance, le coût des ventes, le compte de résultat et le bilan.
+
+Il vient de `tools-build-compta.mjs`, qui s'appuie sur deux modules :
+
+- `tools-scf-plan.mjs` — la nomenclature du Système Comptable Financier
+  (arrêté du 26 juillet 2008), 220 comptes des classes 1 à 7, français et
+  arabe, chacun portant la rubrique du bilan où son solde se range. La
+  rubrique est portée par le compte et non déduite de son préfixe, parce que
+  la classe 4 se répartit des deux côtés du bilan : 44566 est une créance sur
+  le Trésor, 4457 est une dette envers lui, et les deux commencent par 44.
+- `tools-xlsx-writer.mjs` — un écrivain `.xlsx` pour Node. `lib-xlsx.js` fait
+  déjà cela dans le navigateur, mais il écrit des tableaux de valeurs ; ce
+  classeur-ci a besoin de formules matricielles, de listes déroulantes, de
+  liens internes, de volets figés et d'onglets de couleur.
+
+**Une seule feuille de saisie.** Un tableur comptable meurt le jour où il faut
+recopier le même montant à deux endroits, parce qu'un jour on ne le recopie
+pas. Le Journal est la seule feuille où l'on écrit une écriture ; partout
+ailleurs les cellules sont des formules. Les rares cellules modifiables hors
+Journal — l'identité de l'entreprise, l'exercice, les stocks initial et final,
+la table des produits — sont sur fond jaune, et c'est la seule chose que le
+jaune signifie dans ce fichier.
+
+**Le classeur se contrôle lui-même.** Un total débit qui n'égale pas le total
+crédit, un actif qui n'égale pas le passif, un compte qui n'existe pas au
+plan : trois erreurs invisibles à l'œil et fatales au dossier. Elles sont
+affichées en clair sur la page d'accueil et au-dessus des tableaux concernés.
+L'équilibre du bilan n'est pas vérifié après coup, il est construit : la somme
+de tous les soldes valant zéro, l'écart entre l'actif et le passif est
+exactement le résultat de l'exercice, et c'est le compte de résultat qui
+alimente la ligne des capitaux propres.
+
+Trois choses à savoir avant d'éditer le générateur :
+
+- **`SMALL(SI(…))` du grand livre est déclarée matricielle dans le fichier**
+  (`<f t="array" ref="…">`). Sans cela le tableur l'évalue en intersection
+  implicite et rend `#VALEUR!`, exactement comme si on l'avait tapée sans
+  Ctrl+Maj+Entrée. `AGGREGATE(15;6;…)` ferait la même chose sans être
+  matriciel, mais c'est une fonction postérieure à 2007 : dans le format de
+  fichier elle doit s'écrire `_xlfn.AGGREGATE`, et écrite autrement elle
+  revient en `#NOM?`.
+- **Les renvois entre feuilles sont relevés à la construction**, jamais écrits
+  en dur. Les lignes du total de l'actif, du total du passif, du résultat net
+  et des deux cellules nommées `Societe` et `Exercice` sont mémorisées pendant
+  l'assemblage : une rubrique ajoutée au bilan décalerait un total, et un
+  renvoi périmé donnerait un contrôle d'équilibre qui rassure sur la mauvaise
+  cellule.
+- **`calcPr fullCalcOnLoad="1"` est indispensable.** Les formules sont écrites
+  sans valeur en cache — délibérément, comme dans le modèle de facture — et
+  sans ce drapeau le classeur s'ouvre sur une grille vide jusqu'à ce que
+  quelqu'un appuie sur Ctrl+Maj+F9.
+
+Le fichier a été vérifié en le faisant recalculer par LibreOffice puis en
+relisant les valeurs obtenues : journal équilibré à 999 000 DA, balance
+équilibrée, actif égal au passif à 544 800 DA, résultat net de −11 600 DA
+retrouvé identique dans le compte de résultat, au bilan et sur la page
+d'accueil.
+
 ## Terms and privacy
 
 `conditions.html` exists because Google's Branding form asks for a privacy
