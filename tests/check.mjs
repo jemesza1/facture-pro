@@ -2711,6 +2711,69 @@ const land = await readFile(join(ROOT, 'accueil.html'), 'utf8');
 check('and the site links to it, so it is not an orphan',
       /href="conditions\.html"/.test(land));
 
+/* ---------------------------------------------------------------- *
+ * One generator, six addresses.
+ *
+ * Six countries sharing one URL competed for nothing: a search engine
+ * indexes addresses, and "facture Maroc" and "UAE tax invoice" are not the
+ * same page to it. The build writes one file per country from
+ * international.html, so nothing is duplicated in the repository — and the
+ * failure mode to guard is a page that says Morocco in its title and opens
+ * on the United States, or six pages sharing one canonical.
+ * ---------------------------------------------------------------- */
+console.log('\nA page per country');
+
+const PUB = join(ROOT, 'public');
+const COUNTRY_PAGES = [
+  ['facture-maroc.html', 'MA', 'MAD'], ['facture-tunisie.html', 'TN', 'TND'],
+  ['uae-tax-invoice.html', 'AE', 'AED'], ['uk-invoice-template.html', 'GB', 'GBP'],
+  ['us-invoice-template.html', 'US', 'USD'], ['free-invoice-generator.html', 'INT', 'USD'],
+];
+const seenTitles = new Set(), seenCanon = new Set();
+for (const [file, code] of COUNTRY_PAGES) {
+  const html = await readFile(join(PUB, file), 'utf8').catch(() => null);
+  check(`${file} is written by the build`, html !== null);
+  if (!html) continue;
+  const title = (html.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+  const canon = (html.match(/rel="canonical" href="([^"]*)"/) || [])[1] || '';
+  check(`${file} says which country it is`,
+        new RegExp(`data-country="${code}"`).test(html));
+  check(`${file} claims its own address`, canon.endsWith('/' + file), canon);
+  check(`${file} has a title of its own`, title.length > 20 && !seenTitles.has(title), title.slice(0, 40));
+  seenTitles.add(title); seenCanon.add(canon);
+}
+check('no two country pages share a canonical', seenCanon.size === COUNTRY_PAGES.length,
+      seenCanon.size + ' distinct');
+
+/* Opened in a browser, each one has to actually start on its own country —
+   a title is a promise the form has to keep. */
+{
+  const ctx = await browser.newContext();
+  const q = await ctx.newPage();
+  /* Visited one after another in the same browser, which is what the
+     footer row invites and what broke: the shared draft carried the first
+     country onto the second page. */
+  for (const [file, code, cur] of [COUNTRY_PAGES[0], COUNTRY_PAGES[2], COUNTRY_PAGES[4], COUNTRY_PAGES[1]]) {
+    await q.goto(`${BASE}/public/${file}`);
+    await q.waitForTimeout(1100);
+    const got = await q.evaluate(() => ({
+      c: (document.getElementById('country') || {}).value,
+      m: (document.getElementById('currency') || {}).value
+    }));
+    check(`${file} opens on ${code} in ${cur}`, got.c === code && got.m === cur,
+          got.c + '/' + got.m);
+  }
+  await ctx.close();
+}
+
+const cmap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+for (const [file] of COUNTRY_PAGES) {
+  check(`the sitemap offers ${file}`, cmap.includes(file));
+}
+const gen = await readFile(join(PUB, 'facture-maroc.html'), 'utf8');
+check('and the pages link to each other, so none is an orphan',
+      (gen.match(/href="\/(facture|uae|uk|us|free)[^"]*\.html"/g) || []).length >= 5);
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

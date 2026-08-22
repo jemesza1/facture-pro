@@ -261,6 +261,14 @@
 <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-slate-500">
   <p id="t-foot">FacturePro · a free invoice generator · Created by CheMs SoUu</p>
   <p class="mt-2"><a href="/" class="underline" id="t-dz">Invoicing in Algeria? Use the application.</a></p>
+  <nav class="mt-4 leading-7">
+    <a class="underline mx-1" href="/facture-maroc.html">Facture Maroc</a> ·
+    <a class="underline mx-1" href="/facture-tunisie.html">Facture Tunisie</a> ·
+    <a class="underline mx-1" href="/uae-tax-invoice.html">UAE tax invoice</a> ·
+    <a class="underline mx-1" href="/uk-invoice-template.html">UK invoice</a> ·
+    <a class="underline mx-1" href="/us-invoice-template.html">US invoice</a> ·
+    <a class="underline mx-1" href="/free-invoice-generator.html">Free invoice generator</a>
+  </nav>
 </footer>
 
 <script>
@@ -544,17 +552,21 @@ function paintCountries(){
 /* ---------------------------------------------------------------- *
  * Picking a country.
  * ---------------------------------------------------------------- */
+function applyCountryDefaults(code){
+  var c = COUNTRIES[code];
+  if (!c || c.blocked) return;
+  state.currency = c.currency;
+  state.taxRate  = c.taxRate;
+  state.taxName  = c.taxName;
+  state.docLang  = c.docLang;
+  state.legal    = c.legal[state.docLang] || c.legal.en;
+}
+
 function applyCountry(code){
   var c = COUNTRIES[code];
   if (!c) return;
   state.country = code;
-  if (!c.blocked){
-    state.currency = c.currency;
-    state.taxRate  = c.taxRate;
-    state.taxName  = c.taxName;
-    state.docLang  = c.docLang;
-    state.legal    = c.legal[state.docLang] || c.legal.en;
-  }
+  applyCountryDefaults(code);
   $('country').value = code;
   if (!c.blocked){
     $('currency').value = state.currency;
@@ -790,7 +802,27 @@ function init(){
   var nav = (navigator.language || 'en').toLowerCase();
   state.lang = nav.indexOf('ar') === 0 ? 'ar' : (nav.indexOf('fr') === 0 ? 'fr' : 'en');
 
+  /* Six countries sharing one address competed for nothing: a search engine
+     indexes the URL, and "facture Maroc" and "UAE tax invoice" are not the
+     same page to it. The build writes one address per country from this
+     file; data-country is how each of them says which one it is. A stored
+     draft still wins — somebody who was in the middle of an invoice did not
+     ask to be moved. */
+  var preset = (document.documentElement.getAttribute('data-country') || '').toUpperCase();
+  if (preset && !COUNTRIES[preset]) preset = '';
+  if (preset) state.country = preset;
+
   var had = load();
+
+  /* The draft is one per origin, so a visitor who wrote a Moroccan invoice
+     and then followed the footer to the UAE page used to arrive on a
+     Moroccan one: load() restored the country along with the typing. The
+     address is the more recent instruction — they clicked it — so it wins,
+     and what they typed is kept. international.html sends no preset and
+     keeps behaving as it did. */
+  if (preset && state.country !== preset) state.country = preset;
+  if (preset || !had) applyCountryDefaults(state.country);
+
   if (!had){
     var today = new Date();
     var iso = function(d){ return d.toISOString().slice(0, 10); };
@@ -798,7 +830,6 @@ function init(){
     state.issueDate = iso(today);
     state.dueDate = iso(due);
     state.invoiceNumber = 'INV-' + today.getFullYear() + '-001';
-    state.legal = COUNTRIES[state.country].legal[state.docLang];
   }
 
   paintChips();
