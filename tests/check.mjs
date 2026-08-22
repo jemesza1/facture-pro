@@ -2431,6 +2431,18 @@ for (const f of ['icon-48.png', 'icon-96.png', 'icon-144.png', 'icon-512.png', '
   check(`the build ships ${f}`, bytes !== null && bytes.length > 0);
 }
 
+/* A logo nobody sees is not a brand. Every page carried a green square with
+   the letter F, or a generic document glyph, while the real mark lived only
+   in the footer and the browser tab — so a visitor moving between pages was
+   shown a placeholder on each one. */
+const HEADED = [...INDEXED, 'accueil.html', 'conditions.html',
+                'modele-facture-excel.html', 'facture-maroc.html'];
+for (const f of HEADED) {
+  const html = await readFile(join(ROOT, 'public', f), 'utf8');
+  check(`${f} shows the mark itself, not a stand-in letter`,
+        /<img src="\/icon\.svg"/.test(html) && !/font-bold shrink-0"[^>]*>F</.test(html));
+}
+
 /* ---------------------------------------------------------------- *
  * Relancer un client sur WhatsApp.
  *
