@@ -268,6 +268,8 @@ const shell = (page) => {
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
 <style>
   :root{--brand:#006233;--brand2:#059669}
   body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
@@ -285,7 +287,6 @@ const shell = (page) => {
     .card{background:#111b2e;border-color:#1e293b}
   }
 </style>
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
 </head>
 <body class="min-h-screen">
 
@@ -340,6 +341,14 @@ ${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
     btn.addEventListener('click', function(){ apply(!document.body.classList.contains('ar')); });
   })();
 </script>
+<!-- Vercel Web Analytics — counts page views only. Never touches invoice
+     or client data, which stay in the visitor's own browser. -->
+<script>
+  window.va = window.va || function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>`;
 };

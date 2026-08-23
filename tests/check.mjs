@@ -2423,6 +2423,54 @@ for (const f of ['index.html', 'accueil.html']) {
   check(`${f} claims a site name`, flat.some(o => o['@type'] === 'WebSite' && o.name));
 }
 
+/* Analytics that misses the landing page measures the wrong thing. Eight
+   pages carried no counter at all — accueil.html among them, the page every
+   new visitor actually reads — so the numbers reported a fraction of the
+   traffic and nobody could tell. Every page the sitemap offers is a page
+   somebody can arrive on, so every one of them counts. */
+{
+  const paths = [...(await readFile(join(ROOT, 'sitemap.xml'), 'utf8'))
+    .matchAll(/<loc>https:\/\/www\.facturedz\.com\/([^<]*)<\/loc>/g)]
+    .map(m => m[1] || 'index.html');
+  const blind = [];
+  for (const f of paths) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    if (!/_vercel\/insights\/script\.js/.test(html)) blind.push(f);
+  }
+  check('every page the sitemap offers is counted', blind.length === 0,
+        blind.join(', ') || paths.length + ' pages');
+  /* The landing page is the one that redirects visitors onward, so if any
+     page is going to be forgotten it is this one. Named on purpose. */
+  const home = await readFile(join(ROOT, 'public', 'accueil.html'), 'utf8');
+  check('and the landing page above all', /_vercel\/insights/.test(home));
+}
+
+/* Tailwind's preflight sets list-style:none. The generated pages declared
+   their own sheet before it, so the reset won and every bullet list on six
+   pages rendered as flat unmarked lines — legible, but not a list. Order is
+   the whole fix, and order is what silently regresses. */
+for (const f of ['plan-comptable-scf.html', 'modele-facture-excel.html', 'remplir-g50.html']) {
+  const html = await readFile(join(ROOT, 'public', f), 'utf8');
+  const tw = html.indexOf('vendor/tailwind.css');
+  const own = html.indexOf('list-style:disc');
+  check(`${f} keeps its bullets — own styles load after Tailwind`,
+        tw !== -1 && own !== -1 && own > tw, `tailwind@${tw}, rule@${own}`);
+}
+
+/* The chart of accounts page hands over a workbook the build copies rather
+   than one the browser writes — eight sheets and three thousand formulas.
+   A download link is only as good as the file behind it. */
+{
+  const page = await readFile(join(ROOT, 'public', 'plan-comptable-scf.html'), 'utf8');
+  check('the SCF page offers the workbook',
+        /href="comptabilite-scf-algerie\.xlsx" download/.test(page));
+  const wb = await readFile(join(ROOT, 'public', 'comptabilite-scf-algerie.xlsx')).catch(() => null);
+  check('and the build ships it', wb !== null && wb.length > 0);
+  check('and it is a real workbook, not a renamed table',
+        wb !== null && wb[0] === 0x50 && wb[1] === 0x4b,
+        wb ? Math.round(wb.length / 1024) + ' KB' : 'missing');
+}
+
 /* The mark itself has to reach the site root: the build copied static/*.png
    and the manifest, and for a while nothing else — the footer asked for a
    logo that was never deployed. */

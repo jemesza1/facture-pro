@@ -153,5 +153,13 @@
     btn.addEventListener('click', function(){ apply(!document.body.classList.contains('ar')); });
   })();
 </script>
+<!-- Vercel Web Analytics — counts page views only. Never touches invoice
+     or client data, which stay in the visitor's own browser. -->
+<script>
+  window.va = window.va || function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
