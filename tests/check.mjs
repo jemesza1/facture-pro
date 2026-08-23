@@ -2904,7 +2904,8 @@ check('and the pages link to each other, so none is an orphan',
  * ---------------------------------------------------------------- */
 console.log('\nTemplates and answers');
 
-const CONTENT_PAGES = ['modele-facture-excel.html', 'facture-proforma.html',
+const CONTENT_PAGES = ['devis.html', 'bon-de-livraison.html', 'facture-avoir.html',
+                       'modele-facture-excel.html', 'facture-proforma.html',
                        'bon-de-commande.html', 'mentions-obligatoires-facture-algerie.html',
                        'remplir-g50.html'];
 const PUBDIR = join(ROOT, 'public');
@@ -2927,9 +2928,18 @@ for (const f of CONTENT_PAGES) {
   const q = await ctx.newPage();
   const errs = [];
   q.on('pageerror', e => errs.push(String(e)));
-  for (const [file, name] of [['modele-facture-excel.html', 'modele-facture-algerie.xlsx'],
-                              ['facture-proforma.html', 'facture-proforma-modele.xlsx'],
-                              ['bon-de-commande.html', 'bon-de-commande-modele.xlsx']]) {
+  /* priced: the totals are formulas and there is money on the page. The
+     delivery note is the exception that gives the rule its point — a bon de
+     livraison passes through the driver's and the storeman's hands, so a
+     price printed on it is a price handed to people who have no business
+     knowing it. Nothing to total, nothing to compute. */
+  for (const [file, name, priced] of [
+        ['modele-facture-excel.html', 'modele-facture-algerie.xlsx', true],
+        ['facture-proforma.html', 'facture-proforma-modele.xlsx', true],
+        ['bon-de-commande.html', 'bon-de-commande-modele.xlsx', true],
+        ['devis.html', 'devis-modele.xlsx', true],
+        ['facture-avoir.html', 'facture-avoir-modele.xlsx', true],
+        ['bon-de-livraison.html', 'bon-de-livraison-modele.xlsx', false]]) {
     await q.goto(`${BASE}/public/${file}`);
     await q.waitForTimeout(600);
     const btn = await q.$('.dlbtn');
@@ -2945,8 +2955,30 @@ for (const f of CONTENT_PAGES) {
           buf[0] === 0x50 && buf[1] === 0x4b, buf.slice(0, 2).toString('hex'));
     /* The whole point: totals that follow the quantities. */
     const formulas = (text.match(/<f>/g) || []).length;
-    check(`and its totals are formulas, not typed numbers`, formulas >= 20, formulas + ' formulas');
+    if (priced) {
+      check(`and its totals are formulas, not typed numbers`, formulas >= 20, formulas + ' formulas');
+    } else {
+      check(`and it prints no price at all`,
+            !/Prix unitaire/.test(text) && !/Montant TVA/.test(text) && !/Total TTC/.test(text));
+      check(`and computes nothing, having nothing to compute`, formulas === 0, formulas + ' formulas');
+      check(`and asks for the two signatures that make it proof`,
+            /Le livreur/.test(text) && /Qt/.test(text));
+    }
     check(`and it carries the Algerian identifiers`, /NIF/.test(text) && /NIS/.test(text));
+  }
+
+  /* A credit note is not a payment: the stamp duty falls on cash taken over a
+     counter, and an avoir takes nothing. Printing the line invites somebody
+     to fill it in. */
+  {
+    await q.goto(`${BASE}/public/facture-avoir.html`);
+    await q.waitForTimeout(500);
+    const wait = q.waitForEvent('download', {timeout: 15000});
+    await (await q.$('.dlbtn')).click();
+    const text = (await readFile(await (await wait).path())).toString('latin1');
+    check('the credit note carries no stamp duty line', !/Droit de timbre/.test(text));
+    check('and totals as a credit, not as an amount to pay',
+          /TOTAL DE L/.test(text) && !/NET . PAYER/.test(text));
   }
   check('no script error on the template pages', errs.length === 0, errs.join(' | '));
   await ctx.close();

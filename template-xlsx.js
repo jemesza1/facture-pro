@@ -23,14 +23,32 @@
   function build(kind) {
     var isInvoice  = kind === 'facture';
     var isProforma = kind === 'proforma';
-    var title = isInvoice  ? 'FACTURE'
-              : isProforma ? 'FACTURE PROFORMA'
-              : 'BON DE COMMANDE';
-    var sub = isProforma
-      ? "Document d'intention — ne vaut pas facture et n'ouvre pas droit à déduction de TVA"
-      : (isInvoice
-          ? 'Mentions du décret exécutif 05-468 — complétez vos identifiants'
-          : 'Commande adressée au fournisseur — à confirmer par une facture');
+    var isAvoir    = kind === 'avoir';
+    var isDevis    = kind === 'devis';
+    var isDelivery = kind === 'livraison';
+    /* Le bon de livraison est le seul qui ne porte pas d'argent : il accompagne
+       la marchandise, et y inscrire des prix est l'erreur qui fait circuler un
+       tarif chez qui n'a pas à le connaitre. Tout le reste en decoule — pas de
+       colonnes de prix, pas de bloc de totaux, deux signatures a la place. */
+    var priced = !isDelivery;
+    var TITLES = {
+      facture:   'FACTURE',
+      proforma:  'FACTURE PROFORMA',
+      commande:  'BON DE COMMANDE',
+      avoir:     "FACTURE D'AVOIR",
+      devis:     'DEVIS',
+      livraison: 'BON DE LIVRAISON'
+    };
+    var SUBS = {
+      facture:   'Mentions du décret exécutif 05-468 — complétez vos identifiants',
+      proforma:  "Document d'intention — ne vaut pas facture et n'ouvre pas droit à déduction de TVA",
+      commande:  'Commande adressée au fournisseur — à confirmer par une facture',
+      avoir:     "Annule ou corrige une facture déjà émise — rappelez son numéro et sa date",
+      devis:     "Proposition de prix — ne vaut pas facture tant qu'elle n'est pas acceptée",
+      livraison: 'Accompagne la marchandise — sans prix, à signer par le client à la réception'
+    };
+    var title = TITLES[kind] || TITLES.commande;
+    var sub = SUBS[kind] || SUBS.commande;
 
     var rows = [], merges = [], heights = {};
     var R = function () { return rows.length; };          /* 1-based row just pushed */
@@ -51,8 +69,9 @@
     rows.push([]);
 
     /* ---- the two parties, side by side ---- */
-    var left  = isInvoice || isProforma ? 'VENDEUR' : 'ACHETEUR';
-    var right = isInvoice || isProforma ? 'CLIENT'  : 'FOURNISSEUR';
+    var buyerFirst = kind === 'commande';        /* seul document écrit par l'acheteur */
+    var left  = buyerFirst ? 'ACHETEUR' : 'VENDEUR';
+    var right = buyerFirst ? 'FOURNISSEUR' : (isDelivery ? 'LIVRÉ À' : 'CLIENT');
     rows.push([{v: left, s: 'thead'}, '', '', {v: right, s: 'thead'}, '', '']);
     merges.push('A' + R() + ':C' + R()); merges.push('D' + R() + ':F' + R());
 
@@ -60,8 +79,8 @@
       ['Raison sociale', 'Raison sociale'],
       ['Adresse', 'Adresse'],
       ['NIF', 'NIF'],
-      ['NIS', isInvoice || isProforma ? 'NIS' : ''],
-      ['RC', isInvoice || isProforma ? 'RC' : ''],
+      ['NIS', buyerFirst ? '' : 'NIS'],
+      ['RC', buyerFirst ? '' : 'RC'],
       ['AI', '']
     ];
     pairs.forEach(function (pair) {
@@ -76,20 +95,28 @@
     rows.push([]);
 
     /* ---- the lines ---- */
-    rows.push([{v: 'Désignation', s: 'thead'}, {v: 'Quantité', s: 'thead'},
-               {v: 'Prix unitaire HT', s: 'thead'}, {v: 'Total HT', s: 'thead'},
-               {v: 'TVA %', s: 'thead'}, {v: 'Montant TVA', s: 'thead'}]);
+    var HEAD = priced
+      ? ['Désignation', 'Quantité', 'Prix unitaire HT', 'Total HT', 'TVA %', 'Montant TVA']
+      : ['Désignation', 'Unité', 'Qté commandée', 'Qté livrée', 'Observations', ''];
+    rows.push(HEAD.map(function (h) { return {v: h, s: 'thead'}; }));
     var headerRow = R(); heights[headerRow] = 28;
+    if (!priced) merges.push('E' + headerRow + ':F' + headerRow);
 
     var first = headerRow + 1;
     for (var i = 0; i < LINES; i++) {
       var r = first + i;
-      rows.push([
-        {v: '', s: 'cell'}, {v: '', s: 'cell'}, {v: '', s: 'moneyDA'},
-        {f: 'IF(B' + r + '="","",B' + r + '*C' + r + ')', s: 'moneyDA'},
-        {v: '', s: 'cellPct'},
-        {f: 'IF(D' + r + '="","",D' + r + '*E' + r + '/100)', s: 'moneyDA'}
-      ]);
+      if (priced) {
+        rows.push([
+          {v: '', s: 'cell'}, {v: '', s: 'cell'}, {v: '', s: 'moneyDA'},
+          {f: 'IF(B' + r + '="","",B' + r + '*C' + r + ')', s: 'moneyDA'},
+          {v: '', s: 'cellPct'},
+          {f: 'IF(D' + r + '="","",D' + r + '*E' + r + '/100)', s: 'moneyDA'}
+        ]);
+      } else {
+        rows.push([{v: '', s: 'cell'}, {v: '', s: 'cell'}, {v: '', s: 'cell'},
+                   {v: '', s: 'cell'}, {v: '', s: 'cell'}, {v: '', s: 'cell'}]);
+        merges.push('E' + r + ':F' + r);
+      }
       heights[r] = 19;
     }
     var last = first + LINES - 1;
@@ -103,20 +130,39 @@
       merges.push('E' + R() + ':F' + R());
       return R();
     }
-    var ht  = total('Total HT',  'SUM(D' + first + ':D' + last + ')', 'totalDA');
-    var tva = total('Total TVA', 'SUM(F' + first + ':F' + last + ')', 'totalDA');
-    var ttc = total('Total TTC', 'E' + ht + '+E' + tva, 'totalDA');
+    if (priced) {
+      var ht  = total('Total HT',  'SUM(D' + first + ':D' + last + ')', 'totalDA');
+      var tva = total('Total TVA', 'SUM(F' + first + ':F' + last + ')', 'totalDA');
+      var ttc = total('Total TTC', 'E' + ht + '+E' + tva, 'totalDA');
 
-    var timbre = 0;
-    if (isInvoice) {
-      rows.push([null, null, null, {v: 'Droit de timbre', s: 'fieldLabel'},
-                 {v: 0, s: 'totalDA'}, {v: '', s: 'totalDA'}]);
-      timbre = R(); merges.push('E' + timbre + ':F' + timbre);
+      /* Le timbre frappe un encaissement en espèces. Un avoir n'en est pas un :
+         il réduit une dette, il ne se paie pas au comptoir. */
+      var timbre = 0;
+      if (isInvoice) {
+        rows.push([null, null, null, {v: 'Droit de timbre', s: 'fieldLabel'},
+                   {v: 0, s: 'totalDA'}, {v: '', s: 'totalDA'}]);
+        timbre = R(); merges.push('E' + timbre + ':F' + timbre);
+      }
+      var netLabel = isInvoice ? 'NET À PAYER'
+                   : isAvoir   ? "TOTAL DE L'AVOIR"
+                   : 'TOTAL';
+      var netRow = total(netLabel,
+                         isInvoice ? ('E' + ttc + '+E' + timbre) : ('E' + ttc), 'grandDA');
+      heights[netRow] = 24;
+      rows.push([]);
+    } else {
+      /* Ce que le bon de livraison a en propre : la preuve que la marchandise
+         est arrivée. Sans les deux signatures, le document ne prouve rien. */
+      rows.push([{v: 'Le livreur (nom et signature)', s: 'fieldLabel'}, '', '',
+                 {v: 'Le client (nom, date et signature)', s: 'fieldLabel'}, '', '']);
+      merges.push('A' + R() + ':C' + R()); merges.push('D' + R() + ':F' + R());
+      for (var k = 0; k < 3; k++) {
+        rows.push([{v: '', s: 'fieldValue'}, '', '', {v: '', s: 'fieldValue'}, '', '']);
+        merges.push('A' + R() + ':C' + R()); merges.push('D' + R() + ':F' + R());
+        heights[R()] = 20;
+      }
+      rows.push([]);
     }
-    var netRow = total(isInvoice ? 'NET À PAYER' : 'TOTAL',
-                       isInvoice ? ('E' + ttc + '+E' + timbre) : ('E' + ttc), 'grandDA');
-    heights[netRow] = 24;
-    rows.push([]);
 
     /* ---- the footer the law and the buyer expect ---- */
     function note(text) {
@@ -128,14 +174,26 @@
       note('Le droit de timbre ne s’applique qu’aux règlements en espèces (art. 100 du Code du timbre). Vérifiez le barème de la loi de finances en vigueur avant d’inscrire un montant.');
     } else if (isProforma) {
       note('Validité de l’offre : ………… jours.  ·  Ce document ne vaut pas facture et ne doit pas porter un numéro de votre série de factures.');
+    } else if (isAvoir) {
+      note('Émis en annulation ou correction de la facture n° ………………………… du ………/………/……………');
+      note('Arrêté le présent avoir à la somme de : ………………………………………………………………');
+      note('L’avoir porte son propre numéro, dans une série distincte de celle des factures. La TVA qu’il annule vient en déduction de la TVA collectée du mois.');
+    } else if (isDevis) {
+      note('Validité de l’offre : ………… jours.  ·  Délai d’exécution : …………………………………');
+      note('Bon pour accord — date, nom et signature du client : ……………………………………………');
+    } else if (isDelivery) {
+      note('Livraison relative au bon de commande n° ………………………… du ………/………/……………');
+      note('Aucun prix ne figure sur un bon de livraison : la facture les portera. Toute réserve à la réception doit être écrite ci-dessus, avant signature.');
     } else {
       note('Délai de livraison : …………………  ·  Lieu de livraison : ……………………………………');
     }
-    note('Modèle gratuit — www.facturedz.com  ·  Les totaux sont des formules : ne les remplacez pas par des nombres.');
+    note(priced
+      ? 'Modèle gratuit — www.facturedz.com  ·  Les totaux sont des formules : ne les remplacez pas par des nombres.'
+      : 'Modèle gratuit — www.facturedz.com');
 
     return {
       name: title.slice(0, 28),
-      cols: [32, 10, 15, 19, 9, 17],
+      cols: priced ? [32, 10, 15, 19, 9, 17] : [36, 10, 16, 14, 13, 13],
       rows: rows, merges: merges, heights: heights,
       freeze: headerRow,
       fitToPage: true
@@ -144,9 +202,14 @@
 
   window.downloadTemplate = function (kind) {
     if (typeof XLSX === 'undefined' || !XLSX.build) return false;
-    var file = kind === 'proforma' ? 'facture-proforma-modele.xlsx'
-             : kind === 'commande' ? 'bon-de-commande-modele.xlsx'
-             : 'modele-facture-algerie.xlsx';
+    var FILES = {
+      proforma:  'facture-proforma-modele.xlsx',
+      commande:  'bon-de-commande-modele.xlsx',
+      avoir:     'facture-avoir-modele.xlsx',
+      devis:     'devis-modele.xlsx',
+      livraison: 'bon-de-livraison-modele.xlsx'
+    };
+    var file = FILES[kind] || 'modele-facture-algerie.xlsx';
     XLSX.build([build(kind)], file);
     return true;
   };

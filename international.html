@@ -799,8 +799,23 @@ function bindText(id, key){
 }
 
 function init(){
+  /* L'adresse nomme aussi sa langue. facture-maroc.html est servie lang="fr"
+     parce que « facture Maroc » est une recherche francaise ; decider depuis
+     navigator.language seul remplacait ce choix par en chez tout visiteur au
+     navigateur anglais — et setLang reecrivait ensuite l'attribut lang du
+     document, si bien que la page contredisait, une fois rendue, la langue
+     dans laquelle elle avait ete publiee. Un moteur qui execute le script
+     voyait une page marocaine en anglais.
+
+     Donc : la langue declaree gagne ; navigator ne sert que si la page en
+     declare une que l'interface n'a pas ; et un visiteur qui a choisi sa
+     langue a la main la garde — c'est le seul signal plus recent que
+     l'adresse. */
+  var declared = (document.documentElement.getAttribute('lang') || '').slice(0, 2).toLowerCase();
   var nav = (navigator.language || 'en').toLowerCase();
-  state.lang = nav.indexOf('ar') === 0 ? 'ar' : (nav.indexOf('fr') === 0 ? 'fr' : 'en');
+  var declared0 = UI[declared] ? declared
+                : (nav.indexOf('ar') === 0 ? 'ar' : (nav.indexOf('fr') === 0 ? 'fr' : 'en'));
+  state.lang = declared0;
 
   /* Six countries sharing one address competed for nothing: a search engine
      indexes the URL, and "facture Maroc" and "UAE tax invoice" are not the
@@ -822,6 +837,11 @@ function init(){
      keeps behaving as it did. */
   if (preset && state.country !== preset) state.country = preset;
   if (preset || !had) applyCountryDefaults(state.country);
+
+  /* load() a pu ecraser la langue avec celle d'une visite precedente. Ce
+     n'est un choix que si le visiteur a clique : sinon c'est une deduction
+     d'hier, et l'adresse d'aujourd'hui est plus recente. */
+  if (!state.langChosen) state.lang = declared0;
 
   if (!had){
     var today = new Date();
@@ -872,7 +892,11 @@ function init(){
   });
   $('btn-pdf').addEventListener('click', exportPDF);
   [].forEach.call(document.querySelectorAll('button.seg[data-lang]'), function(b){
-    b.addEventListener('click', function(){ setLang(b.dataset.lang); });
+    b.addEventListener('click', function(){
+      state.langChosen = true;
+      setLang(b.dataset.lang);
+      save();
+    });
   });
 
   /* Somebody who already started an invoice comes back to it, not to the
