@@ -72,15 +72,41 @@
   window.applyBackup = function(d){
     if(validBackup(d)) return false;
     try{
-      if(d.company) state.company=Object.assign({},state.company,d.company);
+      /* Un id finit dans onclick="previewInvoice('...')". Les nôtres viennent
+         de uid() et sont alphanumériques ; celui d'un fichier apporté par un
+         tiers est une chaîne quelconque, et une apostrophe y suffit à écrire
+         du script. On ne fait pas confiance : ce qui n'a pas la forme d'un id
+         en reçoit un neuf. */
+      var okId=function(v){ return typeof v==='string' && /^[A-Za-z0-9_-]{1,40}$/.test(v); };
+      /* Remplacer un id sans réparer ce qui pointe dessus orphelinerait les
+         factures d'un client renommé. On garde donc la correspondance. */
+      var remap={};
+      var fixId=function(v){
+        if(okId(v)) return v;
+        var n=uid(); if(typeof v==='string') remap[v]=n; return n;
+      };
+      var follow=function(v){ return remap[v]!==undefined ? remap[v] : v; };
+
+      /* Neutralisé à l'affichage par safeLogo, mais on ne garde pas non plus
+         la chaîne : ce qui n'est jamais écrit ne peut pas être oublié par un
+         futur point d'affichage. */
+      if(d.company){
+        var comp=Object.assign({},state.company,d.company);
+        if(typeof safeLogo==='function') comp.logo=safeLogo(comp.logo);
+        state.company=comp;
+      }
       if(Array.isArray(d.clients)) state.clients=d.clients.map(function(c){
-        return Object.assign({},c,{id:c.id||uid()});});
+        return Object.assign({},c,{id:fixId(c.id)});});
       if(Array.isArray(d.invoices)) state.invoices=d.invoices.map(function(i){
-        return Object.assign({},i,{id:i.id||uid(),items:Array.isArray(i.items)?i.items:[],
+        return Object.assign({},i,{id:fixId(i.id),clientId:follow(i.clientId),
+                                   items:Array.isArray(i.items)?i.items:[],
                                    paymentMode:i.paymentMode||'virement'});});
-      if(Array.isArray(d.products)) state.products=d.products;
-      if(Array.isArray(d.devis)) state.devis=d.devis;
-      if(Array.isArray(d.payments)) state.payments=d.payments;
+      if(Array.isArray(d.products)) state.products=d.products.map(function(p){
+        return Object.assign({},p,{id:fixId(p.id)});});
+      if(Array.isArray(d.devis)) state.devis=d.devis.map(function(v){
+        return Object.assign({},v,{id:fixId(v.id),clientId:follow(v.clientId)});});
+      if(Array.isArray(d.payments)) state.payments=d.payments.map(function(y){
+        return Object.assign({},y,{id:fixId(y.id),invoiceId:follow(y.invoiceId)});});
       /* A backup written before this feature has no expenses key. Leaving
          what is in memory would blend the importer's dépenses into somebody
          else's books, so the absent list means an empty one. */

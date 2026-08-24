@@ -1,4 +1,10 @@
-function renderSettings(){const c=state.company;return`<div class="max-w-2xl space-y-5"><div class="card p-5 space-y-4"><h3 class="font-semibold text-lg">${t('company.title')}</h3>
+function renderSettings(){
+  /* Les autres champs vont dans des value="…" que le navigateur relit tel
+     quel : les échapper ici les ferait ressortir échappés à l'enregistrement.
+     Seul le logo pose problème — il atterrit dans src="…", où une chaîne
+     fabriquée referme l'attribut et ouvre un onerror — et un logo venu d'un
+     fichier de sauvegarde importé n'est pas forcément un logo. */
+  const c=Object.assign({},state.company,{logo:safeLogo(state.company&&state.company.logo)});return`<div class="max-w-2xl space-y-5"><div class="card p-5 space-y-4"><h3 class="font-semibold text-lg">${t('company.title')}</h3>
 <div class="flex items-center gap-4 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
 ${c.logo?`<img src="${c.logo}" alt="${t('company.logo')}" class="h-14 w-auto max-w-[120px] object-contain rounded-lg"/>`:`<div class="h-14 w-14 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-xs">${t('company.logo')}</div>`}
 <div class="flex flex-col gap-1">

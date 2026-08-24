@@ -29,12 +29,21 @@
   function safeName(s){ return String(s || '').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 60); }
 
   /* Group an invoice's lines by VAT rate — this is what a declaration needs. */
+  /* The rest of the journal goes through calcInvoiceTotals, which zeroes a
+     delivery note — it moves goods, it sells nothing — and negates a credit
+     note. This walked the lines raw and did neither, so the one table a
+     merchant transcribes into the G50 disagreed with the totals printed under
+     it on the same sheet: a month whose only invoice had been fully credited
+     declared the full TVA instead of zero, and an invoice followed by its
+     delivery note declared twice. The rule has to be the same rule. */
   function byRate(invoices){
     var map = {};
     invoices.forEach(function(inv){
+      if (typeof isBl === 'function' && isBl(inv)) return;
+      var sign = (typeof isAvoir === 'function' && isAvoir(inv)) ? -1 : 1;
       (inv.items || []).forEach(function(it){
         var rate = Number(it.tva) || 0;
-        var base = (Number(it.qty) || 0) * (Number(it.unitPrice) || 0);
+        var base = (Number(it.qty) || 0) * (Number(it.unitPrice) || 0) * sign;
         if (!map[rate]) map[rate] = {base: 0, tva: 0};
         map[rate].base += base;
         map[rate].tva  += base * rate / 100;
@@ -196,7 +205,7 @@
     rec.push([{v: 'Droit de timbre encaissé', s: 'totalLabel'}, {v: sum.timbre, s: 'totalNum'}]);
     rec.push([{v: 'Nombre de factures', s: 'totalLabel'}, {v: all.length, s: 'totalNum'}]);
     rec.push([]);
-    rec.push([{v: 'Les brouillons et les factures annulées ne sont pas repris. Le droit de timbre ne figure que sur les règlements en espèces.', s: 'note'}]);
+    rec.push([{v: 'Les brouillons, les factures annulées et les bons de livraison ne sont pas repris ; les avoirs viennent en déduction. Le droit de timbre ne figure que sur les règlements en espèces.', s: 'note'}]);
     recMerges.push('A' + rec.length + ':C' + rec.length);
 
     XLSX.build([

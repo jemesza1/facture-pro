@@ -13,7 +13,18 @@ function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({company:sta
 function seedDemoData(){state.clients=[{demo:true,id:'c1',name:'SARL Atlas Services',email:'contact@atlas.dz',address:'45 Bd Mohamed V\n16000 Alger',nif:'099999999999999',nis:'099888777666555',rc:'16/00-1234567B21',phone:'021 00 00 01'},{demo:true,id:'c2',name:'EURL Sahara Tech',email:'info@sahara.dz',address:'8 Rue de la Liberté\n31000 Oran',nif:'088888888888888',nis:'088777666555444',rc:'31/00-7654321B19',phone:'041 00 00 02'},{demo:true,id:'c3',name:'SPA Numidia Trading',email:'admin@numidia.dz',address:'22 Av de l\'Indépendance\n25000 Constantine',nif:'077777777777777',nis:'077666555444333',rc:'25/00-2468013B20',phone:'031 00 00 03'}];const today=new Date();const d=o=>{const dt=new Date(today);dt.setDate(dt.getDate()+o);return dt.toISOString().slice(0,10);};state.invoices=[{demo:true,id:'inv1',number:'FAC-2026-001',clientId:'c1',template:'moderne',date:d(-25),dueDate:d(-10),status:'enretard',items:[{description:'Audit stratégique Q1',qty:1,unitPrice:250000,tva:19},{description:'Accompagnement (5 jours)',qty:5,unitPrice:45000,tva:19}],notes:'Paiement par virement sous 15 jours.'},{demo:true,id:'inv2',number:'FAC-2026-002',clientId:'c2',template:'premium',date:d(-12),dueDate:d(3),status:'envoyee',items:[{description:'Développement module facturation',qty:1,unitPrice:480000,tva:19}],notes:''},{demo:true,id:'inv3',number:'FAC-2026-003',clientId:'c3',template:'classique',date:d(-5),dueDate:d(25),status:'payee',items:[{description:'Création identité visuelle',qty:1,unitPrice:180000,tva:19}],notes:'Merci.'},{demo:true,id:'inv4',number:'FAC-2026-004',clientId:'c1',template:'nature',date:d(-2),dueDate:d(28),status:'brouillon',items:[{description:'Conseil en organisation',qty:3,unitPrice:55000,tva:19}],notes:''}];state.nextInvoiceNumber=5;saveData();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function ltrCodes(s){return String(s==null?'':s).replace(/(\d{2}-\d{3})/g,'<span class="ltr-code">$1</span>');}
-function escObj(o,skip){o=o||{};skip=skip||['logo'];var r={},k;for(k in o){r[k]=(skip.indexOf(k)>-1||typeof o[k]!=='string')?o[k]:esc(o[k]);}return r;}
+/* The logo is the one field that must not be escaped — it is a data: URI and
+   escaping would not break it, but neither would it help: the value lands in
+   src="..." and a crafted string closes the attribute and opens an onerror.
+   It always arrives from FileReader.readAsDataURL on an image/* file, so the
+   shape is known exactly. Anything that is not that shape is not a logo, and
+   a backup file is a place a stranger's string can arrive from. SVG is left
+   out on purpose: it is an image that can carry script. */
+function safeLogo(v){
+  return /^data:image\/(png|jpe?g|gif|webp|bmp);base64,[A-Za-z0-9+/=\s]+$/.test(String(v||''))
+    ? v : '';
+}
+function escObj(o,skip){o=o||{};skip=skip||[];var r={},k;for(k in o){r[k]=(k==='logo')?safeLogo(o[k]):((skip.indexOf(k)>-1||typeof o[k]!=='string')?o[k]:esc(o[k]));}return r;}
 function uid(){return 'id_'+Math.random().toString(36).slice(2,11);}
 function formatMoney(a){return new Intl.NumberFormat('fr-DZ',{style:'currency',currency:'DZD',maximumFractionDigits:0}).format(a||0).replace('DZD','DA');}
 function moneyUI(a){var s=new Intl.NumberFormat('fr-DZ',{style:'decimal',maximumFractionDigits:0}).format(a||0);var c=(typeof t==='function')?t('currency'):' DA';return '<bdi>'+s+c+'</bdi>';}

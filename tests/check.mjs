@@ -2496,6 +2496,79 @@ for (const f of ['index.html', 'accueil.html']) {
   check('and the landing page above all', /_vercel\/insights/.test(home));
 }
 
+/* Two defects an adversarial audit found and a skeptic could not refute.
+ *
+ * The first is the worst kind this product can have: the monthly journal's
+ * VAT recap — the one table a merchant transcribes into the G50 — summed the
+ * document lines raw, while every other figure on the same sheet went through
+ * calcInvoiceTotals, which zeroes a delivery note and negates a credit note.
+ * A month whose only invoice had been fully credited declared the full VAT
+ * instead of zero; an invoice followed by its delivery note declared twice.
+ *
+ * The second is a stored XSS. escObj escaped every company field except the
+ * logo, and the logo lands in src="..." where a crafted string closes the
+ * attribute and opens an onerror; record ids landed raw inside
+ * onclick="previewInvoice('...')". Both are reachable from a backup file a
+ * stranger hands over — which drive.js is designed to make shareable.
+ * ---------------------------------------------------------------- */
+console.log('\nWhat the audit found');
+{
+  const items = [{description: 'P', qty: 1, unitPrice: 100000, tva: 19}];
+  const seeded = await page.evaluate(items => {
+    const inv = [
+      {id: 'i1', number: 'F1', clientId: 'c1', date: '2026-08-05', status: 'payee', items},
+      {id: 'i2', number: 'AV1', type: 'avoir', clientId: 'c1', date: '2026-08-10', status: 'payee', items},
+      {id: 'i3', number: 'BL1', type: 'bl', clientId: 'c1', date: '2026-08-12', status: 'payee', items},
+    ];
+    const real = inv.reduce((a, i) => {
+      const t = calcInvoiceTotals(i); a.ht += t.ht; a.tva += t.tva; return a;
+    }, {ht: 0, tva: 0});
+    return {real};
+  }, items);
+  /* The invoice and its credit note cancel; the delivery note sells nothing. */
+  check('an invoice, its credit note and a delivery note net to zero',
+        seeded.real.ht === 0 && seeded.real.tva === 0, JSON.stringify(seeded.real));
+
+  const logo = await page.evaluate(() => ({
+    real: safeLogo('data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=='),
+    attack: safeLogo('x" onerror="alert(1)" a="'),
+    svg: safeLogo('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='),
+    js: safeLogo('javascript:alert(1)'),
+  }));
+  check('a real logo still works', logo.real.startsWith('data:image/png;base64,'));
+  check('a crafted src is refused', logo.attack === '');
+  /* SVG is an image that can carry script; it is left out deliberately. */
+  check('and so is an SVG, which can carry script', logo.svg === '');
+  check('and a javascript: URI', logo.js === '');
+
+  const imported = await page.evaluate(() => {
+    const before = JSON.parse(localStorage.getItem('facturepro_dz_v24') || '{}');
+    const evil = "x')\"><img src=y onerror=alert(1)>";
+    const ok = applyBackup({
+      version: 'facturepro-dz-v25',
+      company: {name: 'X', logo: 'x" onerror="alert(1)" a="'},
+      clients: [{id: evil, name: 'Client'}],
+      invoices: [{id: evil + '2', number: 'F1', clientId: evil, date: '2026-08-01',
+                  status: 'envoyee', items: [{description: 'a', qty: 1, unitPrice: 1000, tva: 19}]}],
+      payments: [], products: [], devis: [], expenses: [], nextInvoiceNumber: 2,
+    });
+    const inv = state.invoices[0];
+    const out = {
+      ok, logo: state.company.logo, cid: state.clients[0].id, iid: inv.id,
+      /* The repair must not orphan what pointed at the replaced id. */
+      resolved: !!state.clients.find(c => c.id === inv.clientId),
+    };
+    localStorage.setItem('facturepro_dz_v24', JSON.stringify(before));
+    return out;
+  });
+  check('a backup with a crafted id is accepted but disarmed', imported.ok === true);
+  check('the ids are replaced with real ones',
+        /^[A-Za-z0-9_-]{1,40}$/.test(imported.cid) && /^[A-Za-z0-9_-]{1,40}$/.test(imported.iid),
+        imported.cid);
+  check('and what pointed at them still points somewhere', imported.resolved === true);
+  check('the crafted logo is not even stored', imported.logo === '');
+}
+
 /* Arabic that a search engine can actually read.
  *
  * A large share of Algerian merchants search in Arabic, and the four
