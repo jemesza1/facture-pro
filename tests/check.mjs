@@ -2496,6 +2496,46 @@ for (const f of ['index.html', 'accueil.html']) {
   check('and the landing page above all', /_vercel\/insights/.test(home));
 }
 
+/* Dark mode on the static pages, measured rather than assumed.
+ *
+ * Tailwind is configured darkMode:'class' because the application drives the
+ * class itself. The static pages never set it — their own CSS turned the page
+ * dark under prefers-color-scheme while every dark: utility stayed inert — so
+ * text written text-slate-500 sat on #0b1220 at 3.93:1, under the 4.5
+ * threshold. Setting the class was necessary and not sufficient: these pages
+ * write that utility with no dark variant at all, which the measurement
+ * showed and the reading had not.
+ * ---------------------------------------------------------------- */
+console.log('\nDark mode, in a browser that asked for it');
+{
+  const ctx = await browser.newContext({colorScheme: 'dark'});
+  const q = await ctx.newPage();
+  const worst = [];
+  for (const f of ['droit-de-timbre.html', 'calcul-tva.html', 'guide.html',
+                   'plan-comptable-scf.html', 'conditions.html', 'telecharger.html']) {
+    await q.goto(`${BASE}/public/${f}`, {waitUntil: 'domcontentloaded'});
+    await q.waitForTimeout(200);
+    const r = await q.evaluate(() => {
+      const lum = c => {
+        const [r, g, b] = c.match(/\d+/g).slice(0, 3).map(Number).map(v => {
+          v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const bg = getComputedStyle(document.body).backgroundColor;
+      const el = document.querySelector('main p, main li, .card p') || document.body;
+      const L = [lum(bg), lum(getComputedStyle(el).color)].sort((a, b) => b - a);
+      return {ratio: (L[0] + 0.05) / (L[1] + 0.05),
+              dark: document.documentElement.classList.contains('dark')};
+    });
+    if (!r.dark) worst.push(`${f} (no dark class)`);
+    else if (r.ratio < 4.5) worst.push(`${f} (${r.ratio.toFixed(2)}:1)`);
+  }
+  check('body text stays readable in dark mode on every static page',
+        worst.length === 0, worst.join(', ') || '6 pages above 4.5:1');
+  await ctx.close();
+}
+
 /* Two defects an adversarial audit found and a skeptic could not refute.
  *
  * The first is the worst kind this product can have: the monthly journal's

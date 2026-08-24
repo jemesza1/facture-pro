@@ -122,6 +122,12 @@ const STYLE = `<style>
   gap:14px;flex-wrap:wrap;font-size:13px}
 @media (max-width:900px){.fp-foot-in{grid-template-columns:1fr 1fr}}
 @media (max-width:560px){.fp-foot-in{grid-template-columns:1fr}}
+/* Poser la classe dark ne suffisait pas : ces pages ecrivent text-slate-500
+   sans variante dark:, si bien que le texte secondaire restait à 3.93:1 sur le
+   fond sombre — sous le seuil de 4.5. On relève les deux gris que Tailwind
+   utilise pour le texte atténué, et seulement eux. */
+html.dark .text-slate-500,html.dark .text-slate-400,html.dark .text-slate-600{color:#a3b1c2}
+html.dark .opacity-70{opacity:.85}
 @media (prefers-color-scheme:dark){
   .fp-bar{background:#0f172a;border-bottom-color:#1e293b}
   .fp-links a{color:#94a3b8}
@@ -188,15 +194,41 @@ function icons(html) {
   return head === -1 ? html : html.slice(0, head) + ICONS + '\n' + html.slice(head);
 }
 
+
+/* Tailwind est configuré en darkMode:'class' parce que l'application pilote
+   elle-même la classe. Les pages statiques ne la posaient jamais : leur propre
+   CSS passait le fond en sombre sous prefers-color-scheme, mais les utilitaires
+   `dark:text-…` restaient inertes, et un texte en text-slate-500 sur un fond
+   #0b1220 tombait à 3.93:1 — sous le seuil de 4.5.
+
+   Posée dans le <head>, avant tout rendu, pour qu'aucune page ne clignote. Un
+   choix enregistré l'emporte sur la préférence du système : c'est la règle que
+   la page d'accueil applique déjà avec sa propre bascule, et deux règles
+   différentes sur le même site en seraient une de trop. */
+const DARK = `<script>
+(function(){try{
+  var v = localStorage.getItem('facturepro_dark');
+  var on = v === '1' ? true : v === '0' ? false
+         : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('dark', !!on);
+}catch(e){}})();
+</script>`;
+
+function dark(html) {
+  if (html.indexOf("classList.toggle('dark'") !== -1) return html;
+  const head = html.search(/<\/head>/i);
+  return head === -1 ? html : html.slice(0, head) + DARK + '\n' + html.slice(head);
+}
+
 function inject(html, file) {
   /* Le pied, pas la barre : accueil.html ne prend pas de barre, et un garde
      qui la cherchait lui ajoutait un second pied a chaque execution. */
-  if (html.indexOf('class="fp-foot"') !== -1) return icons(html);   /* idempotent */
+  if (html.indexOf('class="fp-foot"') !== -1) return dark(icons(html));  /* idempotent */
 
   /* The bar goes under whatever the page already puts at the top: these
      pages carry their own brand and language button, and a second brand
      three lines above the first reads as a mistake. */
-  let out = icons(html);
+  let out = dark(icons(html));
   if (NO_BAR.has(file)) {
     const end0 = out.lastIndexOf('</body>');
     if (end0 === -1) return html;
