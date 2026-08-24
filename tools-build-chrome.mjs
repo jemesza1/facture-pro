@@ -171,7 +171,9 @@ const SCRIPT = `<script>
 </script>`;
 
 function inject(html, file) {
-  if (html.indexOf('class="fp-bar"') !== -1) return html;     /* idempotent */
+  /* Le pied, pas la barre : accueil.html ne prend pas de barre, et un garde
+     qui la cherchait lui ajoutait un second pied a chaque execution. */
+  if (html.indexOf('class="fp-foot"') !== -1) return html;    /* idempotent */
 
   /* The bar goes under whatever the page already puts at the top: these
      pages carry their own brand and language button, and a second brand

@@ -498,7 +498,6 @@ const shell = (page) => {
     <p class="text-center text-sm mt-3"><a href="/" class="underline">افتح تطبيق الفوترة</a></p>
   </div>
 </main>
-${page.script || ''}
 ${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
 <script src="template-xlsx.js?v=${V}"></script>
 <script>
@@ -526,6 +525,9 @@ ${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
     btn.addEventListener('click', function(){ apply(!document.body.classList.contains('ar')); });
   })();
 </script>
+<!-- Apres le script de langue, jamais avant : une page qui se peint selon
+     body.ar doit trouver la classe deja posee. -->
+${page.script || ''}
 <!-- Vercel Web Analytics — counts page views only. Never touches invoice
      or client data, which stay in the visitor's own browser. -->
 <script>

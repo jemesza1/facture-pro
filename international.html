@@ -441,7 +441,7 @@ var UI = {
 var DRAFT_KEY = 'facturedz_intl_draft';   /* one draft, overwritten. Not an archive. */
 
 var state = {
-  lang:'en', country:'INT', docLang:'en', currency:'USD', taxRate:0, taxName:'Tax',
+  lang:'en', langChosen:false, country:'INT', docLang:'en', currency:'USD', taxRate:0, taxName:'Tax',
   extraLabel:'', extraAmount:0,
   biz:{}, clientName:'', clientAddress:'', clientTaxId:'',
   invoiceNumber:'', issueDate:'', dueDate:'', notes:'', legal:'',
@@ -813,8 +813,15 @@ function init(){
      l'adresse. */
   var declared = (document.documentElement.getAttribute('lang') || '').slice(0, 2).toLowerCase();
   var nav = (navigator.language || 'en').toLowerCase();
-  var declared0 = UI[declared] ? declared
-                : (nav.indexOf('ar') === 0 ? 'ar' : (nav.indexOf('fr') === 0 ? 'fr' : 'en'));
+  var byNav = nav.indexOf('ar') === 0 ? 'ar' : (nav.indexOf('fr') === 0 ? 'fr' : 'en');
+  /* Seules les adresses de pays declarent une langue voulue : le build les
+     ecrit lang="fr" pour le Maroc et la Tunisie parce que « facture Maroc »
+     est une recherche francaise. Cette page-ci n'est l'adresse de personne —
+     elle porte lang="en" faute de mieux — et lire cet « en » comme un choix
+     aurait servi l'anglais a un visiteur francophone. Elle suit donc son
+     navigateur, comme avant. */
+  var addressed = !!(document.documentElement.getAttribute('data-country') || '');
+  var declared0 = (addressed && UI[declared]) ? declared : byNav;
   state.lang = declared0;
 
   /* Six countries sharing one address competed for nothing: a search engine

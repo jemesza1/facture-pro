@@ -2381,7 +2381,7 @@ check('robots points at the sitemap on that host',
      menu, and a site footer under it would be furniture in a workshop. */
   const documents = paths.filter(f => f !== 'index.html');
   const noFoot = [], noBar = [], twice = [];
-  for (const f of documents) {
+  for (const f of documents.concat(['accueil.html'])) {
     const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
     const feet = (html.match(/class="fp-foot"/g) || []).length;
     if (!feet) noFoot.push(f);
@@ -2404,6 +2404,17 @@ check('robots points at the sitemap on that host',
         unlinked.join(', ') || paths.length + ' pages');
   check('and offers the application from the bar',
         /class="fp-cta" href="\/index\.html\?app=1/.test(one));
+
+  /* The map is written by hand in GROUPS. A typo there ships a dead link on
+     all twenty-three pages at once, which is the whole risk of writing
+     navigation once. So every href it emits is opened. */
+  const hrefs = [...foot.matchAll(/href="\/([a-z0-9.-]+\.html)"/g)].map(m => m[1]);
+  const dead = [];
+  for (const h of new Set(hrefs)) {
+    if (!await readFile(join(ROOT, 'public', h), 'utf8').catch(() => null)) dead.push(h);
+  }
+  check('and every link it carries is a page the build writes', dead.length === 0,
+        dead.join(', ') || hrefs.length + ' links');
 
   /* Every label the switch cannot translate stays French for an Arabic
      reader — except the country pages, whose English titles are the search
@@ -2468,6 +2479,58 @@ for (const f of ['index.html', 'accueil.html']) {
   check('and the landing page above all', /_vercel\/insights/.test(home));
 }
 
+/* Which language a page speaks, and who gets to decide.
+ *
+ * Three rules, and each was wrong at some point tonight. A country address
+ * is published in a chosen language — facture-maroc.html is served lang="fr"
+ * because "facture Maroc" is a French search — and deciding from
+ * navigator.language alone overwrote that for every visitor with an English
+ * browser, then rewrote the document's lang attribute to match, so the page
+ * ended up contradicting what it was served as. The hub page is nobody's
+ * address: it carries lang="en" for want of anything better, and reading that
+ * "en" as a decision would serve English to a French speaker. And a visitor
+ * who picks a language by hand has made the most recent decision of all,
+ * which has to survive a reload.
+ * ---------------------------------------------------------------- */
+console.log('\nWhich language a page speaks');
+{
+  const seen = async (locale, file) => {
+    const c = await browser.newContext({locale});
+    const q = await c.newPage();
+    await q.goto(`${BASE}/public/${file}`, {waitUntil: 'networkidle'});
+    const lang = await q.evaluate(() => document.documentElement.lang);
+    await c.close();
+    return lang;
+  };
+
+  check('the hub follows a French browser', await seen('fr-FR', 'international.html') === 'fr');
+  check('and an Arabic one', await seen('ar-DZ', 'international.html') === 'ar');
+  check('and an English one', await seen('en-US', 'international.html') === 'en');
+
+  check('a country address keeps its published language, whatever the browser',
+        await seen('en-US', 'facture-maroc.html') === 'fr');
+  check('and does not bend to Arabic either',
+        await seen('ar-DZ', 'facture-tunisie.html') === 'fr');
+  check('an English address likewise',
+        await seen('fr-FR', 'uk-invoice-template.html') === 'en');
+
+  /* langChosen has to be a key of the state literal: load() copies only the
+     keys it already finds there, so a flag added anywhere else is dropped on
+     every reload and the choice is forgotten. */
+  const c = await browser.newContext({locale: 'en-US'});
+  const q = await c.newPage();
+  await q.goto(`${BASE}/public/facture-maroc.html`, {waitUntil: 'networkidle'});
+  await q.click('button.seg[data-lang="ar"]');
+  await q.waitForTimeout(500);
+  const picked = await q.evaluate(() => document.documentElement.lang);
+  await q.reload({waitUntil: 'networkidle'});
+  await q.waitForTimeout(400);
+  const kept = await q.evaluate(() => document.documentElement.lang);
+  check('a language picked by hand takes effect', picked === 'ar', picked);
+  check('and survives the reload', kept === 'ar', kept);
+  await c.close();
+}
+
 /* The install page is the answer to "logiciel de facturation à télécharger",
    and its whole reason for existing is one button. A button below four
    sections is a button most visitors never reach, so it sits above the body
@@ -2476,6 +2539,11 @@ for (const f of ['index.html', 'accueil.html']) {
    visitor to the manual steps rather than do nothing at all. */
 {
   const html = await readFile(join(ROOT, 'public', 'telecharger.html'), 'utf8');
+  /* The page paints its button from body.ar, and that class is put there by
+     the locale script. Emitted first, the button read a class that was not
+     yet set and an Arabic visitor met a French label. */
+  check("the page's own script runs after the one that sets the language",
+        html.indexOf('fp_locale') < html.indexOf('beforeinstallprompt'));
   const btn = html.indexOf('fp-install');
   const card = html.indexOf('class="card');
   check('the install button sits above the page body, not under it',
@@ -2490,7 +2558,8 @@ for (const f of ['index.html', 'accueil.html']) {
    their own sheet before it, so the reset won and every bullet list on six
    pages rendered as flat unmarked lines — legible, but not a list. Order is
    the whole fix, and order is what silently regresses. */
-for (const f of ['plan-comptable-scf.html', 'modele-facture-excel.html', 'remplir-g50.html']) {
+for (const f of ['plan-comptable-scf.html', 'modele-facture-excel.html', 'remplir-g50.html',
+                 'conditions.html', 'telecharger.html']) {
   const html = await readFile(join(ROOT, 'public', f), 'utf8');
   const tw = html.indexOf('vendor/tailwind.css');
   const own = html.indexOf('list-style:disc');

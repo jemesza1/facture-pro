@@ -12,7 +12,7 @@
    cache only answers when the network does not.
 
    Bump CACHE whenever the shell changes — keep it in step with V in app.js. */
-var CACHE = 'facturepro-20260824b';
+var CACHE = 'facturepro-20260824c';
 
 /* Cached without their ?v= query, and read back with ignoreSearch, so bumping
    an asset version does not orphan every entry. */
@@ -26,7 +26,9 @@ var SHELL = [
   '/droit-de-timbre.html', '/montant-en-lettres.html', '/calcul-tva.html', '/calcul-salaire.html',
   '/international.html',
   '/guide.html', '/conditions.html', '/install.js', '/template-xlsx.js',
-  '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/og.png'
+  '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/og.png',
+  /* la marque que chaque page affiche desormais dans son en-tete et son pied */
+  '/icon.svg', '/icon-48.png'
 ];
 
 function bare(url) {
