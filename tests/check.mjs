@@ -2479,6 +2479,68 @@ for (const f of ['index.html', 'accueil.html']) {
   check('and the landing page above all', /_vercel\/insights/.test(home));
 }
 
+/* Arabic that a search engine can actually read.
+ *
+ * A large share of Algerian merchants search in Arabic, and the four
+ * calculators — the most searched pages on the site — carried none of it
+ * where it counts. Their translations live in a JavaScript table and were
+ * painted only when somebody clicked the language button, so a crawler
+ * reading the page as served found French and stopped. "حساب حق الطابع"
+ * could not match a page that, as delivered, contained no Arabic at all.
+ *
+ * The fix is content, not markup: each calculator now carries a real Arabic
+ * section, always in the DOM whatever the interface is set to, saying what
+ * the tool does and the rule it applies. These checks hold that line —
+ * a threshold low enough to permit rewriting, high enough that deleting the
+ * section fails.
+ * ---------------------------------------------------------------- */
+console.log('\nArabic a crawler can read');
+{
+  const arabic = t => (t.match(/[\u0600-\u06FF]/g) || []).length;
+  /* Comments first, and this order is the whole point: one of these pages
+     carries a comment that mentions "<style>" in prose, and stripping styles
+     before comments matched that literal text against the next real closing
+     tag — swallowing eight thousand characters of page, including the very
+     Arabic this is counting. The page was right; the first version of this
+     check was not. */
+  const text = html => html
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, ' ');
+
+  for (const f of ['droit-de-timbre.html', 'calcul-tva.html',
+                   'calcul-salaire.html', 'montant-en-lettres.html']) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8');
+    const n = arabic(text(html));
+    check(`${f} carries Arabic a crawler can read`, n >= 200, n + ' Arabic characters');
+    check(`and it is served, not painted on a click`,
+          /<section[^>]*lang="ar"/.test(html));
+  }
+
+  /* A searcher who reads Arabic and meets a French snippet does not click,
+     however well the page ranks. The English-only addresses are exempt: the
+     United Kingdom and the United States are not searched in Arabic, and the
+     generic generator is written for whoever finds it. */
+  const ENGLISH_ONLY = new Set(['uk-invoice-template.html', 'us-invoice-template.html',
+                                'free-invoice-generator.html', 'international.html']);
+  const map = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+  const paths = [...map.matchAll(/<loc>https:\/\/www\.facturedz\.com\/([^<]*)<\/loc>/g)]
+    .map(m => m[1] || 'index.html').filter(f => !ENGLISH_ONLY.has(f));
+  const noTitle = [], noDesc = [];
+  for (const f of paths) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    const title = (html.match(/<title>([\s\S]*?)<\/title>/) || ['', ''])[1];
+    const desc = (html.match(/name="description" content="([\s\S]*?)"/) || ['', ''])[1];
+    if (!arabic(title)) noTitle.push(f);
+    if (!arabic(desc)) noDesc.push(f);
+  }
+  check('every page meant for Algeria names itself in Arabic', noTitle.length === 0,
+        noTitle.join(', ') || paths.length + ' pages');
+  check('and describes itself in Arabic, so the snippet is readable',
+        noDesc.length === 0, noDesc.join(', ') || paths.length + ' pages');
+}
+
 /* Which language a page speaks, and who gets to decide.
  *
  * Three rules, and each was wrong at some point tonight. A country address

@@ -48,7 +48,7 @@ const PAGES = [
   {
     file: 'bon-de-livraison.html', kind: 'livraison',
     title: 'Bon de livraison — modèle Excel gratuit, sans prix | وصل التسليم',
-    desc: "Modèle de bon de livraison au format Excel : désignation, quantité commandée et livrée, réserves et signatures. Sans prix, comme il se doit. Gratuit, sans inscription.",
+    desc: "Modèle de bon de livraison au format Excel : désignation, quantité commandée et livrée, réserves et signatures. Sans prix, comme il se doit. Gratuit, sans inscription. نموذج وصل التسليم بصيغة Excel: البيان والكمّية المطلوبة والمسلَّمة والملاحظات والتوقيعان. بلا أسعار، كما يجب. مجاني وبلا تسجيل.",
     og: 'Bon de livraison — modèle Excel gratuit',
     h1fr: 'Le bon de livraison',
     h1ar: 'وصل التسليم',
@@ -78,7 +78,7 @@ const PAGES = [
   {
     file: 'facture-avoir.html', kind: 'avoir',
     title: "Facture d'avoir — modèle Excel gratuit et mode d'emploi | فاتورة إشعار دائن",
-    desc: "Qu'est-ce qu'une facture d'avoir, quand l'émettre, comment la numéroter et ce qu'elle change pour la TVA du mois. Avec un modèle Excel gratuit à télécharger.",
+    desc: "Qu'est-ce qu'une facture d'avoir, quand l'émettre, comment la numéroter et ce qu'elle change pour la TVA du mois. Avec un modèle Excel gratuit à télécharger. ما هي فاتورة الإشعار الدائن، ومتى تُصدَر، وكيف تُرقَّم، وماذا تغيّر في تصريح G50. مع نموذج Excel مجاني.",
     og: "Facture d'avoir — modèle et mode d'emploi",
     h1fr: "La facture d'avoir",
     h1ar: 'فاتورة الإشعار الدائن',
@@ -111,7 +111,7 @@ const PAGES = [
   {
     file: 'devis.html', kind: 'devis',
     title: 'Devis — modèle Excel gratuit pour l’Algérie | نموذج عرض السعر',
-    desc: "Modèle de devis au format Excel : identifiants, lignes, totaux calculés, durée de validité et bon pour accord. Et comment le transformer en facture. Gratuit, sans inscription.",
+    desc: "Modèle de devis au format Excel : identifiants, lignes, totaux calculés, durée de validité et bon pour accord. Et comment le transformer en facture. Gratuit, sans inscription. نموذج عرض سعر بصيغة Excel: المعرّفات والسطور والمجاميع ومدّة الصلاحية وسطر الموافقة. وكيف يتحوّل إلى فاتورة. مجاني وبلا تسجيل.",
     og: 'Devis — modèle Excel gratuit',
     h1fr: 'Le devis',
     h1ar: 'عرض السعر (devis)',
@@ -140,7 +140,7 @@ const PAGES = [
   {
     file: 'telecharger.html',
     title: 'Télécharger FacturePro — logiciel de facturation gratuit à installer | تحميل برنامج الفوترة',
-    desc: "Installez FacturePro sur votre ordinateur ou votre téléphone : icône sur le bureau, fenêtre à part, fonctionne sans connexion. Gratuit, sans inscription et sans fichier à télécharger.",
+    desc: "Installez FacturePro sur votre ordinateur ou votre téléphone : icône sur le bureau, fenêtre à part, fonctionne sans connexion. Gratuit, sans inscription et sans fichier à télécharger. ثبّت برنامج الفوترة في حاسوبك أو هاتفك: أيقونة على سطح المكتب، ويعمل بلا أنترنت. مجاني وبلا تسجيل.",
     og: 'Télécharger et installer FacturePro',
     h1fr: 'Installer FacturePro sur votre ordinateur',
     h1ar: 'ثبّت FacturePro في حاسوبك',
@@ -226,7 +226,7 @@ const PAGES = [
   {
     file: 'plan-comptable-scf.html',
     title: 'Plan comptable SCF Algérie — les comptes et un classeur Excel gratuit | دليل الحسابات',
-    desc: "Le plan comptable algérien (Système Comptable Financier) expliqué : les sept classes, les comptes qu'un commerçant utilise vraiment, et un classeur Excel gratuit — journal, grand livre, balance, compte de résultat et bilan, calculés par formules.",
+    desc: "Le plan comptable algérien (Système Comptable Financier) expliqué : les sept classes, les comptes qu'un commerçant utilise vraiment, et un classeur Excel gratuit — journal, grand livre, balance, compte de résultat et bilan, calculés par formules. دليل الحسابات الجزائري SCF مشروحاً، مع ملفّ Excel مجاني: اليومية ودفتر الأستاذ وميزان المراجعة وحساب النتائج والميزانية.",
     og: 'Plan comptable SCF — les comptes, et un classeur Excel gratuit',
     h1fr: 'Le plan comptable algérien (SCF)',
     h1ar: 'دليل الحسابات الجزائري (SCF)',
@@ -272,7 +272,7 @@ const PAGES = [
   {
     file: 'modele-facture-excel.html', kind: 'facture',
     title: 'Modèle de facture Excel Algérie — gratuit, avec formules | نموذج فاتورة',
-    desc: "Téléchargez un modèle de facture algérienne au format Excel (.xlsx), avec NIF, NIS, RC, AI, TVA 19 % et 9 %, droit de timbre et totaux calculés par formules. Gratuit, sans inscription.",
+    desc: "Téléchargez un modèle de facture algérienne au format Excel (.xlsx), avec NIF, NIS, RC, AI, TVA 19 % et 9 %, droit de timbre et totaux calculés par formules. Gratuit, sans inscription. حمّل نموذج فاتورة جزائرية بصيغة Excel، فيه NIF وNIS وRC وAI والرسم 19٪ و9٪ وحقّ الطابع ومجاميع بصيغ حيّة. مجاني وبلا تسجيل.",
     og: 'Modèle de facture Excel pour l’Algérie — gratuit',
     h1fr: 'Modèle de facture Excel pour l’Algérie',
     h1ar: 'نموذج فاتورة Excel للجزائر',
@@ -301,7 +301,7 @@ const PAGES = [
   {
     file: 'facture-proforma.html', kind: 'proforma',
     title: 'Facture proforma — modèle Excel gratuit et définition | الفاتورة الأولية',
-    desc: "Qu’est-ce qu’une facture proforma, à quoi elle sert (banque, douane, devis ferme), ce qui la distingue d’une facture, et un modèle Excel gratuit à télécharger.",
+    desc: "Qu’est-ce qu’une facture proforma, à quoi elle sert (banque, douane, devis ferme), ce qui la distingue d’une facture, et un modèle Excel gratuit à télécharger. ما هي الفاتورة الأولية، وفيمَ تُستعمل (البنك، الجمارك، عرض سعر ثابت)، وما يميّزها عن الفاتورة. مع نموذج Excel مجاني.",
     og: 'Facture proforma — modèle gratuit et définition',
     h1fr: 'La facture proforma',
     h1ar: 'الفاتورة الأولية (proforma)',
@@ -325,7 +325,7 @@ const PAGES = [
   {
     file: 'bon-de-commande.html', kind: 'commande',
     title: 'Bon de commande — modèle Excel gratuit à télécharger | وصل الطلبية',
-    desc: "Modèle de bon de commande au format Excel, avec les identifiants, les lignes, les totaux calculés et le délai de livraison. Gratuit, sans inscription.",
+    desc: "Modèle de bon de commande au format Excel, avec les identifiants, les lignes, les totaux calculés et le délai de livraison. Gratuit, sans inscription. نموذج وصل الطلبية بصيغة Excel، بالمعرّفات والسطور والمجاميع المحسوبة وأجل التسليم. مجاني وبلا تسجيل.",
     og: 'Bon de commande — modèle Excel gratuit',
     h1fr: 'Le bon de commande',
     h1ar: 'وصل الطلبية',
@@ -348,7 +348,7 @@ const PAGES = [
   {
     file: 'mentions-obligatoires-facture-algerie.html',
     title: 'Mentions obligatoires d’une facture en Algérie — la liste | البيانات الإجبارية',
-    desc: "La liste des mentions qu’une facture doit porter en Algérie : identité et identifiants du vendeur et du client (NIF, NIS, RC, AI), désignation, prix, TVA, montant en lettres et droit de timbre.",
+    desc: "La liste des mentions qu’une facture doit porter en Algérie : identité et identifiants du vendeur et du client (NIF, NIS, RC, AI), désignation, prix, TVA, montant en lettres et droit de timbre. قائمة البيانات التي يجب أن تحملها الفاتورة في الجزائر: هويّة ومعرّفات البائع والزبون (NIF وNIS وRC وAI)، والبيان والسعر والرسم والمبلغ بالحروف وحقّ الطابع.",
     og: 'Mentions obligatoires d’une facture en Algérie',
     h1fr: 'Ce qu’une facture doit porter, en Algérie',
     h1ar: 'ما يجب أن تحمله الفاتورة في الجزائر',
@@ -382,7 +382,7 @@ const PAGES = [
   {
     file: 'remplir-g50.html',
     title: 'Remplir le G50 — d’où viennent les chiffres | ملء تصريح G50',
-    desc: "Le G50 est la déclaration mensuelle. Voici quels chiffres il demande, d’où ils sortent dans vos factures, et comment obtenir le récapitulatif TVA du mois en un clic.",
+    desc: "Le G50 est la déclaration mensuelle. Voici quels chiffres il demande, d’où ils sortent dans vos factures, et comment obtenir le récapitulatif TVA du mois en un clic. تصريح G50 هو التصريح الشهري. إليك ما يطلبه من أرقام، ومن أين تخرج من فواتيرك، وكيف تحصل على ملخّص الرسم للشهر بنقرة.",
     og: 'Remplir le G50 — d’où viennent les chiffres',
     h1fr: 'Le G50, et d’où sortent ses chiffres',
     h1ar: 'تصريح G50، ومن أين تأتي أرقامه',
