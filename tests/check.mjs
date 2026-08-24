@@ -2558,6 +2558,25 @@ console.log('\nArabic a crawler can read');
         noDesc.length === 0, noDesc.join(', ') || paths.length + ' pages');
 }
 
+/* Google shows about sixty characters of a title. These are bilingual — the
+   French phrase somebody types, then the Arabic one — so every character of
+   French filler past that eats the half an Arabic reader needs to recognise
+   the page. Eight titles ran to eighty and ninety. The keyword always leads;
+   what was cut was padding, never a word anybody searches for. */
+{
+  const map = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+  const paths = [...map.matchAll(/<loc>https:\/\/www\.facturedz\.com\/([^<]*)<\/loc>/g)]
+    .map(m => m[1] || 'index.html');
+  const long = [];
+  for (const f of paths) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    const t = (html.match(/<title>([\s\S]*?)<\/title>/) || ['', ''])[1].trim();
+    if (t.length > 75) long.push(`${f} (${t.length})`);
+  }
+  check('no title is long enough to push its Arabic out of the result',
+        long.length === 0, long.join(', ') || paths.length + ' titles');
+}
+
 /* Which language a page speaks, and who gets to decide.
  *
  * Three rules, and each was wrong at some point tonight. A country address

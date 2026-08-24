@@ -139,7 +139,7 @@ const PAGES = [
   },
   {
     file: 'telecharger.html',
-    title: 'Télécharger FacturePro — logiciel de facturation gratuit à installer | تحميل برنامج الفوترة',
+    title: 'Télécharger FacturePro — logiciel de facturation | تحميل برنامج الفوترة',
     desc: "Installez FacturePro sur votre ordinateur ou votre téléphone : icône sur le bureau, fenêtre à part, fonctionne sans connexion. Gratuit, sans inscription et sans fichier à télécharger. ثبّت برنامج الفوترة في حاسوبك أو هاتفك: أيقونة على سطح المكتب، ويعمل بلا أنترنت. مجاني وبلا تسجيل.",
     og: 'Télécharger et installer FacturePro',
     h1fr: 'Installer FacturePro sur votre ordinateur',
@@ -225,7 +225,7 @@ const PAGES = [
   },
   {
     file: 'plan-comptable-scf.html',
-    title: 'Plan comptable SCF Algérie — les comptes et un classeur Excel gratuit | دليل الحسابات',
+    title: 'Plan comptable SCF Algérie + classeur Excel gratuit | دليل الحسابات',
     desc: "Le plan comptable algérien (Système Comptable Financier) expliqué : les sept classes, les comptes qu'un commerçant utilise vraiment, et un classeur Excel gratuit — journal, grand livre, balance, compte de résultat et bilan, calculés par formules. دليل الحسابات الجزائري SCF مشروحاً، مع ملفّ Excel مجاني: اليومية ودفتر الأستاذ وميزان المراجعة وحساب النتائج والميزانية.",
     og: 'Plan comptable SCF — les comptes, et un classeur Excel gratuit',
     h1fr: 'Le plan comptable algérien (SCF)',
@@ -347,7 +347,7 @@ const PAGES = [
   },
   {
     file: 'mentions-obligatoires-facture-algerie.html',
-    title: 'Mentions obligatoires d’une facture en Algérie — la liste | البيانات الإجبارية',
+    title: 'Mentions obligatoires d’une facture en Algérie | البيانات الإجبارية',
     desc: "La liste des mentions qu’une facture doit porter en Algérie : identité et identifiants du vendeur et du client (NIF, NIS, RC, AI), désignation, prix, TVA, montant en lettres et droit de timbre. قائمة البيانات التي يجب أن تحملها الفاتورة في الجزائر: هويّة ومعرّفات البائع والزبون (NIF وNIS وRC وAI)، والبيان والسعر والرسم والمبلغ بالحروف وحقّ الطابع.",
     og: 'Mentions obligatoires d’une facture en Algérie',
     h1fr: 'Ce qu’une facture doit porter, en Algérie',

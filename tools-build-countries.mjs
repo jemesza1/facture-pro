@@ -19,15 +19,15 @@ const HOST = 'https://www.facturedz.com';
 
 export const COUNTRY_PAGES = [
   {file: 'facture-maroc.html', code: 'MA', lang: 'fr',
-   title: 'Facture Maroc — modèle gratuit avec ICE, IF et TVA 20 % | نموذج فاتورة المغرب',
+   title: 'Facture Maroc — modèle gratuit, ICE et TVA 20 % | نموذج فاتورة المغرب',
    desc: "Créez une facture marocaine conforme : ICE, identifiant fiscal, RC, TVA 20 % et total en dirhams. Export PDF immédiat, sans inscription et sans compte. أنشئ فاتورة مغربية مطابقة: ICE والمعرّف الجبائي والسجلّ التجاري والرسم 20٪ بالدرهم، وتصدير PDF فوري بلا تسجيل.",
    og: 'Facture Maroc — modèle gratuit, ICE et TVA 20 %'},
   {file: 'facture-tunisie.html', code: 'TN', lang: 'fr',
-   title: 'Facture Tunisie — modèle gratuit avec matricule fiscal et TVA 19 % | نموذج فاتورة تونس',
+   title: 'Facture Tunisie — modèle gratuit, TVA 19 % | نموذج فاتورة تونس',
    desc: "Créez une facture tunisienne conforme : matricule fiscal, RC, TVA 19 %, timbre fiscal et total en dinars. Export PDF immédiat, sans inscription. أنشئ فاتورة تونسية مطابقة: المعرّف الجبائي والسجلّ التجاري والرسم 19٪ والطابع الجبائي بالدينار، وتصدير PDF فوري بلا تسجيل.",
    og: 'Facture Tunisie — matricule fiscal, TVA et timbre'},
   {file: 'uae-tax-invoice.html', code: 'AE', lang: 'en',
-   title: 'UAE Tax Invoice Template — free, with TRN and 5 % VAT | نموذج فاتورة ضريبية الإمارات',
+   title: 'UAE Tax Invoice Template — TRN and 5 % VAT | نموذج فاتورة ضريبية الإمارات',
    desc: 'Create a UAE tax invoice with the fields the FTA expects: TRN, 5 % VAT and a dirham total. Instant PDF, no signup and no account. أنشئ فاتورة ضريبية إماراتية بالحقول التي تطلبها الهيئة: رقم التسجيل الضريبي والضريبة 5٪ بالدرهم، وPDF فوري بلا تسجيل.',
    og: 'UAE Tax Invoice Template — TRN and 5 % VAT'},
   {file: 'uk-invoice-template.html', code: 'GB', lang: 'en',
