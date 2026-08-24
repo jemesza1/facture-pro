@@ -2362,33 +2362,56 @@ check('robots points at the sitemap on that host',
       /Sitemap: https:\/\/www\.facturedz\.com\/sitemap\.xml/.test(
         await readFile(join(ROOT, 'robots.txt'), 'utf8')));
 
-/* The sitemap tells a crawler a page exists; the footer is what gives it a
-   link to follow and a visitor a way to reach it. When they disagree the
-   sitemap is the one that loses — a page nothing links to is a page Google
-   treats as an afterthought. So the landing footer has to name every address
-   the sitemap claims, and name nothing the build does not produce. */
-const sitemapPaths = [...map.matchAll(/<loc>https:\/\/www\.facturedz\.com\/([^<]*)<\/loc>/g)]
-  .map(m => m[1]).filter(Boolean);
-const accueil = await readFile(join(ROOT, 'accueil.html'), 'utf8');
-const footer = accueil.slice(accueil.indexOf('<footer>'));
-const unlinked = sitemapPaths.filter(f => !footer.includes('href="' + f + '"'));
-check('the footer links every page the sitemap offers', unlinked.length === 0,
-      unlinked.join(', ') || sitemapPaths.length + ' pages');
+/* A visitor arrives on one page, not on the site. They searched "calcul droit
+   de timbre", they landed on the calculator, and until now the calculator was
+   a room with no doors: a logo, a language button, and no sign that anything
+   else here existed.
 
-const footHrefs = [...footer.matchAll(/href="([a-z0-9./-]+\.html)"/g)].map(m => m[1]);
-const dead = [];
-for (const h of new Set(footHrefs)) {
-  if (!await readFile(join(ROOT, 'public', h), 'utf8').catch(() => null)) dead.push(h);
+   One bar and one footer are now written once in tools-build-chrome.mjs and
+   injected into every page at build time. These checks guard the two things
+   that make that worth doing: the chrome reaches every page, and the map it
+   carries names every page — so a page added to the sitemap tomorrow cannot
+   quietly become unreachable from the other twenty-two. */
+{
+  const map = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+  const paths = [...map.matchAll(/<loc>https:\/\/www\.facturedz\.com\/([^<]*)<\/loc>/g)]
+    .map(m => m[1] || 'index.html');
+
+  /* The application is the one exception: it has its own shell and its own
+     menu, and a site footer under it would be furniture in a workshop. */
+  const documents = paths.filter(f => f !== 'index.html');
+  const noFoot = [], noBar = [], twice = [];
+  for (const f of documents) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    const feet = (html.match(/class="fp-foot"/g) || []).length;
+    if (!feet) noFoot.push(f);
+    if (feet > 1) twice.push(f);
+    /* accueil.html carries its own navigation with its own calls to action;
+       it takes the map and nothing else. */
+    if (f !== 'accueil.html' && !/class="fp-bar"/.test(html)) noBar.push(f);
+  }
+  check('every page carries the shared footer', noFoot.length === 0,
+        noFoot.join(', ') || documents.length + ' pages');
+  check('and carries it once — the build can run twice', twice.length === 0, twice.join(', '));
+  check('every content page carries the shared bar', noBar.length === 0,
+        noBar.join(', ') || (documents.length - 1) + ' pages');
+
+  const one = await readFile(join(ROOT, 'public', 'droit-de-timbre.html'), 'utf8');
+  const foot = one.slice(one.indexOf('class="fp-foot"'));
+  const unlinked = paths.filter(f => f !== 'index.html' && f !== 'accueil.html'
+                                  && !foot.includes('href="/' + f + '"'));
+  check('the footer names every page the sitemap offers', unlinked.length === 0,
+        unlinked.join(', ') || paths.length + ' pages');
+  check('and offers the application from the bar',
+        /class="fp-cta" href="\/index\.html\?app=1/.test(one));
+
+  /* Every label the switch cannot translate stays French for an Arabic
+     reader — except the country pages, whose English titles are the search
+     terms and are isolated with bdi rather than translated. */
+  const heads = [...foot.matchAll(/<h3([^>]*)>/g)].filter(m => !/data-fpar=/.test(m[1]));
+  check('every footer heading carries its Arabic', heads.length === 0,
+        heads.length + ' without data-fpar');
 }
-check('and every footer link is a page the build actually writes', dead.length === 0,
-      dead.join(', ') || footHrefs.length + ' links');
-
-/* Bilingual by the same mechanism as the rest of the page: a label the switch
-   cannot translate stays French for an Arabic reader. The country names are
-   deliberately exempt — "UK invoice template" is the search term. */
-const untranslated = [...footer.matchAll(/<h3([^>]*)>/g)].filter(m => !/data-ar=/.test(m[1]));
-check('every footer heading carries its Arabic', untranslated.length === 0,
-      untranslated.length + ' without data-ar');
 
 /* Removing a tag after validation drops that account's ownership, and with it
    the coverage reports and the sitemap submission. There are two because the
@@ -2825,9 +2848,9 @@ console.log('\nTerms and privacy, at an address');
 
 const policyMap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
 check('the sitemap offers it to Google', /conditions\.html/.test(policyMap));
-const land = await readFile(join(ROOT, 'accueil.html'), 'utf8');
+const land = await readFile(join(ROOT, 'public', 'accueil.html'), 'utf8');
 check('and the site links to it, so it is not an orphan',
-      /href="conditions\.html"/.test(land));
+      /href="\/?conditions\.html"/.test(land));
 
 /* ---------------------------------------------------------------- *
  * One generator, six addresses.

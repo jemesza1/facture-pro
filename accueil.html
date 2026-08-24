@@ -424,59 +424,10 @@
     </div>
   </div>
 
-  <!-- The footer is the one block on every page a crawler always reaches, and
-       the only map a visitor gets when the page they landed on was not the one
-       they wanted. With nineteen pages, six links in a row stopped being that
-       map: each section below names a real search intent, and every page the
-       site publishes is reachable from here in one click. -->
-  <footer>
-    <div class="wrap f-in">
-      <div class="f-brand">
-        <img src="/icon.svg" width="36" height="36" alt="FacturePro" loading="lazy">
-        <b>FacturePro</b>
-        <p style="margin-top:8px;max-width:22rem" data-fr="Facturation pour l'Algérie. Created by CheMs SoUu." data-ar="فوترة للجزائر. إعداد CheMs SoUu.">Facturation pour l'Algérie. Created by CheMs SoUu.</p>
-        <p style="margin-top:10px"><a href="index.html?app=1" style="color:#34d399;font-weight:600" data-fr="Ouvrir l'application" data-ar="فتح التطبيق">Ouvrir l'application</a></p>
-      </div>
-      <div class="f-col">
-        <h3 data-fr="Calculateurs" data-ar="حاسبات">Calculateurs</h3>
-        <a href="droit-de-timbre.html" data-fr="Droit de timbre" data-ar="حق الطابع">Droit de timbre</a>
-        <a href="calcul-tva.html" data-fr="Calcul TVA" data-ar="حساب TVA">Calcul TVA</a>
-        <a href="calcul-salaire.html" data-fr="Calcul de salaire" data-ar="حساب الأجر">Calcul de salaire</a>
-        <a href="montant-en-lettres.html" data-fr="Montant en lettres" data-ar="المبلغ بالحروف">Montant en lettres</a>
-      </div>
-      <div class="f-col">
-        <h3 data-fr="Modèles" data-ar="نماذج">Modèles</h3>
-        <a href="modele-facture-excel.html" data-fr="Modèle facture Excel" data-ar="نموذج فاتورة Excel">Modèle facture Excel</a>
-        <a href="facture-proforma.html" data-fr="Facture proforma" data-ar="الفاتورة الأولية">Facture proforma</a>
-        <a href="bon-de-commande.html" data-fr="Bon de commande" data-ar="وصل الطلبية">Bon de commande</a>
-        <a href="bon-de-livraison.html" data-fr="Bon de livraison" data-ar="وصل التسليم">Bon de livraison</a>
-        <a href="devis.html" data-fr="Devis" data-ar="عرض السعر">Devis</a>
-        <a href="facture-avoir.html" data-fr="Facture d'avoir" data-ar="الإشعار الدائن">Facture d'avoir</a>
-        <a href="plan-comptable-scf.html" data-fr="Plan comptable SCF" data-ar="دليل الحسابات SCF">Plan comptable SCF</a>
-      </div>
-      <div class="f-col">
-        <h3 data-fr="Guides" data-ar="أدلة">Guides</h3>
-        <a href="guide.html" data-fr="Guide d'utilisation" data-ar="دليل الاستعمال">Guide d'utilisation</a>
-        <a href="mentions-obligatoires-facture-algerie.html" data-fr="Mentions obligatoires" data-ar="البيانات الإجبارية">Mentions obligatoires</a>
-        <a href="remplir-g50.html" data-fr="Remplir le G50" data-ar="ملء G50">Remplir le G50</a>
-        <a href="conditions.html" data-fr="Conditions et confidentialité" data-ar="الشروط والخصوصية">Conditions et confidentialité</a>
-      </div>
-      <div class="f-col">
-        <h3 data-fr="International" data-ar="دول أخرى">International</h3>
-        <a href="international.html" data-fr="Autres pays" data-ar="بلدان أخرى">Autres pays</a>
-        <a href="facture-maroc.html" data-fr="Facture Maroc" data-ar="فاتورة المغرب">Facture Maroc</a>
-        <a href="facture-tunisie.html" data-fr="Facture Tunisie" data-ar="فاتورة تونس">Facture Tunisie</a>
-        <a href="uae-tax-invoice.html" dir="ltr">UAE tax invoice</a>
-        <a href="uk-invoice-template.html" dir="ltr">UK invoice template</a>
-        <a href="us-invoice-template.html" dir="ltr">US invoice template</a>
-        <a href="free-invoice-generator.html" dir="ltr">Free invoice generator</a>
-      </div>
-    </div>
-    <div class="wrap f-base">
-      <span data-fr="Gratuit, sans inscription — vos données restent sur votre appareil." data-ar="مجاني، بلا تسجيل — بياناتك تبقى على جهازك.">Gratuit, sans inscription — vos données restent sur votre appareil.</span>
-      <span dir="ltr">&copy; 2026 FacturePro</span>
-    </div>
-  </footer>
+  <!-- The bar and the footer both come from tools-build-chrome.mjs, so this
+       page cannot drift from the nineteen others. It keeps its own navigation
+       above — a landing page has calls to action a content page has not — and
+       takes the shared site map at the bottom like everybody else. -->
 
   <script>
     (function () {
