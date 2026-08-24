@@ -17,6 +17,7 @@ const HOST = 'https://www.facturedz.com';
 const V = (readFileSync(join(ROOT, 'app.js'), 'utf8').match(/var V="([^"]+)"/) || [])[1] || '1';
 
 const SIBLINGS = [
+  ['telecharger.html', 'Installer sur PC', 'التثبيت على الحاسوب'],
   ['plan-comptable-scf.html', 'Plan comptable SCF', 'دليل الحسابات SCF'],
   ['devis.html', 'Devis', 'عرض السعر'],
   ['bon-de-livraison.html', 'Bon de livraison', 'وصل التسليم'],
@@ -135,6 +136,92 @@ const PAGES = [
             'في التطبيق، عرض السعر المقبول يتحوّل إلى فاتورة بلا إعادة كتابة السطور: الزبون والأصناف والكمّيات والنسب تُؤخذ كما هي، وتأخذ الفاتورة رقماً من سلسلة الفواتير. وهذه هي اللحظة التي يكثر فيها خطأ النسخ اليدوي، وهي التي نُلغيها.']]},
     ],
     extra: dl('devis', 'Télécharger le modèle de devis', 'حمّل نموذج عرض السعر'),
+  },
+  {
+    file: 'telecharger.html',
+    title: 'Télécharger FacturePro — logiciel de facturation gratuit à installer | تحميل برنامج الفوترة',
+    desc: "Installez FacturePro sur votre ordinateur ou votre téléphone : icône sur le bureau, fenêtre à part, fonctionne sans connexion. Gratuit, sans inscription et sans fichier à télécharger.",
+    og: 'Télécharger et installer FacturePro',
+    h1fr: 'Installer FacturePro sur votre ordinateur',
+    h1ar: 'ثبّت FacturePro في حاسوبك',
+    leadfr: "Une icône sur le bureau, une fenêtre à part sans barre de navigateur, et vos factures même sans connexion. L'installation prend deux clics et ne télécharge aucun fichier.",
+    leadar: 'أيقونة على سطح المكتب، ونافذة خاصة بلا شريط متصفّح، وفواتيرك حتى بلا أنترنت. التثبيت نقرتان، وما ينزّل حتى ملف.',
+    body: [
+      {h: ['Ce que vous obtenez', 'ما تتحصّل عليه'],
+       ul: [
+         ['Une icône sur le bureau et dans le menu Démarrer, comme un logiciel installé', 'أيقونة على سطح المكتب وفي قائمة ابدأ، كأي برنامج مثبَّت'],
+         ['Une fenêtre à elle, sans barre d\u2019adresse ni onglets', 'نافذة خاصة بها، بلا شريط عنوان ولا تبويبات'],
+         ['Le fonctionnement hors connexion : vos factures s\u2019ouvrent sans internet', 'العمل بلا اتّصال: فواتيرك تُفتح بلا أنترنت'],
+         ['Les mises à jour toutes seules, sans rien réinstaller', 'التحديثات وحدها، بلا إعادة تثبيت'],
+         ['Une désinstallation normale, depuis les paramètres de Windows', 'إزالة عادية من إعدادات Windows'],
+       ]},
+      {h: ['Pourquoi il n\u2019y a pas de fichier .exe', 'لماذا لا يوجد ملف .exe'],
+       p: [['Un .exe non signé fait afficher « Windows a protégé votre PC » au premier lancement, et cet écran fait plus peur qu\u2019il ne rassure. L\u2019installation depuis le navigateur donne le même résultat — icône, fenêtre propre, hors connexion — sans avertissement, sans droits d\u2019administrateur et sans place sur le disque.',
+            'ملفّ .exe غير موقّع يُظهر «Windows حمى جهازك» عند أوّل تشغيل، وهذه الشاشة تُخوّف أكثر ممّا تطمئن. والتثبيت من المتصفّح يعطي النتيجة نفسها — أيقونة ونافذة نظيفة وعمل بلا اتّصال — بلا تحذير وبلا صلاحيات مسؤول وبلا مساحة على القرص.'],
+           ['Et une mise à jour arrive toute seule : personne n\u2019a à retélécharger quoi que ce soit quand une règle fiscale change.',
+            'والتحديث يصل وحده: لا أحد يعيد التنزيل كي تتغيّر قاعدة جبائية.']]},
+      {h: ['Les étapes, selon votre appareil', 'الخطوات، حسب جهازك'],
+       ul: [
+         ['Windows ou Mac, avec Chrome ou Edge : cliquez le bouton ci-dessus, ou l\u2019icône d\u2019installation à droite de la barre d\u2019adresse', 'ويندوز أو ماك، بـChrome أو Edge: اضغط الزرّ فوق، أو أيقونة التثبيت على يمين شريط العنوان'],
+         ['Android, avec Chrome : menu ⋮ puis « Installer l\u2019application »', 'أندرويد بـChrome: قائمة ⋮ ثمّ «تثبيت التطبيق»'],
+         ['iPhone ou iPad, avec Safari : Partager puis « Sur l\u2019écran d\u2019accueil »', 'آيفون أو آيباد بـSafari: مشاركة ثمّ «إضافة إلى الشاشة الرئيسية»'],
+         ['Firefox ne sait pas installer une page : utilisez Chrome ou Edge pour cette étape', 'فايرفوكس لا يعرف تثبيت صفحة: استعمل Chrome أو Edge لهذه الخطوة'],
+       ]},
+      {h: ['Vos données restent chez vous', 'بياناتك تبقى عندك'],
+       p: [['Installée ou non, l\u2019application garde vos factures dans le navigateur de cet appareil. Rien ne part sur un serveur — nous n\u2019en avons pas. Pensez à exporter une sauvegarde de temps en temps, ou activez la copie dans votre propre Google Drive.',
+            'مثبَّتاً أو لا، يحفظ التطبيق فواتيرك في متصفّح هذا الجهاز. ولا شيء يذهب إلى خادم — فنحن لا نملك خوادم. تذكّر أن تصدّر نسخة احتياطية من حين لآخر، أو فعّل النسخة في Drive الخاص بك.']]},
+    ],
+    top: '<p class="mb-6"><button type="button" class="dlbtn fp-install">Installer maintenant</button>'
+       + '<span class="block mt-2 text-xs opacity-70" data-fr="Gratuit, sans compte et sans fichier à télécharger."'
+       + ' data-ar="مجاني، بلا حساب وبلا ملف يُنزَّل.">Gratuit, sans compte et sans fichier à télécharger.</span></p>',
+    script: `<script>
+(function(){
+  /* Chrome et Edge annoncent qu'ils savent installer la page ; on garde
+     l'evenement et on le rejoue au clic. Safari et Firefox n'annoncent rien,
+     alors on ne fait pas semblant : le bouton devient un lien vers les gestes
+     a faire a la main, qui sont les seuls qui marchent la-bas. */
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferred = e; paint();
+  });
+  function installed(){
+    return (window.matchMedia && matchMedia('(display-mode: standalone)').matches)
+        || navigator.standalone === true;
+  }
+  function paint(){
+    var btn = document.querySelectorAll('.fp-install');
+    for (var i = 0; i < btn.length; i++){
+      var b = btn[i], ar = document.body.classList.contains('ar');
+      if (installed()) {
+        b.textContent = ar ? 'التطبيق مثبَّت ✓' : 'Application installée ✓';
+        b.disabled = true;
+      } else if (deferred) {
+        b.textContent = ar ? 'ثبّت الآن' : 'Installer maintenant';
+        b.disabled = false;
+      } else {
+        b.textContent = ar ? 'اتبع الخطوات تحت' : 'Suivez les étapes ci-dessous';
+        b.disabled = false;
+      }
+    }
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.fp-install');
+    if (!b) return;
+    if (deferred) { deferred.prompt(); deferred.userChoice.then(function(){ deferred = null; paint(); }); }
+    else {
+      /* Pas de prompt : ce navigateur ne sait pas installer une page. On
+         emmene le visiteur aux gestes manuels plutot que de ne rien faire. */
+      var half = document.getElementById(document.body.classList.contains('ar') ? 'ar' : 'fr');
+      var lists = half ? half.querySelectorAll('ul') : [];
+      var steps = lists.length >= 3 ? lists[2] : lists[lists.length - 1];
+      if (steps) steps.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }
+  });
+  window.addEventListener('appinstalled', function(){ deferred = null; paint(); });
+  paint();
+  document.getElementById('lang').addEventListener('click', function(){ setTimeout(paint, 30); });
+})();
+</script>`,
   },
   {
     file: 'plan-comptable-scf.html',
@@ -397,6 +484,7 @@ const shell = (page) => {
   <div id="fr">
     <h1 class="text-2xl sm:text-3xl font-bold mb-2">${page.h1fr}</h1>
     <p class="opacity-80 mb-5">${page.leadfr}</p>
+    ${page.top || ''}
     <div class="card p-5 sm:p-6">${fr}${page.extra || ''}</div>
     <p class="text-center text-sm mt-8 opacity-70">${sibs('fr')}</p>
     <p class="text-center text-sm mt-3"><a href="/" class="underline">Ouvrir l’application de facturation</a></p>
@@ -404,11 +492,13 @@ const shell = (page) => {
   <div id="ar" dir="rtl" hidden>
     <h1 class="text-2xl sm:text-3xl font-bold mb-2">${page.h1ar}</h1>
     <p class="opacity-80 mb-5">${page.leadar}</p>
+    ${page.top || ''}
     <div class="card p-5 sm:p-6">${ar}${page.extra || ''}</div>
     <p class="text-center text-sm mt-8 opacity-70">${sibs('ar')}</p>
     <p class="text-center text-sm mt-3"><a href="/" class="underline">افتح تطبيق الفوترة</a></p>
   </div>
 </main>
+${page.script || ''}
 ${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
 <script src="template-xlsx.js?v=${V}"></script>
 <script>

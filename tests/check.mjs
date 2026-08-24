@@ -2468,6 +2468,24 @@ for (const f of ['index.html', 'accueil.html']) {
   check('and the landing page above all', /_vercel\/insights/.test(home));
 }
 
+/* The install page is the answer to "logiciel de facturation à télécharger",
+   and its whole reason for existing is one button. A button below four
+   sections is a button most visitors never reach, so it sits above the body
+   — and it has to degrade: Chrome and Edge hand over an install prompt,
+   Safari and Firefox hand over nothing, and there the button must take the
+   visitor to the manual steps rather than do nothing at all. */
+{
+  const html = await readFile(join(ROOT, 'public', 'telecharger.html'), 'utf8');
+  const btn = html.indexOf('fp-install');
+  const card = html.indexOf('class="card');
+  check('the install button sits above the page body, not under it',
+        btn !== -1 && card !== -1 && btn < card, `button@${btn}, body@${card}`);
+  check('and the page explains the manual route for browsers that cannot install',
+        /Safari/.test(html) && /Firefox/.test(html));
+  check('and it never promises a file it does not serve',
+        !/\.exe['"\s]/.test(html) || /pas de fichier \.exe/.test(html));
+}
+
 /* Tailwind's preflight sets list-style:none. The generated pages declared
    their own sheet before it, so the reset won and every bullet list on six
    pages rendered as flat unmarked lines — legible, but not a list. Order is

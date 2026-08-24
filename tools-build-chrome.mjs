@@ -51,6 +51,7 @@ const GROUPS = [
     ['facture-avoir.html', "Facture d'avoir", 'الإشعار الدائن'],
   ]],
   ['Guides', 'أدلة', [
+    ['telecharger.html', 'Installer sur PC', 'التثبيت على الحاسوب'],
     ['guide.html', "Guide d'utilisation", 'دليل الاستعمال'],
     ['mentions-obligatoires-facture-algerie.html', 'Mentions obligatoires', 'البيانات الإجبارية'],
     ['remplir-g50.html', 'Remplir le G50', 'ملء G50'],
