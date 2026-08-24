@@ -170,15 +170,33 @@ const SCRIPT = `<script>
 })();
 </script>`;
 
+
+/* Les icônes, elles aussi écrites une fois. Google prend le favicon du site
+   sur la page d'accueil, alors les résultats de recherche ne dépendaient pas
+   des autres — mais treize pages continuaient de ne déclarer qu'un 32 px, et
+   une page qui déclare autre chose que ses vingt-quatre sœurs est exactement
+   ce que ce fichier existe pour empêcher. */
+const ICONS = `<link rel="icon" href="/icon-48.png" sizes="48x48" type="image/png" />
+<link rel="icon" href="/icon-96.png" sizes="96x96" type="image/png" />
+<link rel="icon" href="/icon.svg" type="image/svg+xml" />`;
+
+function icons(html) {
+  if (html.indexOf('icon-48.png') !== -1) return html;
+  const at = html.search(/<link rel="icon"/i);
+  if (at !== -1) return html.slice(0, at) + ICONS + '\n' + html.slice(at);
+  const head = html.search(/<\/head>/i);
+  return head === -1 ? html : html.slice(0, head) + ICONS + '\n' + html.slice(head);
+}
+
 function inject(html, file) {
   /* Le pied, pas la barre : accueil.html ne prend pas de barre, et un garde
      qui la cherchait lui ajoutait un second pied a chaque execution. */
-  if (html.indexOf('class="fp-foot"') !== -1) return html;    /* idempotent */
+  if (html.indexOf('class="fp-foot"') !== -1) return icons(html);   /* idempotent */
 
   /* The bar goes under whatever the page already puts at the top: these
      pages carry their own brand and language button, and a second brand
      three lines above the first reads as a mistake. */
-  let out = html;
+  let out = icons(html);
   if (NO_BAR.has(file)) {
     const end0 = out.lastIndexOf('</body>');
     if (end0 === -1) return html;

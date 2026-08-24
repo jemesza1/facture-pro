@@ -2396,6 +2396,23 @@ check('robots points at the sitemap on that host',
   check('every content page carries the shared bar', noBar.length === 0,
         noBar.join(', ') || (documents.length - 1) + ' pages');
 
+  /* The icons went the same way as the navigation, and for the same reason.
+     Google reads the site's favicon off the home page, so the search results
+     never depended on the rest — but thirteen pages still declared only a
+     32 px icon, and a page that declares something different from its
+     twenty-four sisters is exactly what one shared source exists to prevent.
+     Counted, not merely found: injecting them twice would be its own bug. */
+  const noIcon = [], twiceIcon = [];
+  for (const f of documents.concat(['accueil.html'])) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    const n = (html.match(/icon-48\.png/g) || []).length;
+    if (n === 0) noIcon.push(f);
+    if (n > 1) twiceIcon.push(f);
+  }
+  check('every page declares the icon Google accepts', noIcon.length === 0,
+        noIcon.join(', ') || documents.length + ' pages');
+  check('and declares it once', twiceIcon.length === 0, twiceIcon.join(', '));
+
   const one = await readFile(join(ROOT, 'public', 'droit-de-timbre.html'), 'utf8');
   const foot = one.slice(one.indexOf('class="fp-foot"'));
   const unlinked = paths.filter(f => f !== 'index.html' && f !== 'accueil.html'
