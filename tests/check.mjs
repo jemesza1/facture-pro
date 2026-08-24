@@ -3320,6 +3320,21 @@ for (const f of CONTENT_PAGES) {
 const smap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
 for (const f of CONTENT_PAGES) check(`the sitemap offers ${f}`, smap.includes(f));
 
+/* The cache name in sw.js is the only thing that actually evicts an old
+   build: bare() strips the ?v= query before storing, and the fallback reads
+   back with ignoreSearch, so the version on a script URL never decides what a
+   returning visitor is served. V in app.js and CACHE in sw.js are meant to be
+   bumped together; when they drift, the intent is lost and the next person to
+   read them cannot tell which one was forgotten. */
+const appSrc = await readFile(join(ROOT, 'app.js'), 'utf8');
+const swSrc = await readFile(join(ROOT, 'sw.js'), 'utf8');
+const vStamp = (appSrc.match(/var\s+V\s*=\s*"([^"]+)"/) || [])[1];
+const cacheStamp = (swSrc.match(/var\s+CACHE\s*=\s*'facturepro-([^']+)'/) || [])[1];
+check('app.js still declares a version stamp', !!vStamp, String(vStamp));
+check('sw.js still names its cache after one', !!cacheStamp, String(cacheStamp));
+check('and the two carry the same stamp',
+      !!vStamp && vStamp === cacheStamp, `V=${vStamp} CACHE=${cacheStamp}`);
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
