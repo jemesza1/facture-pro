@@ -3320,6 +3320,74 @@ for (const f of CONTENT_PAGES) {
 const smap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
 for (const f of CONTENT_PAGES) check(`the sitemap offers ${f}`, smap.includes(f));
 
+/* ---------------------------------------------------------------- *
+ * Every control in every dialog has a name a screen reader can read.
+ *
+ * Measured, not asserted structurally: the check computes the accessible
+ * name the way an assistive technology resolves it — label[for], a wrapping
+ * label, aria-label, aria-labelledby — and fails on anything left anonymous.
+ * Asserting that a `for` attribute exists would pass on a `for` pointing at
+ * the wrong field, which is how this class of fix usually goes wrong.
+ * ---------------------------------------------------------------- */
+console.log('\nEvery field in every dialog can be named aloud');
+
+const NAME_SRC = `(el) => {
+  if (el.getAttribute('aria-label')) return 'aria-label';
+  if (el.id) { const l = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+               if (l && l.textContent.trim()) return 'for'; }
+  if (el.closest('label')) return 'wrap';
+  const lb = el.getAttribute('aria-labelledby');
+  if (lb && document.getElementById(lb)) return 'labelledby';
+  return null;
+}`;
+
+for (const fn of ['openClientModal', 'openNewInvoice', 'openProductModal',
+                  'openExpenseModal', 'openDevisModal', 'openPaymentModal']) {
+  const r = await page.evaluate(({fn, src}) => {
+    if (typeof window[fn] !== 'function') return {missing: true};
+    window[fn]();
+    const named = eval(src);
+    const ctrls = [...document.querySelectorAll('#modal-root input,#modal-root select,#modal-root textarea')]
+      .filter(e => e.type !== 'hidden' && e.type !== 'file');
+    /* An icon-only button is a button whose whole label is an <svg>. */
+    const icons = [...document.querySelectorAll('#modal-root button')].filter(b => !b.textContent.trim());
+    const out = {
+      controls: ctrls.length,
+      unnamed: ctrls.filter(e => !named(e)).map(e => e.className || e.tagName),
+      unnamedIcons: icons.filter(b => !b.getAttribute('aria-label')).map(b => b.className),
+    };
+    window.closeModal();
+    return out;
+  }, {fn, src: NAME_SRC});
+  check(`${fn} opens fields that all have a name`,
+        !r.missing && r.controls > 0 && r.unnamed.length === 0,
+        r.missing ? 'function missing' : r.unnamed.join(', '));
+  check(`${fn} names its icon-only buttons`,
+        !r.missing && r.unnamedIcons.length === 0,
+        r.missing ? 'function missing' : r.unnamedIcons.join(', '));
+}
+
+/* The invoice rows repeat, so they cannot be named by id without colliding —
+   the row delete button removes a node without renumbering anything, so the
+   second add would reuse an id the first still holds. They carry aria-label
+   instead, and this proves it survives more than one row. */
+const rowNames = await page.evaluate(({src}) => {
+  window.openNewInvoice(); window.addInvoiceItem(); window.addInvoiceItem();
+  const named = eval(src);
+  const ctrls = [...document.querySelectorAll('#items-container input,#items-container select')];
+  const ids = ctrls.map(e => e.id).filter(Boolean);
+  const out = {rows: document.querySelectorAll('#items-container .item-row').length,
+               controls: ctrls.length,
+               unnamed: ctrls.filter(e => !named(e)).length,
+               collidingIds: ids.length !== new Set(ids).size};
+  window.closeModal();
+  return out;
+}, {src: NAME_SRC});
+check('three invoice rows carry three sets of named fields',
+      rowNames.rows === 3 && rowNames.controls === 15 && rowNames.unnamed === 0,
+      JSON.stringify(rowNames));
+check('and no two rows share an id', rowNames.collidingIds === false);
+
 /* The cache name in sw.js is the only thing that actually evicts an old
    build: bare() strips the ?v= query before storing, and the fallback reads
    back with ignoreSearch, so the version on a script URL never decides what a

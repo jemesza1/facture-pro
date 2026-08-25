@@ -135,16 +135,16 @@
     var p=id? state.products.find(function(x){return x.id===id;}):null;
     openModal('<div class="modal max-w-md" onclick="event.stopPropagation()">'+
       '<div class="modal-header"><h3 class="font-semibold">'+(p?(ar()?'\u062a\u0639\u062f\u064a\u0644':'Modifier'):(ar()?'\u0645\u0646\u062a\u062c / \u062e\u062f\u0645\u0629':'Produit / Service'))+'</h3>'+
-      '<button onclick="closeModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
+      '<button onclick="closeModal()" class="btn-ghost p-2" aria-label="'+esc(t('ui.close'))+'"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
       '<div class="modal-body space-y-3">'+
-        '<div><label class="form-label">'+(ar()?'\u0627\u0644\u0648\u0635\u0641 *':'D\u00e9signation *')+'</label><input id="prod-name" class="form-input" value="'+esc(p&&p.name||'')+'"/></div>'+
+        '<div><label class="form-label" for="prod-name">'+(ar()?'\u0627\u0644\u0648\u0635\u0641 *':'D\u00e9signation *')+'</label><input id="prod-name" class="form-input" value="'+esc(p&&p.name||'')+'"/></div>'+
         '<div class="grid grid-cols-2 gap-3">'+
-          '<div><label class="form-label">'+(ar()?'\u0627\u0644\u0633\u0639\u0631 HT':'Prix HT')+'</label><input id="prod-price" type="number" min="0" step="0.01" class="form-input ltr-code" value="'+(p?p.price:0)+'"/></div>'+
-          '<div><label class="form-label">TVA %</label><input id="prod-tva" type="number" min="0" max="100" class="form-input ltr-code" value="'+(p&&p.tva!=null?p.tva:19)+'"/></div>'+
+          '<div><label class="form-label" for="prod-price">'+(ar()?'\u0627\u0644\u0633\u0639\u0631 HT':'Prix HT')+'</label><input id="prod-price" type="number" min="0" step="0.01" class="form-input ltr-code" value="'+(p?p.price:0)+'"/></div>'+
+          '<div><label class="form-label" for="prod-tva">TVA %</label><input id="prod-tva" type="number" min="0" max="100" class="form-input ltr-code" value="'+(p&&p.tva!=null?p.tva:19)+'"/></div>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-3">'+
-          '<div><label class="form-label">'+(ar()?'\u0627\u0644\u0645\u062e\u0632\u0648\u0646':'Stock')+'</label><input id="prod-stock" type="number" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.stock!=null?p.stock:0)+'"/></div>'+
-          '<div><label class="form-label">'+(ar()?'\u062d\u062f \u0623\u062f\u0646\u0649':'Seuil')+'</label><input id="prod-min" type="number" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.minStock!=null?p.minStock:0)+'"/></div>'+
+          '<div><label class="form-label" for="prod-stock">'+(ar()?'\u0627\u0644\u0645\u062e\u0632\u0648\u0646':'Stock')+'</label><input id="prod-stock" type="number" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.stock!=null?p.stock:0)+'"/></div>'+
+          '<div><label class="form-label" for="prod-min">'+(ar()?'\u062d\u062f \u0623\u062f\u0646\u0649':'Seuil')+'</label><input id="prod-min" type="number" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.minStock!=null?p.minStock:0)+'"/></div>'+
         '</div></div>'+
       '<div class="modal-footer flex justify-end gap-2">'+
         '<button onclick="closeModal()" class="btn-secondary">'+(ar()?'\u0625\u0644\u063a\u0627\u0621':'Annuler')+'</button>'+

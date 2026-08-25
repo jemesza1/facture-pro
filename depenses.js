@@ -226,7 +226,7 @@
     var x=id?(state.expenses||[]).find(function(e){return e.id===id;}):null;
     openModal('<div class="modal max-w-lg" onclick="event.stopPropagation()">'+
       '<div class="modal-header"><h3 class="font-semibold">'+esc(x?t('exp.edit'):t('exp.add'))+'</h3>'+
-      '<button onclick="closeModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
+      '<button onclick="closeModal()" class="btn-ghost p-2" aria-label="'+esc(t('ui.close'))+'"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
       '<div class="modal-body space-y-3">'+
         '<div><label class="form-label" for="exp-label">'+esc(t('exp.labelReq'))+'</label>'+
           '<input id="exp-label" class="form-input" value="'+esc(x&&x.label||'')+'"/></div>'+
