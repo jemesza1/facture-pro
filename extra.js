@@ -9,6 +9,9 @@
        the whitelist below writes what it finds. */
     if(!state.expenses) state.expenses=[];
     if(!state.nextDevisNumber) state.nextDevisNumber=1;
+    /* Recurring templates are a list like the others. Created here so the
+       whitelist below writes them; ledger.js is loaded later. */
+    if(!state.recurrences) state.recurrences=[];
   }
 
   var _save=window.saveData;
@@ -27,7 +30,8 @@
         expenses:state.expenses,
         nextDevisNumber:state.nextDevisNumber,
         nextAvoirNumber:state.nextAvoirNumber,
-        nextBlNumber:state.nextBlNumber
+        nextBlNumber:state.nextBlNumber,
+        recurrences:state.recurrences
       }));
       window.__saveWarned=false;
     }catch(e){
@@ -54,6 +58,7 @@
       if(Array.isArray(d.devis)) state.devis=d.devis;
       if(Array.isArray(d.payments)) state.payments=d.payments;
       if(Array.isArray(d.expenses)) state.expenses=d.expenses;
+      if(Array.isArray(d.recurrences)) state.recurrences=d.recurrences;
       if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
     }catch(e){}
   };

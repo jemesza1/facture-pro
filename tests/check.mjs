@@ -2008,6 +2008,7 @@ check('the backup carries the products', payload.products.length === 1);
 check('the backup carries the devis', payload.devis.length === 1);
 check('the backup carries the payments', payload.payments.length === 1);
 check('the backup carries the dépenses', payload.expenses.length === 1);
+check('the backup carries the recurrences list', Array.isArray(payload.recurrences));
 check('the backup carries the avoir counter', payload.nextAvoirNumber === 7, String(payload.nextAvoirNumber));
 check('the backup carries the devis counter', payload.nextDevisNumber === 4, String(payload.nextDevisNumber));
 
@@ -2055,6 +2056,23 @@ const noExp = await page.evaluate(() => {
 });
 check('a backup with no dépenses key restores none, rather than keeping ours',
       noExp === 0, String(noExp));
+
+const recTrip = await page.evaluate(() => {
+  state.recurrences = [{id:'r1', clientId:'c1', freq:'month', nextDate:'2026-09-01',
+    active:true, items:[{description:'Abonnement', qty:1, unitPrice:12000, tva:19}]}];
+  const saved = window.buildBackup();
+  state.recurrences = [{id:'should-not-keep', clientId:'c1', items:[], freq:'year', nextDate:'2099-01-01'}];
+  const ok = window.applyBackup(JSON.parse(JSON.stringify(saved)));
+  const carried = (state.recurrences || []).map(r => r.id);
+  const d = window.buildBackup();
+  delete d.recurrences;
+  window.applyBackup(d);
+  return {ok, carried, afterAbsent: (state.recurrences || []).length};
+});
+check('a backup carries recurrences through a restore',
+      recTrip.ok && recTrip.carried.includes('r1'), JSON.stringify(recTrip.carried));
+check('a backup with no recurrences key restores none, rather than keeping ours',
+      recTrip.afterAbsent === 0, String(recTrip.afterAbsent));
 
 const refused = await page.evaluate(() => {
   const before = state.clients.length;
@@ -2740,6 +2758,13 @@ console.log('\nWhich language a page speaks');
   check('a language picked by hand takes effect', picked === 'ar', picked);
   check('and survives the reload', kept === 'ar', kept);
   await c.close();
+
+  const qlangCtx = await browser.newContext({locale: 'en-US'});
+  const qlangPage = await qlangCtx.newPage();
+  await qlangPage.goto(`${BASE}/public/facture-maroc.html?lang=ar`, {waitUntil: 'networkidle'});
+  const qlang = await qlangPage.evaluate(() => document.documentElement.lang);
+  check('?lang= on a country page wins over the published language', qlang === 'ar', qlang);
+  await qlangCtx.close();
 }
 
 /* The install page is the answer to "logiciel de facturation à télécharger",
@@ -3342,7 +3367,8 @@ const NAME_SRC = `(el) => {
 }`;
 
 for (const fn of ['openClientModal', 'openNewInvoice', 'openProductModal',
-                  'openExpenseModal', 'openDevisModal', 'openPaymentModal']) {
+                  'openExpenseModal', 'openDevisModal', 'openPaymentModal',
+                  'openRecurrenceModal']) {
   const r = await page.evaluate(({fn, src}) => {
     if (typeof window[fn] !== 'function') return {missing: true};
     window[fn]();
@@ -3387,6 +3413,197 @@ check('three invoice rows carry three sets of named fields',
       rowNames.rows === 3 && rowNames.controls === 15 && rowNames.unnamed === 0,
       JSON.stringify(rowNames));
 check('and no two rows share an id', rowNames.collidingIds === false);
+
+/* ---------------------------------------------------------------- *
+ * Relevé de compte, factures récurrentes, hreflang, unique country copy,
+ * and the production bundle. The five things the product did not do.
+ * ---------------------------------------------------------------- */
+console.log('\nRelevé, récurrences, hreflang, bundle');
+
+{
+  const stmt = await page.evaluate(() => {
+    state.clients = [{id:'c1', name:'SARL Atlas', nif:'0999'}, {id:'c2', name:'Autre', nif:''}];
+    state.invoices = [
+      {id:'i1', number:'FAC-2025-001', clientId:'c1', date:'2025-06-01', status:'envoyee',
+       paymentMode:'virement', items:[{description:'A', qty:1, unitPrice:100000, tva:19}]},
+      {id:'i2', number:'FAC-2026-001', clientId:'c1', date:'2026-02-01', status:'envoyee',
+       paymentMode:'virement', items:[{description:'B', qty:1, unitPrice:50000, tva:19}]},
+      {id:'i3', number:'FAC-2026-002', clientId:'c1', date:'2026-02-15', status:'brouillon',
+       items:[{description:'Draft', qty:1, unitPrice:10000, tva:19}]},
+      {id:'i4', number:'FAC-2026-003', clientId:'c1', date:'2026-02-16', status:'annulee',
+       items:[{description:'X', qty:1, unitPrice:10000, tva:19}]},
+      {id:'i5', number:'BL-2026-001', clientId:'c1', date:'2026-02-17', status:'envoyee', type:'bl',
+       items:[{description:'Goods', qty:1, unitPrice:10000, tva:19}]},
+      {id:'i6', number:'AV-2026-001', clientId:'c1', date:'2026-03-01', status:'payee', type:'avoir',
+       items:[{description:'A', qty:1, unitPrice:100000, tva:19}]},
+      {id:'i7', number:'FAC-2026-009', clientId:'c2', date:'2026-02-01', status:'envoyee',
+       items:[{description:'Other', qty:1, unitPrice:8000, tva:19}]}
+    ];
+    state.payments = [
+      {id:'p1', invoiceId:'i1', clientId:'c1', amount:40000, date:'2025-07-01'},
+      {id:'p2', invoiceId:'i2', clientId:'c1', amount:10000, date:'2026-02-20'}
+    ];
+    const lines = buildStatementLines('c1', '2026-01-01', '2026-12-31');
+    const opening = statementOpening('c1', '2026-01-01');
+    const net1 = calcInvoiceTotals(state.invoices[0]).net;
+    const net2 = calcInvoiceTotals(state.invoices[1]).net;
+    const av = calcInvoiceTotals(state.invoices[5]).net;
+    const refs = lines.map(l => l.ref);
+    const kinds = lines.map(l => l.kind);
+    const last = lines[lines.length - 1];
+    const debit = lines.reduce((s, l) => s + l.debit, 0);
+    const credit = lines.reduce((s, l) => s + l.credit, 0);
+    return {
+      n: lines.length, refs, kinds, opening, net1, net2, av,
+      lastBal: last && last.balance, lastKind: last && last.kind,
+      debit, credit, closing: opening + debit - credit,
+      hasDraft: refs.includes('FAC-2026-002'),
+      hasCancel: refs.includes('FAC-2026-003'),
+      hasBl: refs.includes('BL-2026-001'),
+      hasOther: refs.includes('FAC-2026-009')
+    };
+  });
+  check('the statement sees the live invoice in the period', stmt.refs.includes('FAC-2026-001'), stmt.refs.join(','));
+  check('and the payment on it', stmt.kinds.includes('payment'));
+  check('and the avoir as a credit', stmt.kinds.includes('avoir') && stmt.av < 0, String(stmt.av));
+  check('drafts stay off the statement', !stmt.hasDraft);
+  check('cancelled invoices stay off the statement', !stmt.hasCancel);
+  check('delivery notes stay off the statement', !stmt.hasBl);
+  check('another client\'s invoice stays off the statement', !stmt.hasOther);
+  check('the opening balance is what happened before the period',
+        stmt.opening === stmt.net1 - 40000, String(stmt.opening));
+  check('and the running balance closes on opening plus the period',
+        stmt.closing === stmt.opening + stmt.debit - stmt.credit, String(stmt.closing));
+}
+
+{
+  const rec = await page.evaluate(() => {
+    const item = {description:'Abonnement mensuel', qty:1, unitPrice:10000, tva:19};
+    state.clients = [{id:'c1', name:'SARL Atlas'}];
+    state.invoices = [];
+    state.payments = [];
+    state.nextInvoiceNumber = 1;
+    state.recurrences = [{
+      id:'r-past', clientId:'c1', freq:'month', nextDate:'2020-01-01', active:true,
+      items:[item], paymentMode:'virement', template:'classique', notes:''
+    }];
+    const madePast = generateDueRecurring();
+    const pastInv = (state.invoices || []).filter(i => i.recurrenceId === 'r-past');
+    const nextAfterPast = (state.recurrences.find(r => r.id === 'r-past') || {}).nextDate;
+    const statuses = pastInv.map(i => i.status);
+
+    state.invoices = [];
+    state.nextInvoiceNumber = 1;
+    state.recurrences = [{
+      id:'r-future', clientId:'c1', freq:'month', nextDate:'2099-01-01', active:true,
+      items:[item], paymentMode:'virement'
+    }];
+    const madeFuture = generateDueRecurring();
+    const futureInv = (state.invoices || []).filter(i => i.recurrenceId === 'r-future');
+
+    state.recurrences = [{
+      id:'r-pause', clientId:'c1', freq:'month', nextDate:'2020-01-01', active:false,
+      items:[item]
+    }];
+    const madePaused = generateDueRecurring();
+
+    const legacyOk = (function(){
+      const d = {clients:[{id:'c1', name:'X'}], invoices:[], products:[], devis:[], payments:[], expenses:[]};
+      state.recurrences = [{id:'keep-me'}];
+      const ok = window.applyBackup(d);
+      return ok && (state.recurrences || []).length === 0;
+    })();
+
+    const okPages = (typeof initApp === 'function');
+    return {
+      madePast, nPast: pastInv.length, nextAfterPast, statuses,
+      madeFuture, nFuture: futureInv.length, madePaused, legacyOk, okPages,
+      fn: typeof generateDueRecurring === 'function' && typeof buildStatementLines === 'function'
+    };
+  });
+  check('a due recurrence issues at most three drafts in one session',
+        rec.madePast === 3 && rec.nPast === 3, JSON.stringify({made: rec.madePast, n: rec.nPast}));
+  check('and those documents are brouillons',
+        rec.statuses.every(s => s === 'brouillon'), rec.statuses.join(','));
+  check('and nextDate still moved, so the series does not pile up',
+        rec.nextAfterPast === '2020-04-01', rec.nextAfterPast);
+  check('a future recurrence issues nothing',
+        rec.madeFuture === 0 && rec.nFuture === 0, String(rec.madeFuture));
+  check('a paused recurrence issues nothing', rec.madePaused === 0, String(rec.madePaused));
+  check('a legacy backup without recurrences still loads', rec.legacyOk);
+  check('statement and recurring generators are on the window', rec.fn);
+}
+
+{
+  const c2 = await readFile(join(ROOT, 'c2.js'), 'utf8');
+  const app = await readFile(join(ROOT, 'app.js'), 'utf8');
+  check('the ok list in c2.js includes statement and recurring',
+        /'statement'/.test(c2) && /'recurring'/.test(c2));
+  check('and the load fallback in app.js does too',
+        /"statement"/.test(app) && /"recurring"/.test(app));
+  check('source app.js still loads the core scripts in order',
+        /lib-calc\.js/.test(app) && /ledger\.js/.test(app) && /core\.reduce/.test(app)
+        && !/load\("core\.js/.test(app));
+}
+
+{
+  const pubApp = await readFile(join(ROOT, 'public', 'app.js'), 'utf8');
+  const pubCore = await readFile(join(ROOT, 'public', 'core.js'), 'utf8').catch(() => '');
+  check('public/app.js loads the concatenated core',
+        /core\.js\?v=/.test(pubApp) && !/lib-calc\.js/.test(pubApp), pubApp.slice(0, 180));
+  check('public/core.js contains calcInvoiceTotals', /function calcInvoiceTotals/.test(pubCore));
+  check('and generateDueRecurring', /generateDueRecurring/.test(pubCore));
+}
+
+{
+  const SKIP_HREF = new Set(['dashboard-facturepro.html', 'mobile-facturepro.html',
+                             'design-system.html', 'landing-facturepro.html']);
+  const pubDir = join(ROOT, 'public');
+  const { readdirSync } = await import('node:fs');
+  const missing = [];
+  const accueilBad = [];
+  for (const f of readdirSync(pubDir).filter(x => x.endsWith('.html'))) {
+    if (SKIP_HREF.has(f)) continue;
+    const html = await readFile(join(pubDir, f), 'utf8');
+    if (!/hreflang="fr-DZ"/.test(html) || !/hreflang="ar-DZ"/.test(html) || !/hreflang="x-default"/.test(html)) {
+      missing.push(f);
+    }
+  }
+  check('every published page declares hreflang fr-DZ, ar-DZ and x-default',
+        missing.length === 0, missing.join(', ') || 'all pages');
+  const accueil = await readFile(join(ROOT, 'public', 'accueil.html'), 'utf8');
+  check('accueil.html points hreflang at the domain root, not at itself',
+        /hreflang="fr-DZ" href="https:\/\/www\.facturedz\.com\/\?lang=fr"/.test(accueil)
+        && !/hreflang="fr-DZ" href="https:\/\/www\.facturedz\.com\/accueil\.html/.test(accueil),
+        (accueil.match(/hreflang="fr-DZ"[^>]*/ ) || ['missing'])[0]);
+  const uae = await readFile(join(ROOT, 'public', 'uae-tax-invoice.html'), 'utf8');
+  check('an English country page also declares hreflang=en',
+        /hreflang="en"/.test(uae));
+}
+
+{
+  const needles = [
+    ['facture-maroc.html', 'ICE'],
+    ['facture-tunisie.html', 'matricule fiscal'],
+    ['uae-tax-invoice.html', 'TRN'],
+    ['uk-invoice-template.html', 'Companies House'],
+    ['us-invoice-template.html', 'EIN'],
+    ['free-invoice-generator.html', 'own currency'],
+  ];
+  const copies = [];
+  for (const [file, needle] of needles) {
+    const html = await readFile(join(ROOT, 'public', file), 'utf8');
+    const copy = (html.match(/<article id="country-copy"[\s\S]*?<\/article>/) || [''])[0];
+    check(`${file} carries unique copy naming ${needle}`,
+          copy.includes(needle) && copy.length > 400, copy.length + ' chars');
+    copies.push(copy);
+  }
+  check('no two country pages share their #country-copy',
+        new Set(copies).size === copies.length, copies.length + ' pages');
+  const maroc = copies[0], tunisie = copies[1];
+  check('Maroc and Tunisie are not word-for-word duplicates',
+        maroc !== tunisie && maroc.includes('ICE') && tunisie.includes('matricule fiscal'));
+}
 
 /* The cache name in sw.js is the only thing that actually evicts an old
    build: bare() strips the ?v= query before storing, and the fallback reads

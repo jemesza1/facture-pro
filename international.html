@@ -49,6 +49,13 @@
         padding:.45rem .9rem;font-size:.875rem;cursor:pointer}
   .chip:hover{border-color:var(--brand);color:var(--brand)}
   .hero{background:linear-gradient(135deg,#0f172a 0%,#04371f 55%,#0f172a 100%)}
+  html[data-country] #country-copy{display:block;max-width:48rem;margin:0 auto;padding:2.75rem 1rem 0.5rem}
+  html[data-country] #country-copy[hidden]{display:block}
+  #country-copy h1{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;margin:0 0 .75rem}
+  #country-copy p{color:#475569;line-height:1.65;margin:0 0 .85rem}
+  #country-copy h2{font-size:1.05rem;font-weight:700;margin:1.25rem 0 .4rem}
+  #country-copy ul{margin:0 0 1rem;padding-inline-start:1.2rem;color:#475569}
+  #country-copy li{margin:.25rem 0}
   /* The document. It stays left-to-right in every interface language — the
      invoice is a document, not a screen, and the repository keeps them LTR. */
   .paper{background:#fff;width:794px;max-width:100%;direction:ltr;text-align:left;
@@ -108,6 +115,8 @@
     </div>
   </div>
 </header>
+
+<article id="country-copy" hidden></article>
 
 <!-- The landing. A visitor must know within a second that this is not the
      Algerian workspace: hero first, form second. -->
@@ -850,6 +859,12 @@ function init(){
      d'hier, et l'adresse d'aujourd'hui est plus recente. */
   if (!state.langChosen) state.lang = declared0;
 
+  /* ?lang= is more recent than a stored click or the published language:
+     hreflang points here, and a visitor who followed that link asked for
+     this one. Applied after load(), so it is not overwritten by a draft. */
+  var qlang = (/[?&]lang=(fr|ar|en)\b/.exec(location.search) || [])[1];
+  if (qlang && UI[qlang]) { state.lang = qlang; state.langChosen = true; }
+
   if (!had){
     var today = new Date();
     var iso = function(d){ return d.toISOString().slice(0, 10); };
@@ -908,7 +923,8 @@ function init(){
 
   /* Somebody who already started an invoice comes back to it, not to the
      hero they have read once. */
-  if (had) openForm(state.country);
+  if (preset) openForm(state.country);
+  else if (had) openForm(state.country);
 }
 
 init();
