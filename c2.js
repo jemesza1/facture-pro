@@ -401,7 +401,7 @@ function downloadPdf(){downloadPDF();}
 function initApp(){
   loadData();
   if(localStorage.getItem('facturepro_dark')==='1'){state.dark=true;document.documentElement.classList.add('dark');}
-  var ok=['dashboard','invoices','devis','products','payments','expenses','debts','clients','templates','settings','help','terms'];
+  var ok=['dashboard','invoices','devis','products','payments','expenses','debts','clients','statement','recurring','templates','settings','help','terms'];
   var p=state.currentPage;
   navigate(ok.indexOf(p)>-1?p:'dashboard');
 }

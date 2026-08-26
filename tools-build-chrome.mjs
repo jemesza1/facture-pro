@@ -24,6 +24,7 @@ const OUT = join(ROOT, 'public');
 /* The application is not a document: it has its own shell, its own menu, and
    a footer under it would be furniture in a workshop. The three mockups are
    design references nothing links to. */
+const HOST = 'https://www.facturedz.com';
 const SKIP = new Set(['index.html', 'dashboard-facturepro.html',
                       'mobile-facturepro.html', 'design-system.html',
                       'landing-facturepro.html']);
@@ -220,15 +221,46 @@ function dark(html) {
   return head === -1 ? html : html.slice(0, head) + DARK + '\n' + html.slice(head);
 }
 
+/* hreflang. The site speaks French and Arabic for Algeria, and English on
+   the country pages that were published in English. Without these tags a
+   crawler treats every language as the same URL and picks one. accueil.html
+   is the domain root, so its alternates point at "/" — not at accueil.html,
+   which would compete with the address people type.
+
+   Idempotent: index.html and accueil.html already declare their own. */
+function hreflang(html, file) {
+  if (/rel=["']alternate["'][^>]*hreflang=/i.test(html)) return html;
+  if (/hreflang=["'][^"']+["'][^>]*rel=["']alternate["']/i.test(html)) return html;
+  const isHome = file === 'accueil.html';
+  const path = isHome ? '/' : '/' + file;
+  const base = HOST + path;
+  const alt = lang => `${base}${isHome ? '?' : '?'}lang=${lang}`;
+  const published = ((html.match(/<html[^>]*\blang="([^"]*)"/i) || [])[1] || '').slice(0, 2).toLowerCase();
+  const tags = [
+    `<link rel="alternate" hreflang="fr-DZ" href="${alt('fr')}" />`,
+    `<link rel="alternate" hreflang="ar-DZ" href="${alt('ar')}" />`,
+  ];
+  if (published === 'en') {
+    tags.push(`<link rel="alternate" hreflang="en" href="${alt('en')}" />`);
+  }
+  tags.push(`<link rel="alternate" hreflang="x-default" href="${base}" />`);
+  const head = html.search(/<\/head>/i);
+  return head === -1 ? html : html.slice(0, head) + tags.join('\n') + '\n' + html.slice(head);
+}
+
 function inject(html, file) {
+  /* Hreflang is independent of the bar: a page that already has a footer
+     still needs the tags, and a second run must not duplicate them. */
+  let out = hreflang(html, file);
+
   /* Le pied, pas la barre : accueil.html ne prend pas de barre, et un garde
      qui la cherchait lui ajoutait un second pied a chaque execution. */
-  if (html.indexOf('class="fp-foot"') !== -1) return dark(icons(html));  /* idempotent */
+  if (out.indexOf('class="fp-foot"') !== -1) return dark(icons(out));  /* idempotent */
 
   /* The bar goes under whatever the page already puts at the top: these
      pages carry their own brand and language button, and a second brand
      three lines above the first reads as a mistake. */
-  let out = dark(icons(html));
+  out = dark(icons(out));
   if (NO_BAR.has(file)) {
     const end0 = out.lastIndexOf('</body>');
     if (end0 === -1) return html;
