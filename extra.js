@@ -96,7 +96,7 @@
     var ar=locale==='ar';
     openModal('<div class="modal max-w-md" onclick="event.stopPropagation()">'+
       '<div class="modal-header"><h3 class="font-semibold">'+(p?(ar?'\u062a\u0639\u062f\u064a\u0644':'Modifier'):(ar?'\u0645\u0646\u062a\u062c / \u062e\u062f\u0645\u0629':'Produit / Service'))+'</h3>'+
-      '<button onclick="closeModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
+      '<button onclick="closeModal()" class="btn-ghost p-2" aria-label="'+esc(t('ui.close'))+'"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
       '<div class="modal-body space-y-3">'+
         '<div><label class="form-label">'+(ar?'\u0627\u0644\u0648\u0635\u0641 *':'D\u00e9signation *')+'</label><input id="prod-name" class="form-input" value="'+esc(p&&p.name||'')+'"/></div>'+
         '<div class="grid grid-cols-2 gap-3">'+
@@ -173,20 +173,20 @@
     var ar=locale==='ar';
     openModal('<div class="modal max-w-3xl" onclick="event.stopPropagation()">'+
       '<div class="modal-header"><h3 class="font-semibold">'+(d?(ar?'\u062a\u0639\u062f\u064a\u0644 \u0639\u0631\u0636':'Modifier devis'):(ar?'\u0639\u0631\u0636 \u0633\u0639\u0631 \u062c\u062f\u064a\u062f':'Nouveau devis'))+'</h3>'+
-      '<button onclick="closeModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
+      '<button onclick="closeModal()" class="btn-ghost p-2" aria-label="'+esc(t('ui.close'))+'"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
       '<div class="modal-body space-y-4">'+
         '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">'+
-          '<div><label class="form-label">'+(ar?'\u0627\u0644\u0639\u0645\u064a\u0644 *':'Client *')+'</label><select id="dev-client" class="form-select"><option value="">\u2014</option>'+
+          '<div><label class="form-label" for="dev-client">'+(ar?'\u0627\u0644\u0639\u0645\u064a\u0644 *':'Client *')+'</label><select id="dev-client" class="form-select"><option value="">\u2014</option>'+
             state.clients.map(function(c){return '<option value="'+c.id+'" '+(d&&d.clientId===c.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+
           '</select></div>'+
-          '<div><label class="form-label">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input type="date" id="dev-date" class="form-input" value="'+(d&&d.date||new Date().toISOString().slice(0,10))+'"/></div>'+
-          '<div><label class="form-label">'+esc(t('devis.validUntil'))+'</label><input type="date" id="dev-valid" class="form-input" value="'+esc(d&&d.validUntil||'')+'"/>'+
+          '<div><label class="form-label" for="dev-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input type="date" id="dev-date" class="form-input" value="'+(d&&d.date||new Date().toISOString().slice(0,10))+'"/></div>'+
+          '<div><label class="form-label" for="dev-valid">'+esc(t('devis.validUntil'))+'</label><input type="date" id="dev-valid" class="form-input" value="'+esc(d&&d.validUntil||'')+'"/>'+
             '<p class="text-xs text-slate-500 mt-1">'+esc(t('devis.validHint'))+'</p></div>'+
         '</div>'+
-        '<div><div class="flex justify-between mb-2"><label class="form-label mb-0">'+(ar?'\u0627\u0644\u0628\u0646\u0648\u062f':'Lignes')+'</label>'+
+        '<div><div class="flex justify-between mb-2"><span class="form-label mb-0">'+(ar?'\u0627\u0644\u0628\u0646\u0648\u062f':'Lignes')+'</span>'+
           '<button type="button" onclick="addDevisItem()" class="text-sm text-sky-600 font-medium">+ '+(ar?'\u0625\u0636\u0627\u0641\u0629':'Ajouter')+'</button></div>'+
           '<div id="dev-items" class="space-y-2">'+items.map(function(it){return devisItemRow(it);}).join('')+'</div></div>'+
-        '<div><label class="form-label">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0627\u062a':'Notes')+'</label><textarea id="dev-notes" class="form-input" rows="2">'+esc(d&&d.notes||'')+'</textarea></div>'+
+        '<div><label class="form-label" for="dev-notes">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0627\u062a':'Notes')+'</label><textarea id="dev-notes" class="form-input" rows="2">'+esc(d&&d.notes||'')+'</textarea></div>'+
       '</div>'+
       '<div class="modal-footer flex justify-end gap-2">'+
         '<button onclick="closeModal()" class="btn-secondary">'+(ar?'\u0625\u0644\u063a\u0627\u0621':'Annuler')+'</button>'+
@@ -199,11 +199,11 @@
   function devisItemRow(it){
     it=it||{description:'',qty:1,unitPrice:0,tva:19};
     return '<div class="grid grid-cols-12 gap-2 items-end devis-row">'+
-      '<div class="col-span-5"><input class="form-input di-desc" placeholder="'+esc(t('inv.desc'))+'" value="'+esc(it.description||'')+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-qty" title="'+esc(t('inv.qty'))+'" placeholder="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-price" title="'+esc(t('inv.unit'))+'" placeholder="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code di-tva" title="'+esc(t('inv.vat'))+'" placeholder="'+esc(t('inv.vat'))+'" value="'+(it.tva!=null?it.tva:19)+'"/></div>'+
-      '<div class="col-span-1"><button type="button" onclick="this.closest(\'.devis-row\').remove()" class="btn-ghost p-2 text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>';
+      '<div class="col-span-5"><input class="form-input di-desc" aria-label="'+esc(t('inv.desc'))+'" placeholder="'+esc(t('inv.desc'))+'" value="'+esc(it.description||'')+'"/></div>'+
+      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-qty" aria-label="'+esc(t('inv.qty'))+'" title="'+esc(t('inv.qty'))+'" placeholder="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
+      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-price" aria-label="'+esc(t('inv.unit'))+'" title="'+esc(t('inv.unit'))+'" placeholder="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
+      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code di-tva" aria-label="'+esc(t('inv.vat'))+'" title="'+esc(t('inv.vat'))+'" placeholder="'+esc(t('inv.vat'))+'" value="'+(it.tva!=null?it.tva:19)+'"/></div>'+
+      '<div class="col-span-1"><button type="button" onclick="this.closest(\'.devis-row\').remove()" class="btn-ghost p-2 text-red-500" aria-label="'+esc(t('actions.delete'))+'"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>';
   }
 
   window.addDevisItem=function(){
@@ -325,17 +325,17 @@
     var invs=state.invoices.filter(function(i){return i.status!=='annulee';});
     openModal('<div class="modal max-w-md" onclick="event.stopPropagation()">'+
       '<div class="modal-header"><h3 class="font-semibold">'+(ar?'\u062a\u0633\u062c\u064a\u0644 \u062f\u0641\u0639\u0629':'Enregistrer un paiement')+'</h3>'+
-      '<button onclick="closeModal()" class="btn-ghost p-2"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
+      '<button onclick="closeModal()" class="btn-ghost p-2" aria-label="'+esc(t('ui.close'))+'"><i data-lucide="x" class="w-5 h-5"></i></button></div>'+
       '<div class="modal-body space-y-3">'+
-        '<div><label class="form-label">'+(ar?'\u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629 *':'Facture *')+'</label><select id="pay-inv" class="form-select"><option value="">\u2014</option>'+
+        '<div><label class="form-label" for="pay-inv">'+(ar?'\u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629 *':'Facture *')+'</label><select id="pay-inv" class="form-select"><option value="">\u2014</option>'+
           invs.map(function(i){ var cl=getClient(i.clientId)||{}; return '<option value="'+i.id+'">'+esc(i.number)+' \u2014 '+esc(cl.name||'')+'</option>'; }).join('')+
         '</select></div>'+
-        '<div><label class="form-label">'+(ar?'\u0627\u0644\u0645\u0628\u0644\u063a *':'Montant *')+'</label><input id="pay-amount" type="number" min="0" step="0.01" class="form-input ltr-code"/></div>'+
-        '<div><label class="form-label">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input id="pay-date" type="date" class="form-input" value="'+new Date().toISOString().slice(0,10)+'"/></div>'+
-        '<div><label class="form-label">'+(ar?'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062f\u0641\u0639':'Mode')+'</label><select id="pay-method" class="form-select">'+
+        '<div><label class="form-label" for="pay-amount">'+(ar?'\u0627\u0644\u0645\u0628\u0644\u063a *':'Montant *')+'</label><input id="pay-amount" type="number" min="0" step="0.01" class="form-input ltr-code"/></div>'+
+        '<div><label class="form-label" for="pay-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input id="pay-date" type="date" class="form-input" value="'+new Date().toISOString().slice(0,10)+'"/></div>'+
+        '<div><label class="form-label" for="pay-method">'+(ar?'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062f\u0641\u0639':'Mode')+'</label><select id="pay-method" class="form-select">'+
           ['virement','especes','cheque','ccp','autre'].map(function(m){return '<option value="'+m+'">'+esc(t('payment.method.'+m))+'</option>';}).join('')+
         '</select></div>'+
-        '<div><label class="form-label">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0629':'Note')+'</label><input id="pay-note" class="form-input"/></div>'+
+        '<div><label class="form-label" for="pay-note">'+(ar?'\u0645\u0644\u0627\u062d\u0638\u0629':'Note')+'</label><input id="pay-note" class="form-input"/></div>'+
       '</div>'+
       '<div class="modal-footer flex justify-end gap-2">'+
         '<button onclick="closeModal()" class="btn-secondary">'+(ar?'\u0625\u0644\u063a\u0627\u0621':'Annuler')+'</button>'+
