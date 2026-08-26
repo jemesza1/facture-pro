@@ -8,6 +8,7 @@
        rather than in depenses.js: this ensure() runs on every saveData, and
        the whitelist below writes what it finds. */
     if(!state.expenses) state.expenses=[];
+    if(!state.recurring) state.recurring=[];
     if(!state.nextDevisNumber) state.nextDevisNumber=1;
   }
 
@@ -25,6 +26,7 @@
         devis:state.devis,
         payments:state.payments,
         expenses:state.expenses,
+        recurring:state.recurring,
         nextDevisNumber:state.nextDevisNumber,
         nextAvoirNumber:state.nextAvoirNumber,
         nextBlNumber:state.nextBlNumber
@@ -54,6 +56,7 @@
       if(Array.isArray(d.devis)) state.devis=d.devis;
       if(Array.isArray(d.payments)) state.payments=d.payments;
       if(Array.isArray(d.expenses)) state.expenses=d.expenses;
+      if(Array.isArray(d.recurring)) state.recurring=d.recurring;
       if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
     }catch(e){}
   };

@@ -1998,6 +1998,9 @@ const payload = await page.evaluate(() => {
   state.devis    = [{id:'d1', number:'DEV-2026-001', clientId:'c1', items:[]}];
   state.payments = [{id:'y1', invoiceId:'i1', amount:5000, date:'2026-07-02'}];
   state.expenses = [{id:'e1', label:'Loyer', amount:30000, date:'2026-07-01', category:'loyer'}];
+  state.recurring = [{id:'r1', clientId:'c1', frequency:'month', nextDate:'2099-01-01',
+                      active:true, paymentMode:'virement',
+                      items:[{description:'Loyer', qty:1, unitPrice:40000, tva:19}]}];
   state.nextAvoirNumber = 7;
   state.nextDevisNumber = 4;
   return window.buildBackup();
@@ -2008,6 +2011,7 @@ check('the backup carries the products', payload.products.length === 1);
 check('the backup carries the devis', payload.devis.length === 1);
 check('the backup carries the payments', payload.payments.length === 1);
 check('the backup carries the dépenses', payload.expenses.length === 1);
+check('the backup carries the récurrences', payload.recurring.length === 1);
 check('the backup carries the avoir counter', payload.nextAvoirNumber === 7, String(payload.nextAvoirNumber));
 check('the backup carries the devis counter', payload.nextDevisNumber === 4, String(payload.nextDevisNumber));
 
@@ -2016,11 +2020,12 @@ check('the backup carries the devis counter', payload.nextDevisNumber === 4, Str
 const trip = await page.evaluate(() => {
   const saved = window.buildBackup();
   state.clients = []; state.invoices = []; state.products = [];
-  state.devis = []; state.payments = []; state.expenses = [];
+  state.devis = []; state.payments = []; state.expenses = []; state.recurring = [];
   const ok = window.applyBackup(JSON.parse(JSON.stringify(saved)));
   return {ok, clients: state.clients.length, invoices: state.invoices.length,
           products: state.products.length, devis: state.devis.length,
           payments: state.payments.length, expenses: state.expenses.length,
+          recurring: state.recurring.length,
           avoir: state.nextAvoirNumber};
 });
 check('a wiped ledger restores', trip.ok);
@@ -2030,6 +2035,7 @@ check('and the products come back', trip.products === 1, String(trip.products));
 check('and the devis come back', trip.devis === 1, String(trip.devis));
 check('and the payments come back', trip.payments === 1, String(trip.payments));
 check('and the dépenses come back', trip.expenses === 1, String(trip.expenses));
+check('and the récurrences come back', trip.recurring === 1, String(trip.recurring));
 check('and the avoir counter comes back', trip.avoir === 7, String(trip.avoir));
 
 /* A file whose counter is older than its own documents would number a second
@@ -2055,6 +2061,18 @@ const noExp = await page.evaluate(() => {
 });
 check('a backup with no dépenses key restores none, rather than keeping ours',
       noExp === 0, String(noExp));
+
+const noRec = await page.evaluate(() => {
+  const d = window.buildBackup();
+  d.recurring = [{id:'keep', clientId:'c1', frequency:'month', nextDate:'2099-01-01',
+                  items:[{description:'X', qty:1, unitPrice:1, tva:19}]}];
+  window.applyBackup(d);
+  delete d.recurring;
+  window.applyBackup(d);
+  return (state.recurring || []).length;
+});
+check('a backup with no récurrences key restores none, rather than keeping ours',
+      noRec === 0, String(noRec));
 
 const refused = await page.evaluate(() => {
   const before = state.clients.length;
@@ -3213,6 +3231,28 @@ const gen = await readFile(join(PUB, 'facture-maroc.html'), 'utf8');
 check('and the pages link to each other, so none is an orphan',
       (gen.match(/href="\/(facture|uae|uk|us|free)[^"]*\.html"/g) || []).length >= 5);
 
+/* Word-for-word duplicate bodies used to make the six addresses compete.
+   A crawler that never runs JS still has to read a different H1, a different
+   intro, and a hreflang cluster that points the six at each other. */
+{
+  const h1s = new Set(), copies = new Set();
+  for (const [file, code] of COUNTRY_PAGES) {
+    const html = await readFile(join(PUB, file), 'utf8');
+    const h1 = ((html.match(/<h1 id="t-h1"[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || '').trim();
+    const copy = ((html.match(/data-country-copy="([^"]+)"/) || [])[1] || '');
+    check(`${file} has a crawler-visible intro of its own`,
+          copy === code && /id="country-copy"/.test(html), copy);
+    check(`${file} does not keep the hub's H1`,
+          h1.length > 10 && !/An invoice your country will accept/.test(h1), h1.slice(0, 60));
+    check(`${file} does not share that H1 with a sister`, !h1s.has(h1), h1.slice(0, 40));
+    h1s.add(h1); copies.add(copy);
+    check(`${file} declares a hreflang cluster`,
+          /rel="alternate" hreflang=/.test(html) && html.includes('hreflang="x-default"'));
+  }
+  check('no two country pages share an intro', copies.size === COUNTRY_PAGES.length,
+        copies.size + ' distinct');
+}
+
 /* ---------------------------------------------------------------- *
  * The pages that answer a search with the thing people came for.
  *
@@ -3342,7 +3382,8 @@ const NAME_SRC = `(el) => {
 }`;
 
 for (const fn of ['openClientModal', 'openNewInvoice', 'openProductModal',
-                  'openExpenseModal', 'openDevisModal', 'openPaymentModal']) {
+                  'openExpenseModal', 'openDevisModal', 'openPaymentModal',
+                  'openRecurringModal']) {
   const r = await page.evaluate(({fn, src}) => {
     if (typeof window[fn] !== 'function') return {missing: true};
     window[fn]();
@@ -3387,6 +3428,314 @@ check('three invoice rows carry three sets of named fields',
       rowNames.rows === 3 && rowNames.controls === 15 && rowNames.unnamed === 0,
       JSON.stringify(rowNames));
 check('and no two rows share an id', rowNames.collidingIds === false);
+
+/* ---------------------------------------------------------------- *
+ * Relevé de compte, factures récurrentes, hreflang, and the bundle.
+ * ---------------------------------------------------------------- */
+console.log('\nRelevé de compte');
+
+{
+  const led = await page.evaluate(() => {
+    if (typeof locale !== 'undefined' && locale !== 'fr') toggleLocale();
+    state.clients = [{id:'cl1', name:'SARL Atlas', nif:'0999'}];
+    state.payments = [
+      {id:'p1', invoiceId:'inv1', clientId:'cl1', amount:50000, date:'2026-03-10'}
+    ];
+    state.invoices = [
+      {id:'inv1', number:'FAC-2026-101', clientId:'cl1', date:'2026-03-01',
+       status:'envoyee', paymentMode:'virement',
+       items:[{description:'Prestation', qty:1, unitPrice:100000, tva:19}]},
+      {id:'invD', number:'FAC-2026-102', clientId:'cl1', date:'2026-03-02',
+       status:'brouillon', paymentMode:'virement',
+       items:[{description:'Brouillon', qty:1, unitPrice:80000, tva:19}]},
+      {id:'invA', number:'FAC-2026-103', clientId:'cl1', date:'2026-03-03',
+       status:'annulee', paymentMode:'virement',
+       items:[{description:'Annulée', qty:1, unitPrice:70000, tva:19}]},
+      {id:'invAv', number:'AV-2026-001', type:'avoir', clientId:'cl1', date:'2026-03-15',
+       status:'payee', paymentMode:'virement',
+       items:[{description:'Avoir', qty:1, unitPrice:20000, tva:19}]},
+      {id:'invBl', number:'BL-2026-001', type:'bl', clientId:'cl1', date:'2026-03-16',
+       status:'envoyee', paymentMode:'virement',
+       items:[{description:'Livraison', qty:1, unitPrice:90000, tva:19}]},
+      {id:'invOther', number:'FAC-2026-199', clientId:'other', date:'2026-03-01',
+       status:'envoyee', paymentMode:'virement',
+       items:[{description:'Autre client', qty:1, unitPrice:10000, tva:19}]}
+    ];
+    const all = clientLedger('cl1');
+    const period = clientLedger('cl1', '2026-03-10', '2026-03-15');
+    return {
+      n: all.lines.length,
+      kinds: all.lines.map(l => l.kind),
+      debit: all.lines.filter(l => l.kind === 'invoice').map(l => l.debit),
+      creditPay: all.lines.filter(l => l.kind === 'payment').map(l => l.credit),
+      creditAv: all.lines.filter(l => l.kind === 'avoir').map(l => l.credit),
+      balance: all.balance,
+      periodN: period.lines.length,
+      periodKinds: period.lines.map(l => l.kind)
+    };
+  });
+  check('the ledger skips drafts, cancelled invoices and delivery notes',
+        led.n === 3 && led.kinds.slice().sort().join(',') === 'avoir,invoice,payment',
+        JSON.stringify(led.kinds));
+  check('an issued invoice is a debit at its net',
+        led.debit.length === 1 && near(led.debit[0], 119000), String(led.debit[0]));
+  check('a payment is a credit',
+        led.creditPay.length === 1 && near(led.creditPay[0], 50000), String(led.creditPay[0]));
+  check('an avoir is a credit, because calcInvoiceTotals already negated it',
+        led.creditAv.length === 1 && near(led.creditAv[0], 23800), String(led.creditAv[0]));
+  check('the running balance is debit minus credit',
+        near(led.balance, 119000 - 50000 - 23800), String(led.balance));
+  check('a period filter keeps only dates inside the window',
+        led.periodN === 2 && led.periodKinds.slice().sort().join(',') === 'avoir,payment',
+        JSON.stringify(led.periodKinds));
+}
+
+check('the menu offers the relevé',
+      await page.evaluate(() => !!document.querySelector('.nav-item[data-page="releve"]')));
+
+{
+  await page.evaluate(() => {
+    state.currentPage = 'releve';
+    state.releveClientId = 'cl1';
+    saveData();
+  });
+  await page.reload();
+  await page.waitForFunction(() => typeof clientLedger === 'function', {timeout: 30000});
+  check('and a refresh comes back to it rather than the dashboard',
+        await page.evaluate(() => state.currentPage) === 'releve');
+}
+
+{
+  const ui = await page.evaluate(() => {
+    state.releveClientId = 'cl1';
+    navigate('releve');
+    const txt = document.getElementById('main-content').innerText;
+    return {title: /Relevé/.test(txt), client: /SARL Atlas/.test(txt),
+            paper: !!document.getElementById('releve-paper'),
+            keys: /\breleve\./.test(txt)};
+  });
+  check('the page names the client and the document', ui.title && ui.client);
+  check('and paints a paper the PDF can capture', ui.paper);
+  check('with no key showing through', !ui.keys);
+}
+
+{
+  const arabic = await page.evaluate(() => {
+    if (locale !== 'ar') toggleLocale();
+    navigate('releve');
+    const title = document.getElementById('page-title').textContent;
+    const txt = document.getElementById('main-content').innerText;
+    const dir = document.documentElement.dir;
+    if (locale !== 'fr') toggleLocale();
+    return {title, dir, keys: /\breleve\./.test(txt),
+            french: /Relevé de compte/.test(txt), arabic: /كشف حساب/.test(txt)};
+  });
+  check('the relevé is translated in Arabic', arabic.arabic && !arabic.french, arabic.title);
+  check('with no key showing through in Arabic', !arabic.keys);
+  check('and the interface still mirrors', arabic.dir === 'rtl', arabic.dir);
+}
+
+{
+  const keys = await page.evaluate(() => {
+    function walk(a, b, p) {
+      const miss = [];
+      if (a && typeof a === 'object' && !Array.isArray(a)) {
+        for (const k of Object.keys(a)) miss.push.apply(miss, walk(a[k], b && b[k], p + '.' + k));
+      } else if (typeof a === 'string' && typeof b !== 'string') miss.push(p);
+      return miss;
+    }
+    return {
+      rel: walk(I18N.fr.releve, I18N.ar.releve, 'releve'),
+      rec: walk(I18N.fr.rec, I18N.ar.rec, 'rec'),
+      navR: typeof I18N.ar.nav.releve === 'string' && typeof I18N.ar.nav.recurring === 'string'
+    };
+  });
+  check('every French relevé string has an Arabic twin', keys.rel.length === 0, keys.rel.join(', '));
+  check('every French récurrence string has an Arabic twin', keys.rec.length === 0, keys.rec.join(', '));
+  check('the nav labels exist in Arabic too', keys.navR);
+}
+
+console.log('\nFactures récurrentes');
+
+check('the menu offers récurrences',
+      await page.evaluate(() => !!document.querySelector('.nav-item[data-page="recurring"]')));
+
+{
+  const issued = await page.evaluate(() => {
+    state.clients = [{id:'cl1', name:'SARL Atlas'}];
+    state.invoices = [];
+    state.nextInvoiceNumber = 1;
+    state.recurring = [
+      {id:'rr1', clientId:'cl1', frequency:'month', nextDate:'2020-01-01', active:true,
+       paymentMode:'virement', items:[{description:'Loyer', qty:1, unitPrice:40000, tva:19}]},
+      {id:'rr2', clientId:'cl1', frequency:'month', nextDate:'2020-01-01', active:false,
+       paymentMode:'virement', items:[{description:'Pause', qty:1, unitPrice:1000, tva:19}]},
+      {id:'rr3', clientId:'cl1', frequency:'month', nextDate:'2020-01-01', active:true,
+       paymentMode:'virement', items:[]}
+    ];
+    const n = runRecurring();
+    const drafts = state.invoices.filter(i => i.status === 'brouillon');
+    return {
+      n, drafts: drafts.length,
+      numbers: drafts.map(i => i.number),
+      recId: drafts.map(i => i.recurringId),
+      next: state.recurring[0].nextDate,
+      pausedNext: state.recurring[1].nextDate,
+      emptyNext: state.recurring[2].nextDate,
+      stored: /"recurring"/.test(localStorage.getItem('facturepro_dz_v24') || '')
+    };
+  });
+  check('a due rule writes drafts, capped at three catch-ups',
+        issued.n === 3 && issued.drafts === 3, JSON.stringify({n: issued.n, d: issued.drafts}));
+  check('those drafts belong to the rule',
+        issued.recId.every(id => id === 'rr1'), issued.recId.join(','));
+  check('and they carry a real invoice number',
+        issued.numbers.every(n => /^FAC-\d{4}-\d{3}$/.test(n)), issued.numbers.join(','));
+  check('the next date advanced three months, not a year',
+        issued.next === '2020-04-01', issued.next);
+  check('a paused rule issues nothing', issued.pausedNext === '2020-01-01');
+  check('a rule with no lines issues nothing', issued.emptyNext === '2020-01-01');
+  check('and the list is in the whitelist, so it survives a save', issued.stored);
+}
+
+{
+  await page.evaluate(() => {
+    state.recurring = [{id:'rrKeep', clientId:'cl1', frequency:'week', nextDate:'2099-06-01',
+                        active:true, paymentMode:'virement',
+                        items:[{description:'Abonnement', qty:1, unitPrice:5000, tva:19}]}];
+    state.currentPage = 'recurring';
+    saveData();
+  });
+  await page.reload();
+  await page.waitForFunction(() => typeof runRecurring === 'function', {timeout: 30000});
+  const back = await page.evaluate(() => ({
+    page: state.currentPage,
+    n: (state.recurring || []).length,
+    freq: (state.recurring[0] || {}).frequency,
+    extra: (state.invoices || []).filter(i => i.recurringId === 'rrKeep').length
+  }));
+  check('a refresh comes back to récurrences rather than the dashboard', back.page === 'recurring');
+  check('and a future-dated rule is not issued on open', back.n === 1 && back.extra === 0,
+        JSON.stringify(back));
+  check('the frequency survived the reload', back.freq === 'week', back.freq);
+}
+
+{
+  const ui = await page.evaluate(() => {
+    navigate('recurring');
+    const txt = document.getElementById('main-content').innerText;
+    return {title: /récurrent/i.test(txt), client: /SARL Atlas/.test(txt),
+            keys: /\brec\./.test(txt)};
+  });
+  check('the page lists the rule', ui.title && ui.client);
+  check('with no key showing through', !ui.keys);
+}
+
+{
+  const arabic = await page.evaluate(() => {
+    if (locale !== 'ar') toggleLocale();
+    navigate('recurring');
+    const title = document.getElementById('page-title').textContent;
+    const txt = document.getElementById('main-content').innerText;
+    const dir = document.documentElement.dir;
+    if (locale !== 'fr') toggleLocale();
+    return {title, dir, keys: /\brec\./.test(txt),
+            french: /Factures récurrentes/.test(txt), arabic: /المتكرر/.test(txt)};
+  });
+  check('récurrences are translated in Arabic', arabic.arabic && !arabic.french, arabic.title);
+  check('with no key showing through in Arabic', !arabic.keys);
+  check('and the interface still mirrors', arabic.dir === 'rtl', arabic.dir);
+}
+
+{
+  const pause = await page.evaluate(() => {
+    const before = state.recurring[0].active;
+    toggleRecurring(state.recurring[0].id);
+    const mid = state.recurring[0].active;
+    /* Editing a paused rule must not turn it back on. */
+    state.recurring[0].notes = 'kept';
+    saveData();
+    openRecurringModal(state.recurring[0].id);
+    document.getElementById('rec-notes').value = 'kept-edit';
+    saveRecurring(state.recurring[0].id);
+    return {before, mid, after: state.recurring[0].active, notes: state.recurring[0].notes};
+  });
+  check('pausing a rule records it as paused',
+        pause.before !== false && pause.mid === false, JSON.stringify(pause));
+  check('and editing a paused rule does not reactivate it',
+        pause.after === false && pause.notes === 'kept-edit', JSON.stringify(pause));
+}
+
+/* Week / month / year step, including a month-end that has no matching day. */
+{
+  const step = await page.evaluate(() => {
+    const jan = addRecurringPeriod('2026-01-31', 'month');
+    const week = addRecurringPeriod('2026-08-20', 'week');
+    const year = addRecurringPeriod('2026-08-20', 'year');
+    const mar = addRecurringPeriod('2026-03-31', 'month');
+    return {jan, week, year, mar};
+  });
+  check('a week later is seven days later', step.week === '2026-08-27', step.week);
+  check('a year later keeps the day', step.year === '2027-08-20', step.year);
+  check('31 January becomes the last day of February, not 3 March',
+        step.jan === '2026-02-28', step.jan);
+  check('31 March becomes 30 April, not 1 May', step.mar === '2026-04-30', step.mar);
+}
+
+console.log('\nhreflang, and one script instead of eighteen');
+
+{
+  const home = await readFile(join(ROOT, 'index.html'), 'utf8');
+  const land = await readFile(join(ROOT, 'accueil.html'), 'utf8');
+  check('the app document declares hreflang',
+        /hreflang="fr"/.test(home) && /hreflang="ar"/.test(home) && /hreflang="x-default"/.test(home));
+  check('the landing page declares hreflang',
+        /hreflang="fr"/.test(land) && /hreflang="ar"/.test(land) && /hreflang="x-default"/.test(land));
+  check('and the Arabic alternate is a real query the landing honours',
+        /lang=ar/.test(land) && /lang=\(ar\|fr\)/.test(land));
+}
+
+{
+  const pages = ['droit-de-timbre.html', 'calcul-tva.html', 'guide.html',
+                 'conditions.html', 'montant-en-lettres.html', 'calcul-salaire.html'];
+  for (const f of pages) {
+    const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    check(`${f} received hreflang at build time`,
+          /rel="alternate" hreflang="fr"/.test(html) &&
+          /rel="alternate" hreflang="ar"/.test(html) &&
+          /rel="alternate" hreflang="x-default"/.test(html),
+          html ? 'missing tags' : 'not built');
+    check(`${f} honours ?lang= so the Arabic URL is not a duplicate`,
+          html.indexOf('lang=(ar|fr)') !== -1);
+  }
+}
+
+{
+  const appSrc = await readFile(join(ROOT, 'app.js'), 'utf8');
+  const swSrc = await readFile(join(ROOT, 'sw.js'), 'utf8');
+  const core = (appSrc.match(/var core=(\[[^\]]+\])/) || [])[1];
+  const files = core ? Function('return ' + core)() : [];
+  check('the source still loads scripts one by one, so the tests can',
+        files.includes('releve.js') && files.includes('recurrent.js') && files.length > 5,
+        String(files.length));
+  check('and the service worker caches both new files and the bundle',
+        swSrc.includes("'/releve.js'") && swSrc.includes("'/recurrent.js'") &&
+        swSrc.includes("'/core.bundle.js'"));
+  const bundled = await readFile(join(ROOT, 'public', 'core.bundle.js'), 'utf8').catch(() => '');
+  const pubApp = await readFile(join(ROOT, 'public', 'app.js'), 'utf8').catch(() => '');
+  check('the build wrote a single bundle', bundled.length > 50000, bundled ? bundled.length + ' B' : 'missing');
+  check('that bundle contains the new modules',
+        bundled.includes('clientLedger') && bundled.includes('runRecurring'));
+  check('and public/app.js loads that one file, not the eighteen',
+        /var core=\["core\.bundle\.js"\]/.test(pubApp) && !pubApp.includes('releve.js'),
+        (pubApp.match(/var core=\[[^\]]+\]/) || [])[0]);
+}
+
+await page.evaluate(() => {
+  state.recurring = [];
+  state.releveClientId = '';
+  saveData();
+});
 
 /* The cache name in sw.js is the only thing that actually evicts an old
    build: bare() strips the ?v= query before storing, and the fallback reads

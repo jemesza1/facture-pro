@@ -80,8 +80,8 @@ const BAR = [
   ['international.html', 'International', 'دولي'],
 ];
 
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const esc = s => String(s).replace(/&/g, '&').replace(/</g, '<')
+  .replace(/>/g, '>').replace(/"/g, '"');
 
 /* A label with no Arabic keeps its own words: "UK invoice template" is the
    search term, and translating it would hide the page from what it answers. */
@@ -137,7 +137,7 @@ html.dark .opacity-70{opacity:.85}
 
 const bar = `<nav class="fp-bar" aria-label="Outils du site"><div class="fp-bar-in">
 <div class="fp-links">${BAR.map(link).join('')}<a href="#fp-map"><span data-fpfr="Tout voir" data-fpar="عرض الكل">Tout voir</span></a></div>
-<a class="fp-cta" href="/index.html?app=1&amp;new=1"><span data-fpfr="Créer une facture" data-fpar="أنشئ فاتورة">Créer une facture</span></a>
+<a class="fp-cta" href="/index.html?app=1&new=1"><span data-fpfr="Créer une facture" data-fpar="أنشئ فاتورة">Créer une facture</span></a>
 </div></nav>`;
 
 const columns = GROUPS.map(([fr, ar, items]) =>
@@ -194,6 +194,35 @@ function icons(html) {
   return head === -1 ? html : html.slice(0, head) + ICONS + '\n' + html.slice(head);
 }
 
+/* A crawler that cannot run JavaScript still has to be told that Arabic and
+   French are the same document. Country pages already carry their own cluster
+   (written by tools-build-countries.mjs) and are left alone; the hub is a
+   three-language picker, not a FR/AR pair, so it is left alone too. */
+function hreflang(html, file) {
+  if (html.indexOf('hreflang') !== -1) return html;
+  if (file === 'international.html') return html;
+  const path = file === 'accueil.html' ? '/' : '/' + file;
+  const url = 'https://www.facturedz.com' + path;
+  const ar = url + (path.indexOf('?') === -1 ? '?lang=ar' : '&lang=ar');
+  const tags =
+    `<link rel="alternate" hreflang="fr" href="${url}" />\n` +
+    `<link rel="alternate" hreflang="ar" href="${ar}" />\n` +
+    `<link rel="alternate" hreflang="x-default" href="${url}" />\n`;
+  const head = html.search(/<\/head>/i);
+  return head === -1 ? html : html.slice(0, head) + tags + html.slice(head);
+}
+
+/* hreflang="ar" points at ?lang=ar. That URL is only a language if the page
+   actually reads it — most of these pages already honour fp_locale, so a
+   one-line write in <head> is enough for their own script to pick it up. */
+const LANGQ = `<script>(function(){try{var m=/[?&]lang=(ar|fr)(?:&|$)/.exec(location.search||'');if(m)localStorage.setItem('fp_locale',m[1]);}catch(e){}})();</script>`;
+
+function langq(html) {
+  if (html.indexOf('lang=(ar|fr)') !== -1) return html;
+  const head = html.search(/<\/head>/i);
+  return head === -1 ? html : html.slice(0, head) + LANGQ + '\n' + html.slice(head);
+}
+
 
 /* Tailwind est configuré en darkMode:'class' parce que l'application pilote
    elle-même la classe. Les pages statiques ne la posaient jamais : leur propre
@@ -223,12 +252,12 @@ function dark(html) {
 function inject(html, file) {
   /* Le pied, pas la barre : accueil.html ne prend pas de barre, et un garde
      qui la cherchait lui ajoutait un second pied a chaque execution. */
-  if (html.indexOf('class="fp-foot"') !== -1) return dark(icons(html));  /* idempotent */
+  if (html.indexOf('class="fp-foot"') !== -1) return hreflang(langq(dark(icons(html))), file);  /* idempotent */
 
   /* The bar goes under whatever the page already puts at the top: these
      pages carry their own brand and language button, and a second brand
      three lines above the first reads as a mistake. */
-  let out = dark(icons(html));
+  let out = hreflang(langq(dark(icons(html))), file);
   if (NO_BAR.has(file)) {
     const end0 = out.lastIndexOf('</body>');
     if (end0 === -1) return html;

@@ -19,6 +19,9 @@
        typed, linked and shared — and everything this page earns belongs to
        it rather than to a second URL competing with it. -->
   <link rel="canonical" href="https://www.facturedz.com/" />
+  <link rel="alternate" hreflang="fr" href="https://www.facturedz.com/" />
+  <link rel="alternate" hreflang="ar" href="https://www.facturedz.com/?lang=ar" />
+  <link rel="alternate" hreflang="x-default" href="https://www.facturedz.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="FacturePro" />
   <meta property="og:locale" content="fr_DZ" />
@@ -432,6 +435,10 @@
   <script>
     (function () {
       var KEY = 'fp_locale';
+      try {
+        var m = /[?&]lang=(ar|fr)(?:&|$)/.exec(location.search || '');
+        if (m) localStorage.setItem(KEY, m[1]);
+      } catch (e) {}
       function loc() {
         try { return localStorage.getItem(KEY) || 'fr'; } catch (e) { return 'fr'; }
       }
