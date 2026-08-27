@@ -490,7 +490,9 @@ const shell = (page) => {
     <p class="text-center text-sm mt-3"><a href="/" class="underline">Ouvrir l’application de facturation</a></p>
   </div>
   <div id="ar" dir="rtl" hidden>
-    <h1 class="text-2xl sm:text-3xl font-bold mb-2">${page.h1ar}</h1>
+    <!-- h2, pas h1 : la page est servie en francais et n'a qu'un titre de
+         document. Le bloc arabe en est la traduction, donc une section. -->
+    <h2 class="text-2xl sm:text-3xl font-bold mb-2">${page.h1ar}</h2>
     <p class="opacity-80 mb-5">${page.leadar}</p>
     ${page.top || ''}
     <div class="card p-5 sm:p-6">${ar}${page.extra || ''}</div>

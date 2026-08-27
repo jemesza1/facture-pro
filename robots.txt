@@ -1,4 +1,14 @@
 User-agent: *
 Allow: /
 
+# ?app=1 ouvre l'application, pas une page a lire : ce sont les memes octets
+# que l'accueil, avec l'interface par-dessus. La laisser explorer revient a
+# offrir a Google deux adresses pour un seul contenu.
+Disallow: /*?app=
+Disallow: /*&app=
+Disallow: /*?new=
+
+# ?lang=ar reste explorable : c'est l'adresse que les balises hreflang
+# declarent comme la version arabe. L'interdire ici contredirait la balise.
+
 Sitemap: https://www.facturedz.com/sitemap.xml

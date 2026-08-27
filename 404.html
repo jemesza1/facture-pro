@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Page introuvable — FacturePro Algérie</title>
+<!-- Une 404 se sert avec un statut 404 et ne s'indexe pas : sans cette ligne
+     Google la traite comme une page ordinaire et l'ajoute a l'index. -->
+<meta name="robots" content="noindex, follow" />
+<link rel="icon" href="/icon-48.png" sizes="48x48" type="image/png" />
+<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a;
+       min-height:100vh;display:flex;flex-direction:column}
+  .ar{font-family:Cairo,system-ui,sans-serif}
+  main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+       text-align:center;padding:3rem 1rem;max-width:34rem;margin-inline:auto}
+  .code{font-size:4rem;font-weight:800;color:var(--brand);line-height:1;letter-spacing:-.03em}
+  h1{font-size:1.5rem;font-weight:700;margin:.75rem 0 .5rem}
+  p{color:#475569;line-height:1.65;margin:0 0 .35rem}
+  .go{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.75rem}
+  .go a{padding:.7rem 1.15rem;border-radius:.85rem;text-decoration:none;font-weight:600;font-size:.9rem}
+  .primary{background:var(--brand);color:#fff}
+  .ghost{border:1px solid #cbd5e1;color:#0f172a}
+  @media (prefers-color-scheme:dark){
+    body{background:#0b1220;color:#e2e8f0}
+    p{color:#a3b1c2}
+    .ghost{border-color:#334155;color:#e2e8f0}
+  }
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css" />
+</head>
+<body>
+<main>
+  <div class="code">404</div>
+  <h1>Cette page n’existe pas</h1>
+  <p>Le lien est peut-être ancien, ou l’adresse comporte une faute de frappe.</p>
+  <p class="ar" dir="rtl" lang="ar">هذه الصفحة غير موجودة — الرابط قديم أو فيه خطأ مطبعي.</p>
+  <div class="go">
+    <a class="primary" href="/">Retour à l’accueil</a>
+    <a class="ghost" href="/index.html?app=1">Créer une facture</a>
+    <a class="ghost" href="/guide.html">Guide d’utilisation</a>
+  </div>
+</main>
+</body>
+</html>

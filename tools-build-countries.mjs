@@ -33,6 +33,10 @@ export const COUNTRY_PAGES = [
 <li>Identifiant fiscal (IF) et registre de commerce (RC)</li>
 <li>TVA marocaine 20 % · total en MAD</li>
 </ul>
+<h2 class="text-xl font-bold mb-3 mt-8">Numérotation, conservation et taux</h2>
+<p>Les factures se numérotent dans une <strong>série continue et sans trou</strong>, par ordre chronologique : un numéro sauté est une facture manquante aux yeux de l’administration. La facture se conserve <strong>dix ans</strong>, comme les autres pièces comptables.</p>
+<p>Le taux de 20 % est le taux normal, mais il n’est pas le seul : des taux réduits existent pour certaines opérations, et une facture sans ICE expose l’acheteur à un refus de déduction. Mieux vaut vérifier l’ICE du client avant d’émettre que d’émettre un avoir ensuite.</p>
+<p lang="ar" dir="rtl" class="mt-4">تُرقَّم الفواتير في <b>سلسلة متّصلة بلا انقطاع</b> وبترتيب زمني، وتُحفظ <b>عشر سنوات</b>. ونسبة 20٪ هي العادية وليست الوحيدة. وفاتورة بلا ICE تعرّض المشتري لرفض الخصم — فتحقّق من ICE العميل قبل الإصدار.</p>
 </section>`},
   {file: 'facture-tunisie.html', code: 'TN', lang: 'fr', hreflang: 'fr-TN',
    title: 'Facture Tunisie — modèle gratuit, TVA 19 % | نموذج فاتورة تونس',
@@ -49,6 +53,10 @@ export const COUNTRY_PAGES = [
 <li>TVA tunisienne 19 % · total en TND</li>
 <li>Timbre fiscal à saisir, pas à inventer</li>
 </ul>
+<h2 class="text-xl font-bold mb-3 mt-8">Timbre fiscal, matricule et conservation</h2>
+<p>La Tunisie ajoute au bas de la facture un <strong>timbre fiscal</strong> d’un montant forfaitaire, révisé par la loi de finances : il ne dépend pas du montant facturé, contrairement au droit de timbre algérien qui suit un barème. Vérifiez le montant de l’année en cours plutôt que de recopier une facture ancienne.</p>
+<p>Le <strong>matricule fiscal</strong> identifie l’entreprise et doit figurer sur chaque facture, avec le registre de commerce. Les pièces se conservent <strong>dix ans</strong>, et la numérotation suit une série continue.</p>
+<p lang="ar" dir="rtl" class="mt-4">تونس تضيف أسفل الفاتورة <b>طابعًا جبائيًّا</b> بمبلغ جزافي تراجعه قوانين المالية — لا يتبع المبلغ المفوتر، خلافًا لحقّ الطابع الجزائري الذي يتبع سلّمًا. و<b>المعرّف الجبائي</b> إجباري في كلّ فاتورة مع السجلّ التجاري، والحفظ <b>عشر سنوات</b>.</p>
 </section>`},
   {file: 'uae-tax-invoice.html', code: 'AE', lang: 'en', hreflang: 'en-AE',
    title: 'UAE Tax Invoice Template — TRN and 5 % VAT | نموذج فاتورة ضريبية الإمارات',
@@ -65,6 +73,10 @@ export const COUNTRY_PAGES = [
 <li>5 % VAT · total in AED</li>
 <li>PDF export, nothing stored on our servers</li>
 </ul>
+<h2 class="text-xl font-bold mb-3 mt-8">Tax invoice or simplified — and what the FTA checks</h2>
+<p>The UAE distinguishes a <strong>full tax invoice</strong> from a <strong>simplified</strong> one. A simplified invoice is allowed when the recipient is not VAT-registered, or when the total stays under AED 10,000; above that, or when the buyer is registered and wants to reclaim the VAT, the full form is required — with the buyer’s name, address and TRN.</p>
+<p>The <strong>TRN is 15 digits</strong>. VAT stands at 5 %, though some supplies are zero-rated (exports, certain healthcare and education) and others exempt — which is not the same thing, since exempt supplies carry no right to reclaim input tax. Records must be kept for <strong>five years</strong>.</p>
+<p>An invoice issued in a foreign currency must also show the AED equivalent at the Central Bank rate of the supply date.</p>
 </section>`},
   {file: 'uk-invoice-template.html', code: 'GB', lang: 'en', hreflang: 'en-GB',
    title: 'UK Invoice Template — free, with VAT number and 20 % VAT',
@@ -80,6 +92,10 @@ export const COUNTRY_PAGES = [
 <li>Company number (Companies House)</li>
 <li>20 % VAT · total in GBP</li>
 </ul>
+<h2 class="text-xl font-bold mb-3 mt-8">When you must register, and which rate applies</h2>
+<p>VAT registration is compulsory once taxable turnover passes the HMRC threshold over any rolling twelve months — and voluntary below it, which can be worth doing when your customers are themselves registered. Until you are registered you must <strong>not</strong> charge VAT or show a VAT number.</p>
+<p>Three rates coexist: <strong>20 %</strong> standard, <strong>5 %</strong> reduced (domestic fuel, some renovations) and <strong>0 %</strong> zero-rated (most food, children’s clothing, books). Zero-rated is not exempt: zero-rated sales still let you reclaim input tax, exempt ones do not.</p>
+<p>A VAT invoice must carry a unique sequential number, both addresses, your VAT number, the supply date and the rate per line. Keep records for <strong>six years</strong>.</p>
 </section>`},
   {file: 'us-invoice-template.html', code: 'US', lang: 'en', hreflang: 'en-US',
    title: 'US Invoice Template — free, no signup',
@@ -95,6 +111,10 @@ export const COUNTRY_PAGES = [
 <li>Optional sales-tax line, rate left to you</li>
 <li>Total in USD · instant PDF</li>
 </ul>
+<h2 class="text-xl font-bold mb-3 mt-8">No federal VAT — what actually applies</h2>
+<p>There is no nationwide sales tax in the United States. Tax is set by state and often by county and city on top, so the rate depends on where the sale is deemed to happen — and whether you have <strong>nexus</strong> there, meaning enough presence or sales volume to owe tax in that state at all. Services are taxable in some states and not in others.</p>
+<p>An invoice is not a tax document the way it is in Europe or the Gulf: no federal rule dictates its form. What matters commercially is that it is unambiguous — an invoice number, both parties, itemised lines, and <strong>payment terms</strong> stated plainly (Net 30, Net 15, due on receipt), since these decide when you can chase payment.</p>
+<p>Your <strong>EIN</strong> identifies the business federally. Contractors paid $600 or more in a year are reported on Form 1099-NEC, which is a separate obligation from invoicing.</p>
 </section>`},
   {file: 'free-invoice-generator.html', code: 'INT', lang: 'en', hreflang: 'en',
    title: 'Free Invoice Generator — any country, instant PDF, no signup',
@@ -110,6 +130,10 @@ export const COUNTRY_PAGES = [
 <li>A tax-number field you label yourself</li>
 <li>No signup · PDF in one click · nothing stored here</li>
 </ul>
+<h2 class="text-xl font-bold mb-3 mt-8">What every country asks for, whatever the rules</h2>
+<p>Tax rules differ, but the skeleton of an invoice barely does. Almost everywhere, a document is only an invoice if it carries: a <strong>unique number</strong> from an unbroken series, the <strong>date</strong> of issue, the full identity and address of both parties, an itemised description with quantities and unit prices, the tax rate and amount shown separately from the net, and the total due.</p>
+<p>Two habits travel well. Never reuse or skip a number — a gap is what an auditor notices first. And never change an issued invoice: correct it with a credit note that carries its own number and names the invoice it cancels.</p>
+<p>Choose your country above and the form adapts: the identifiers it expects, its tax rate, its currency. Nothing is sent anywhere — the PDF is built in your browser.</p>
 </section>`},
 ];
 

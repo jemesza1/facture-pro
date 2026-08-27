@@ -152,8 +152,8 @@ const footer = `<footer class="fp-foot" id="fp-map"><div class="fp-foot-in">
 <p style="margin-top:10px"><a href="/index.html?app=1" style="color:#34d399;font-weight:600" data-fpfr="Ouvrir l'application" data-fpar="فتح التطبيق">Ouvrir l'application</a></p>
 </div>${columns}</div>
 <div class="fp-foot-base">
-<span data-fpfr="Created by CheMs SoUu" data-fpar="إعداد CheMs SoUu">Created by CheMs SoUu</span>
-<span dir="ltr">&copy; 2026 FacturePro</span>
+<span data-fpfr="FacturePro — outil de facturation, Algérie · Created by CheMs SoUu" data-fpar="FacturePro — أداة فوترة، الجزائر · إعداد CheMs SoUu">FacturePro — outil de facturation, Algérie · Created by CheMs SoUu</span>
+<span><a href="/conditions.html" data-fpfr="Conditions et confidentialité" data-fpar="الشروط والخصوصية">Conditions et confidentialité</a> &nbsp;·&nbsp; <span dir="ltr">&copy; 2026 FacturePro</span></span>
 </div></footer>`;
 
 /* The pages disagree about how they switch language — some swap two hidden
