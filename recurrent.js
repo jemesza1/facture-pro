@@ -245,15 +245,80 @@
     if(typeof _render==='function') return _render.apply(this,arguments);
   };
 
-  var _init=window.initApp;
-  window.initApp=function(){
-    if(typeof _init==='function') _init();
+  /* Ce que l'application allait faire toute seule : ecrire des factures dans
+     le registre a chaque ouverture, sans le dire avant. Elles naissent en
+     brouillon, et c'est bien le commercant qui a cree la regle — mais une
+     piece comptable qui apparait sans qu'on l'ait demandee ce matin-la reste
+     une surprise, et le numero qu'elle consomme ne se rend pas. On montre donc
+     d'abord ce qui est du, et on attend la reponse. */
+  window.dueRecurring=function(){
+    ensure();
+    var now=today(), out=[], i, r, d, guard;
+    for(i=0;i<state.recurring.length;i++){
+      r=state.recurring[i];
+      if(!r||r.active===false) continue;
+      if(!r.clientId||!(r.items||[]).length) continue;
+      if(!r.nextDate||r.nextDate>now) continue;
+      d=r.nextDate; guard=0;
+      /* Meme borne que runRecurring, sinon la liste annoncerait plus de
+         factures que le bouton n'en emettra. */
+      while(d<=now && guard<3){
+        out.push({rule:r, date:d, ht:lineTotal(r)});
+        d=addPeriod(d, r.frequency||'month');
+        guard++;
+      }
+    }
+    return out;
+  };
+
+  function lineTotal(rule){
+    var ht=0;
+    (rule.items||[]).forEach(function(it){
+      ht += (Number(it.qty)||0)*(Number(it.unitPrice)||0);
+    });
+    return ht;
+  }
+
+  window.askRecurring=function(){
+    var due=dueRecurring();
+    if(!due.length) return false;
+    var rows=due.map(function(d){
+      var c=(typeof getClient==='function') ? getClient(d.rule.clientId) : {name:''};
+      var amount=(typeof moneyUI==='function') ? moneyUI(d.ht) : String(d.ht);
+      return '<div class="flex items-center justify-between gap-3 py-2 border-b border-slate-100 dark:border-slate-800">'+
+             '<div class="min-w-0"><p class="font-medium truncate">'+esc(c.name||'')+'</p>'+
+             '<p class="text-xs text-slate-500 ltr-code">'+esc(d.date)+'</p></div>'+
+             '<span class="font-semibold whitespace-nowrap">'+esc(amount)+'</span></div>';
+    }).join('');
+    openModal('<div class="modal" onclick="event.stopPropagation()">'+
+      '<div class="modal-header"><h3 class="font-semibold">'+esc(t('rec.askTitle'))+'</h3>'+
+      '<button onclick="closeModal()" class="btn-ghost p-2" aria-label="'+esc(t('ui.close'))+'">'+
+      '<i data-lucide="x" class="w-5 h-5"></i></button></div>'+
+      '<div class="modal-body">'+
+      '<p class="text-sm text-slate-500 mb-3">'+esc(t('rec.askBody'))+'</p>'+
+      rows+
+      '<p class="text-xs text-slate-500 mt-3">'+esc(t('rec.askLaterHint'))+'</p></div>'+
+      '<div class="modal-footer">'+
+      '<button onclick="closeModal()" class="btn-secondary">'+esc(t('rec.askLater'))+'</button>'+
+      '<button onclick="confirmRecurring()" class="btn-primary">'+esc(t('rec.askIssue'))+'</button>'+
+      '</div></div>');
+    return true;
+  };
+
+  window.confirmRecurring=function(){
     var n=0;
     try{ n=runRecurring(); }catch(e){}
+    closeModal();
     if(n){
       try{ toast(t('rec.issued').replace('{n}', String(n))); }catch(e){}
       try{ renderPage(); }catch(e){}
     }
+  };
+
+  var _init=window.initApp;
+  window.initApp=function(){
+    if(typeof _init==='function') _init();
+    try{ askRecurring(); }catch(e){}
   };
 
   if(typeof state!=='undefined') ensure();

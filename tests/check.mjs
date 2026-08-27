@@ -3598,6 +3598,90 @@ check('the menu offers récurrences',
   check('and the list is in the whitelist, so it survives a save', issued.stored);
 }
 
+/* Ce que la regle allait faire seule : ecrire dans le registre a chaque
+   ouverture. Les brouillons ne se rendent pas plus que les numeros qu'ils
+   consomment, donc on demande d'abord. */
+{
+  const asked = await page.evaluate(() => {
+    state.clients = [{id:'cl1', name:'SARL Atlas'}];
+    state.invoices = []; state.nextInvoiceNumber = 1;
+    state.recurring = [{id:'rr1', clientId:'cl1', frequency:'month', nextDate:'2020-01-01',
+      active:true, paymentMode:'virement',
+      items:[{description:'Loyer', qty:1, unitPrice:40000, tva:19}]}];
+    const opened = askRecurring();
+    const box = document.querySelector('#modal-root .modal');
+    return {opened, count: state.invoices.length,
+            due: dueRecurring().length,
+            text: box ? box.innerText : '',
+            client: !!box && /Atlas/.test(box.innerText)};
+  });
+  check('a due récurrence asks before it writes anything', asked.opened && asked.count === 0,
+        String(asked.count));
+  check('and names the client it would bill', asked.client);
+  check('the list it shows matches what would be issued', asked.due === 3, String(asked.due));
+
+  const later = await page.evaluate(() => {
+    closeModal();
+    return {count: state.invoices.length, next: state.recurring[0].nextDate};
+  });
+  check('« plus tard » issues nothing', later.count === 0, String(later.count));
+  check('and does not move the date, so the question comes back',
+        later.next === '2020-01-01', later.next);
+
+  const yes = await page.evaluate(() => {
+    askRecurring(); confirmRecurring();
+    return {count: state.invoices.length,
+            drafts: state.invoices.every(i => i.status === 'brouillon'),
+            open: !!document.querySelector('#modal-root .modal')};
+  });
+  check('« émettre » writes the three drafts', yes.count === 3, String(yes.count));
+  check('as drafts, never as sent invoices', yes.drafts);
+  check('and closes the dialog behind it', !yes.open);
+}
+
+/* Une modale qui ne prend pas le clavier n'est une modale que pour la souris. */
+console.log('\nLes fenêtres, au clavier');
+{
+  const opened = await page.evaluate(() => {
+    navigate('clients');
+    const b = [...document.querySelectorAll('button')]
+      .find(x => /nouveau client|عميل جديد/i.test(x.textContent));
+    b.id = 'fp-test-opener'; b.focus(); b.click();
+    const box = document.querySelector('#modal-root .modal');
+    const lb = box && box.getAttribute('aria-labelledby');
+    return {role: box && box.getAttribute('role'),
+            modal: box && box.getAttribute('aria-modal'),
+            titled: !!(lb && document.getElementById(lb)),
+            focus: document.activeElement.id};
+  });
+  check('a modal says it is a dialog', opened.role === 'dialog', String(opened.role));
+  check('and that the page behind it is inert', opened.modal === 'true');
+  check('and points a screen reader at its own title', opened.titled);
+  check('the focus lands in the first field, not on the close button',
+        opened.focus === 'cli-name', opened.focus);
+
+  let escaped = false;
+  for (let i = 0; i < 40; i++) {
+    await page.keyboard.press('Tab');
+    if (!await page.evaluate(() => {
+      const m = document.querySelector('#modal-root .modal');
+      return !!m && m.contains(document.activeElement);
+    })) { escaped = true; break; }
+  }
+  check('forty tabs never walk out of the dialog', !escaped);
+  await page.keyboard.press('Shift+Tab');
+  check('and neither does going backwards', await page.evaluate(() => {
+    const m = document.querySelector('#modal-root .modal');
+    return !!m && m.contains(document.activeElement);
+  }));
+
+  await page.keyboard.press('Escape');
+  check('Escape closes it, as everybody expects',
+        await page.evaluate(() => !document.querySelector('#modal-root .modal')));
+  check('and the focus goes back to the button that opened it',
+        await page.evaluate(() => document.activeElement.id) === 'fp-test-opener');
+}
+
 {
   await page.evaluate(() => {
     state.recurring = [{id:'rrKeep', clientId:'cl1', frequency:'week', nextDate:'2099-06-01',
