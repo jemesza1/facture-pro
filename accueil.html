@@ -2,10 +2,18 @@
 <html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8" />
+  <!-- Le reste du site suit le telephone quand personne n'a choisi : un
+       ecran regle en sombre recevait ici une page blanche. Cette page garde
+       son propre script — le generateur voit un classList.toggle('dark') dans
+       son bouton et croit le sien deja pose — donc il doit dire la meme chose
+       que celui des autres pages : le choix enregistre l'emporte, sinon le
+       systeme decide. -->
   <script>
     try {
-      if (localStorage.getItem('facturepro_dark') === '1')
-        document.documentElement.classList.add('dark');
+      var v = localStorage.getItem('facturepro_dark');
+      var on = v === '1' ? true : v === '0' ? false
+             : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.classList.toggle('dark', !!on);
     } catch (e) {}
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -465,7 +473,14 @@
         if (meta) meta.setAttribute('content', on ? '#020617' : '#006233');
         try { localStorage.setItem('facturepro_dark', on ? '1' : '0'); } catch (e) {}
       }
-      setDark(document.documentElement.classList.contains('dark'));
+      /* Peindre l'etat de depart, sans l'enregistrer : ecrire ici gravait
+         « clair » des la premiere visite et le systeme n'etait plus jamais
+         consulte, sur cette page comme sur toutes les autres. */
+      (function () {
+        var on = document.documentElement.classList.contains('dark');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', on ? '#020617' : '#006233');
+      })();
       var th = document.getElementById('themeBtn');
       if (th) th.addEventListener('click', function () {
         setDark(!document.documentElement.classList.contains('dark'));

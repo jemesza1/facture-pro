@@ -4048,6 +4048,41 @@ console.log('\nLe relevé, lu en arabe');
   await ar.close();
 }
 
+/* La page d'accueil gardait son propre script de theme — le generateur voit un
+   classList.toggle('dark') dans son bouton et croit le sien deja pose — et ce
+   script ne regardait que la valeur enregistree, jamais le telephone. Pire, il
+   enregistrait « clair » des la premiere visite : le systeme n'etait plus
+   consulte nulle part sur le site, pour toujours. */
+{
+  for (const [scheme, wanted] of [['dark', true], ['light', false]]) {
+    const c = await browser.newContext({colorScheme: scheme});
+    const pg = await c.newPage();
+    await pg.goto(`${BASE}/public/accueil.html`);
+    await pg.waitForTimeout(600);
+    const r = await pg.evaluate(() => ({
+      dark: document.documentElement.classList.contains('dark'),
+      stored: (() => { try { return localStorage.getItem('facturepro_dark'); } catch (e) { return 'ERR'; } })()
+    }));
+    check(`a phone set to ${scheme} is answered in ${scheme}`, r.dark === wanted, String(r.dark));
+    check(`and arriving is not a choice worth recording (${scheme})`, r.stored === null, String(r.stored));
+    await c.close();
+  }
+  /* Mais un choix, lui, doit survivre a la page suivante. */
+  const c = await browser.newContext({colorScheme: 'dark'});
+  const pg = await c.newPage();
+  await pg.goto(`${BASE}/public/accueil.html`);
+  await pg.waitForTimeout(600);
+  await pg.click('#themeBtn').catch(() => {});
+  await pg.waitForTimeout(250);
+  const after = await pg.evaluate(() => ({
+    dark: document.documentElement.classList.contains('dark'),
+    stored: localStorage.getItem('facturepro_dark')
+  }));
+  check('but asking for the other one is remembered',
+        after.stored === (after.dark ? '1' : '0') && after.stored !== null, String(after.stored));
+  await c.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
