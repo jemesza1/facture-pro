@@ -3963,6 +3963,33 @@ console.log('\nMarge, remise : l’arithmétique du comptoir');
   await pcp.close();
 }
 
+/* Le pied de page est la carte du site, et sur telephone il se lit au doigt.
+   Des liens de 22px de haut se manquent une fois sur trois, et c'est le seul
+   endroit d'ou l'on rejoint les deux tiers des pages. */
+{
+  const finger = await browser.newContext({
+    viewport: {width: 412, height: 915},
+    hasTouch: true, isMobile: true
+  });
+  const fp = await finger.newPage();
+  await fp.goto(`${BASE}/public/calcul-marge.html`);
+  await fp.waitForTimeout(900);
+  const t = await fp.evaluate(() => {
+    const link = document.querySelector('.fp-foot-col a');
+    const chip = document.querySelector('.fp-links a');
+    return {
+      foot: link ? Math.round(link.getBoundingClientRect().height) : 0,
+      bar: chip ? Math.round(chip.getBoundingClientRect().height) : 0,
+      tiny: [...document.querySelectorAll('.fp-foot a, .fp-bar a')]
+        .filter(e => { const r = e.getBoundingClientRect(); return r.height > 0 && r.height < 36; }).length
+    };
+  });
+  check('a footer link is big enough to hit with a thumb', t.foot >= 36, t.foot + 'px');
+  check('and so is a chip in the bar', t.bar >= 36, t.bar + 'px');
+  check('none of the shared navigation is finger-hostile', t.tiny <= 2, String(t.tiny));
+  await finger.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

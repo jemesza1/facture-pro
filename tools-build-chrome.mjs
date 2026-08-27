@@ -120,6 +120,13 @@ const STYLE = `<style>
 .fp-foot h3{color:#e2e8f0;font-size:13px;font-weight:700;letter-spacing:.04em;
   text-transform:uppercase;margin:0 0 10px}
 .fp-foot-col a{display:block;padding:3px 0}
+/* Au doigt, 3px de marge font une cible de 22px de haut : on vise le lien
+   d'a cote une fois sur trois. Les pointeurs fins gardent la liste compacte,
+   les doigts recoivent de quoi viser. */
+@media (pointer:coarse){
+  .fp-foot-col a{padding:10px 0}
+  .fp-links a{padding:11px 10px}
+}
 .fp-foot b{display:block;color:#fff;font-size:16px;margin:10px 0 8px}
 .fp-foot p{margin:0;max-width:22rem;line-height:1.6}
 .fp-foot-base{border-top:1px solid #1e293b;margin-top:30px;padding:16px 16px 0;
