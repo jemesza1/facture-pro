@@ -3855,6 +3855,46 @@ check('and the two carry the same stamp',
         fr < 92160 && ar < 92160, `${Math.round(fr/1024)}/${Math.round(ar/1024)} KB`);
 }
 
+/* Un bouton qui n'est qu'une icone, ou dont le libelle disparait sous 640px,
+   n'a plus de nom du tout pour qui n'a pas d'ecran. Et un champ colle a
+   l'etiquette du champ voisin n'herite pas de la sienne : la proximite se
+   voit, elle ne s'entend pas. */
+{
+  const pg = await browser.newPage();
+  await pg.goto(`${BASE}/index.html?app=1`, {waitUntil: "load"});
+  await pg.waitForTimeout(1800);
+  const app = await pg.evaluate(() => ({
+    total: document.querySelectorAll('input,select,textarea,button').length,
+    fields: [...document.querySelectorAll('input,select,textarea')]
+      .filter(x => x.type !== 'hidden' && !x.getAttribute('aria-label') && !x.labels?.length).length,
+    buttons: [...document.querySelectorAll('button')]
+      .filter(x => !x.textContent.trim() && !x.getAttribute('aria-label') && !x.title).length
+  }));
+  check('the application really rendered before we counted', app.total > 3, String(app.total));
+  check('every field in the application can be named out loud', app.fields === 0, String(app.fields));
+  check('and every button too, icon or not', app.buttons === 0, String(app.buttons));
+  await pg.close();
+
+  const gen = await browser.newPage();
+  /* Le serveur du harnais sert la racine du depot, et les pages pays n'y
+     existent pas : elles sont ecrites dans public/ par le build. Sans ce
+     prefixe la page repond 404, et une page vide n'a aucun champ mal nomme —
+     le test passerait en ne regardant rien. */
+  await gen.goto(`${BASE}/public/facture-maroc.html`, {waitUntil: "load"});
+  await gen.waitForTimeout(1500);
+  const g = await gen.evaluate(() => ({
+    fields: document.querySelectorAll('input,select,textarea').length,
+    unnamed: [...document.querySelectorAll('input,select,textarea')]
+      .filter(x => x.type !== 'hidden' && !x.getAttribute('aria-label') && !x.labels?.length).length,
+    tax: document.getElementById('taxName')?.getAttribute('aria-label') || ''
+  }));
+  check('the country page really loaded its form', g.fields > 8, String(g.fields));
+  check('the international form names its fields as well', g.unnamed === 0, String(g.unnamed));
+  check('and names them in the language the page is written in',
+        /^[^\x00-\x7F]|taxe|tax/i.test(g.tax) && g.tax.length > 3, g.tax);
+  await gen.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

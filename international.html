@@ -176,7 +176,7 @@
             <label id="t-ltax" class="block text-xs font-medium text-slate-500 mb-1" for="taxRate">Tax</label>
             <div class="flex gap-2">
               <input id="taxRate" type="number" min="0" max="100" step="0.1" class="fld" />
-              <input id="taxName" class="fld w-28" />
+              <input id="taxName" class="fld w-28" aria-label="Tax name" />
             </div>
           </div>
           <!-- A line for whatever else the country puts on an invoice. Empty,
@@ -186,7 +186,7 @@
             <label id="t-lextra" class="block text-xs font-medium text-slate-500 mb-1" for="extraLabel">Other charge (optional)</label>
             <div class="flex gap-2">
               <input id="extraLabel" class="fld" />
-              <input id="extraAmount" type="number" step="0.001" class="fld w-36" />
+              <input id="extraAmount" type="number" step="0.001" class="fld w-36" aria-label="Other charge amount" />
             </div>
             <p id="hint" class="hidden mt-2 text-xs leading-relaxed rounded-xl px-3 py-2"
                style="background:#fffbeb;color:#92400e;border:1px solid #fcd34d"></p>
@@ -245,8 +245,8 @@
 
       <div class="card p-5 space-y-3">
         <h2 id="t-notes" class="font-semibold">Notes and legal mention</h2>
-        <textarea id="notes" rows="2" class="fld"></textarea>
-        <textarea id="legal" rows="3" class="fld text-slate-600"></textarea>
+        <textarea id="notes" rows="2" class="fld" aria-label="Notes"></textarea>
+        <textarea id="legal" rows="3" class="fld text-slate-600" aria-label="Legal mention"></textarea>
         <p id="t-draft" class="text-xs text-slate-500">This form is remembered on this device so a refresh does not lose it. No invoice is kept — export the PDF.</p>
       </div>
     </section>
@@ -435,6 +435,8 @@ var UI = {
       num:'Invoice number', issue:'Issue date', due:'Due date',
       lines:'Lines', add:'Add', sub:'Subtotal', total:'Total',
       notes:'Notes and legal mention',
+      aTaxName:'Name of the tax', aExtraAmt:'Amount of the other charge',
+      aNotes:'Notes shown on the invoice', aLegal:'Legal mention printed at the bottom',
       draft:'This form is remembered on this device so a refresh does not lose it. No invoice is kept — export the PDF.',
       foot:'FacturePro · a free invoice generator · Created by CheMs SoUu',
       dz:'Invoicing in Algeria? Use the application.',
@@ -455,6 +457,8 @@ var UI = {
       num:'N° de facture', issue:"Date d'émission", due:"Date d'échéance",
       lines:'Lignes', add:'Ajouter', sub:'Sous-total', total:'Total',
       notes:'Notes et mention légale',
+      aTaxName:'Nom de la taxe', aExtraAmt:'Montant de l’autre charge',
+      aNotes:'Notes affichées sur la facture', aLegal:'Mention légale imprimée en bas',
       draft:"Ce formulaire est conservé sur cet appareil : un rafraîchissement ne l'efface pas. Aucune facture n'est gardée — exportez le PDF.",
       foot:'FacturePro · générateur de factures gratuit · Created by CheMs SoUu',
       dz:"Vous facturez en Algérie ? Utilisez l'application.",
@@ -475,6 +479,8 @@ var UI = {
       num:'رقم الفاتورة', issue:'تاريخ الإصدار', due:'تاريخ الاستحقاق',
       lines:'السطور', add:'إضافة', sub:'المجموع الفرعي', total:'الإجمالي',
       notes:'ملاحظات ومذكّرة قانونية',
+      aTaxName:'اسم الرسم', aExtraAmt:'مبلغ الرسم الآخر',
+      aNotes:'ملاحظات تظهر على الفاتورة', aLegal:'المذكّرة القانونية أسفل الفاتورة',
       draft:'يُحفظ هذا النموذج على هذا الجهاز حتى لا يضيع عند تحديث الصفحة. لا تُحفظ أي فاتورة — صدّر ملف PDF.',
       foot:'FacturePro · مولّد فواتير مجاني · Created by CheMs SoUu',
       dz:'تفوتر في الجزائر؟ استعمل التطبيق.',
@@ -563,6 +569,13 @@ function paintText(){
     't-add':s.add,'t-sub':s.sub,'t-total':s.total,'t-notes':s.notes,'t-draft':s.draft,
     't-foot':s.foot,'t-dz':s.dz};
   Object.keys(map).forEach(function(id){ var el = $(id); if (el) el.textContent = map[id]; });
+  /* Ces quatre champs n'ont pas d'etiquette visible — ils sont colles au
+     champ qui en porte une. Un lecteur d'ecran, lui, ne voit pas cette
+     proximite : il faut la lui dire, et dans la langue de la page. */
+  var aria = {taxName:s.aTaxName, extraAmount:s.aExtraAmt, notes:s.aNotes, legal:s.aLegal};
+  Object.keys(aria).forEach(function(id){
+    var el = $(id); if (el && aria[id]) el.setAttribute('aria-label', aria[id]);
+  });
 }
 
 function cname(c){ return c.name[state.lang] || c.name.en; }
