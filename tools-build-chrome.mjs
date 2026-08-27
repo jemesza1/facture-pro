@@ -126,6 +126,12 @@ const STYLE = `<style>
 @media (pointer:coarse){
   .fp-foot-col a{padding:10px 0}
   .fp-links a{padding:11px 10px}
+  /* Le bouton vert est la porte d'entree de tout le site, et il etait le plus
+     petit des trois. Les deux liens du bloc de gauche vivent dans un <p>, que
+     padding seul n'agrandit pas : ils passent en bloc pour recevoir la marge. */
+  .fp-cta{padding:12px 18px}
+  .fp-foot p a{display:inline-block;padding:9px 0}
+  .fp-foot-base a{display:inline-block;padding:11px 0}
 }
 .fp-foot b{display:block;color:#fff;font-size:16px;margin:10px 0 8px}
 .fp-foot p{margin:0;max-width:22rem;line-height:1.6}

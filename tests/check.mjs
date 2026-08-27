@@ -3986,8 +3986,66 @@ console.log('\nMarge, remise : l’arithmétique du comptoir');
   });
   check('a footer link is big enough to hit with a thumb', t.foot >= 36, t.foot + 'px');
   check('and so is a chip in the bar', t.bar >= 36, t.bar + 'px');
-  check('none of the shared navigation is finger-hostile', t.tiny <= 2, String(t.tiny));
+  check('none of the shared navigation is finger-hostile', t.tiny === 0, String(t.tiny));
   await finger.close();
+}
+
+/* Le releve se lit en arabe, et l'arabe est une ecriture liee : un
+   letter-spacing detache les lettres et le mot cesse d'exister — le titre
+   sortait « كشف هساب لـعيل ». Inter ne porte aucun glyphe arabe non plus. */
+console.log('\nLe relevé, lu en arabe');
+{
+  const ar = await browser.newContext({locale: 'ar-DZ', viewport: {width: 1100, height: 1400}});
+  const pg = await ar.newPage();
+  await pg.goto(`${BASE}/index.html?app=1`);
+  await pg.waitForTimeout(2200);
+  await pg.evaluate(() => { try { localStorage.setItem('fp_locale', 'ar'); } catch (e) {} });
+  await pg.reload(); await pg.waitForTimeout(2400);
+  await pg.evaluate(() => navigate('releve'));
+  await pg.waitForTimeout(500);
+  await pg.evaluate(() => {
+    const s = document.querySelector('#releve-client, select');
+    if (s && s.options.length > 1) { s.selectedIndex = 1; s.dispatchEvent(new Event('change')); }
+  });
+  await pg.waitForTimeout(1000);
+
+  const paper = await pg.evaluate(() => {
+    const p = document.getElementById('releve-paper');
+    if (!p) return null;
+    const title = p.querySelector('div div div');
+    const cs = getComputedStyle(title);
+    return {dir: p.getAttribute('dir'), font: getComputedStyle(p).fontFamily,
+            spacing: cs.letterSpacing, transform: cs.textTransform,
+            title: title.textContent};
+  });
+  check('the statement turns around for an Arabic reader', paper && paper.dir === 'rtl');
+  check('and asks for a font that has Arabic letters in it',
+        !!paper && /Cairo/.test(paper.font), paper ? paper.font : '');
+  check('nothing pulls the letters of a joined script apart',
+        !!paper && paper.spacing === 'normal', paper ? paper.spacing : '');
+  check('and nothing tries to capitalise a script without case',
+        !!paper && paper.transform === 'none', paper ? paper.transform : '');
+  check('so the title is the words themselves', !!paper && paper.title.indexOf('كشف حساب العميل') === 0,
+        paper ? paper.title.slice(0, 20) : '');
+
+  /* Une date se lit dans l'ordre ou elle est ecrite. Un nom de mois arabe
+     entraine les chiffres qui le suivent dans son propre sens, et le jour
+     part a l'autre bout — d'ou une date sans lettre. */
+  const date = await pg.evaluate(() => {
+    const node = document.querySelector('#releve-paper tbody td bdi').firstChild;
+    const t = node.textContent, out = [];
+    for (let i = 0; i < t.length; i++) {
+      const r = document.createRange(); r.setStart(node, i); r.setEnd(node, i + 1);
+      const b = r.getBoundingClientRect();
+      if (b.width > 0) out.push({ch: t[i], x: b.left});
+    }
+    out.sort((a, b) => a.x - b.x);
+    return {logical: t, painted: out.map(o => o.ch).join('')};
+  });
+  check('an Arabic date is painted in the order it was written',
+        date.logical.replace(/\s/g, '') === date.painted.replace(/\s/g, ''),
+        date.logical + ' → ' + date.painted);
+  await ar.close();
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));

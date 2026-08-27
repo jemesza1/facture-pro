@@ -28,7 +28,23 @@ function escObj(o,skip){o=o||{};skip=skip||[];var r={},k;for(k in o){r[k]=(k==='
 function uid(){return 'id_'+Math.random().toString(36).slice(2,11);}
 function formatMoney(a){return new Intl.NumberFormat('fr-DZ',{style:'currency',currency:'DZD',maximumFractionDigits:0}).format(a||0).replace('DZD','DA');}
 function moneyUI(a){var s=new Intl.NumberFormat('fr-DZ',{style:'decimal',maximumFractionDigits:0}).format(a||0);var c=(typeof t==='function')?t('currency'):' DA';return '<bdi>'+s+c+'</bdi>';}
-function dateUI(iso){if(!iso)return'\u2014';var L=(typeof locale!=='undefined'&&locale==='ar')?'ar-DZ':'fr-DZ';try{return '<bdi>'+new Date(iso).toLocaleDateString(L,{day:'2-digit',month:'short',year:'numeric'})+'</bdi>';}catch(e){return '<bdi>'+formatDate(iso)+'</bdi>';}}
+/* <bdi> seul prend sa direction du premier caractere fort, qui est arabe dans
+   « 02 أوت 2026 » : le jour partait alors a gauche et l'annee au milieu, si
+   bien qu'on lisait « أوت 2026 02 ». Une date se lit dans l'ordre ou le
+   formateur l'a ecrite — jour, mois, annee — quel que soit le texte autour,
+   d'ou la direction posee explicitement plutot que devinee. */
+function dateUI(iso){if(!iso)return'\u2014';
+  var ar=(typeof locale!=='undefined'&&locale==='ar');
+  /* En arabe, un nom de mois suivi de chiffres les transforme en chiffres
+     arabes au sens de l'algorithme bidi : ils rejoignent le mot dans le meme
+     segment droite-a-gauche, et « 02 أوت 2026 » se peignait « 02 2026 أوت ».
+     Poser une direction ne suffit pas, c'est la juxtaposition qui l'entraine.
+     Une date toute en chiffres n'a pas de lettre pour l'entrainer : elle se
+     lit pareil dans les deux sens, et c'est la forme des documents ici. */
+  var opt=ar?{day:'2-digit',month:'2-digit',year:'numeric'}
+            :{day:'2-digit',month:'short',year:'numeric'};
+  try{return '<bdi dir="ltr">'+new Date(iso).toLocaleDateString('fr-DZ',opt)+'</bdi>';}
+  catch(e){return '<bdi dir="ltr">'+formatDate(iso)+'</bdi>';}}
 function formatDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('fr-DZ',{day:'2-digit',month:'short',year:'numeric'});}
 /* ---- Droit de timbre (timbre de quittance) ----
    Article 100 du Code du timbre, bareme de la LF 2025. Il n'est du que sur

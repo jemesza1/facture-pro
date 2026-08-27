@@ -133,7 +133,10 @@
     var co=typeof escObj==='function'?escObj(state.company):state.company;
     var rows=led.lines.map(function(l,i){
       return '<tr style="background:'+(i%2?'#f8fafc':'#fff')+'">'+
-        '<td style="padding:8px 10px;font-size:11px;border-bottom:1px solid #eef2f7">'+esc(formatDate(l.date))+'</td>'+
+        /* dateUI suit la langue, formatDate est fige en francais : c'est la
+           facture qui a besoin du second, pas un releve qu'on lit en arabe.
+           Il rend du HTML deja isole, donc pas d'esc() par-dessus. */
+        '<td style="padding:8px 10px;font-size:11px;border-bottom:1px solid #eef2f7">'+dateUI(l.date)+'</td>'+
         '<td style="padding:8px 10px;font-size:11px;border-bottom:1px solid #eef2f7">'+esc(l.ref||'—')+'</td>'+
         '<td style="padding:8px 10px;font-size:11px;border-bottom:1px solid #eef2f7">'+esc(l.label)+'</td>'+
         '<td style="padding:8px 10px;font-size:11px;text-align:right;border-bottom:1px solid #eef2f7">'+(l.debit?formatMoney(l.debit):'—')+'</td>'+
@@ -141,9 +144,20 @@
         '<td style="padding:8px 10px;font-size:11px;text-align:right;font-weight:700;border-bottom:1px solid #eef2f7">'+formatMoney(l.balance)+'</td></tr>';
     }).join('');
     var due=led.balance>0;
-    return '<div class="invoice-paper" id="releve-paper" style="padding:28px 32px;font-family:Inter,Arial,sans-serif;color:#0f172a;background:#fff">'+
+    /* L'arabe est une ecriture liee : letter-spacing detache les lettres les
+       unes des autres et le mot cesse d'etre lisible — « كشف حساب العميل »
+       sortait en « كشف هساب لـعيل ». uppercase n'a pas de sens non plus dans
+       une ecriture sans casse. Et Inter ne porte aucun glyphe arabe : sans
+       Cairo devant, la fonte tombe sur ce que la machine a sous la main, ce
+       qui n'est pas la meme d'un telephone a l'autre. */
+    var rtl = (document.documentElement.lang || '').slice(0, 2) === 'ar';
+    var titleStyle = 'font-size:11px;color:#006233;font-weight:700'
+      + (rtl ? '' : ';letter-spacing:.08em;text-transform:uppercase');
+    return '<div class="invoice-paper" id="releve-paper"' + (rtl ? ' dir="rtl"' : '') +
+      ' style="padding:28px 32px;font-family:' + (rtl ? 'Cairo,' : '') +
+      'Inter,Arial,sans-serif;color:#0f172a;background:#fff">'+
       '<div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:18px">'+
-        '<div><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#006233;font-weight:700">'+esc(t('releve.title'))+'</div>'+
+        '<div><div style="' + titleStyle + '">'+esc(t('releve.title'))+'</div>'+
           '<div style="font-size:18px;font-weight:800;margin-top:4px">'+esc(co.name||'')+'</div>'+
           (typeof legalLines==='function'? '<div style="font-size:10px;color:#64748b;margin-top:4px">'+legalLines(co,false)+'</div>':'')+
         '</div>'+
