@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Calcul de marge et prix de vente — Algérie | حساب هامش الربح</title>
+<meta name="description" content="Calculez votre prix de vente à partir du prix d'achat : taux de marge, taux de marque, coefficient multiplicateur et TVA 19 % ou 9 %. En dinars, gratuit, sans inscription. حساب هامش الربح وسعر البيع." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.facturedz.com/calcul-marge.html" />
+<meta property="og:title" content="Calcul de marge et prix de vente — Algérie" />
+<meta property="og:description" content="Du prix d'achat au prix de vente : marge, marque, coefficient et TVA algérienne. Gratuit, sans inscription." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://www.facturedz.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://www.facturedz.com/og.png" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .num{direction:ltr;unicode-bidi:isolate}
+  input[type=number]{direction:ltr;text-align:start}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
+  button.seg{border:1px solid #cbd5e1;background:transparent;color:inherit;
+    padding:.55rem .9rem;border-radius:11px;font-size:.875rem;font-weight:600;
+    cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+  button.seg[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  .step{display:flex;justify-content:space-between;gap:1rem;padding:.6rem 0;
+    border-bottom:1px solid #e2e8f0;font-size:.9rem}
+  .step:last-child{border-bottom:0}
+  .step .v{font-weight:600;white-space:nowrap}
+  .warn{background:#fffbeb;color:#92400e;border:1px solid #fcd34d}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+    th,td,.step{border-color:#1e293b}
+    button.seg{border-color:#334155}
+    .warn{background:#3b2f14;color:#fcd34d;border-color:#78350f}
+  }
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <img src="/icon.svg" alt="" width="36" height="36" class="w-9 h-9 rounded-xl shrink-0" />
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 pb-16">
+
+  <h1 id="h1" class="text-2xl sm:text-3xl font-bold mb-2">Calcul de marge et prix de vente</h1>
+  <p id="sub" class="text-slate-500 mb-6">Du prix d’achat au prix affiché, avec la TVA algérienne.</p>
+
+  <div class="card p-5 sm:p-6">
+    <label id="lpa" class="block text-sm font-medium mb-2" for="pa">Prix d’achat HT (DA)</label>
+    <input id="pa" type="number" inputmode="decimal" min="0" step="0.01" placeholder="1000"
+           class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+
+    <p id="modelbl" class="text-sm font-medium mt-5 mb-2">Ce que je connais ensuite</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="seg" id="m-marque" data-mode="marque" aria-pressed="true">Taux de marque</button>
+      <button type="button" class="seg" id="m-marge"  data-mode="marge"  aria-pressed="false">Taux de marge</button>
+      <button type="button" class="seg" id="m-coef"   data-mode="coef"   aria-pressed="false">Coefficient</button>
+      <button type="button" class="seg" id="m-pv"     data-mode="pv"     aria-pressed="false">Prix de vente</button>
+    </div>
+
+    <label id="lval" class="block text-sm font-medium mt-5 mb-2" for="val">Taux de marque (%)</label>
+    <input id="val" type="number" inputmode="decimal" min="0" step="0.01" placeholder="30"
+           class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+    <p id="valhint" class="text-xs text-slate-500 mt-1.5">Part du prix de vente qui vous reste.</p>
+
+    <p id="tvalbl" class="text-sm font-medium mt-5 mb-2">TVA applicable</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="seg" data-rate="19" aria-pressed="true">19 %</button>
+      <button type="button" class="seg" data-rate="9"  aria-pressed="false">9 %</button>
+      <button type="button" class="seg" data-rate="0"  aria-pressed="false" id="r-0">Exonéré</button>
+    </div>
+
+    <p id="err" class="hidden warn text-xs leading-relaxed rounded-xl px-3 py-2 mt-4"></p>
+
+    <div class="mt-6" id="steps">
+      <div class="step"><span id="s1">Prix d’achat HT</span><span class="num v" id="v-pa">—</span></div>
+      <div class="step"><span id="s2">Marge en dinars</span><span class="num v" id="v-marge">—</span></div>
+      <div class="step"><span id="s3">Prix de vente HT</span><span class="num v" id="v-pvht">—</span></div>
+      <div class="step"><span id="s4">TVA</span><span class="num v" id="v-tva">—</span></div>
+    </div>
+
+    <div class="rounded-xl p-4 mt-4 text-white flex items-center justify-between gap-3" style="background:var(--brand)">
+      <span id="s5" class="text-sm opacity-90">Prix de vente TTC</span>
+      <span class="num text-2xl font-bold" id="v-pvttc">—</span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+      <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+        <p id="k1" class="text-xs text-slate-500 mb-1">Taux de marge</p>
+        <p class="num font-bold" id="v-tmarge">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+        <p id="k2" class="text-xs text-slate-500 mb-1">Taux de marque</p>
+        <p class="num font-bold" id="v-tmarque">—</p>
+      </div>
+      <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+        <p id="k3" class="text-xs text-slate-500 mb-1">Coefficient</p>
+        <p class="num font-bold" id="v-coef">—</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5 text-sm leading-relaxed">
+    <h2 id="t1" class="font-semibold mb-2">Marge et marque ne sont pas la même chose</h2>
+    <p id="p1" class="text-slate-600 dark:text-slate-400 mb-3">
+      C’est l’erreur qui coûte le plus cher, et elle se fait tous les jours. Les deux se
+      calculent sur la même marge en dinars, mais pas sur la même base : le
+      <strong>taux de marge</strong> la rapporte au <em>prix d’achat</em>, le
+      <strong>taux de marque</strong> la rapporte au <em>prix de vente</em>.
+    </p>
+    <p id="p2" class="text-slate-600 dark:text-slate-400 mb-3">
+      Un commerçant qui veut garder 40 % de ce que paie le client, et qui applique 40 % sur son
+      prix d’achat, n’en garde en réalité que <strong>28,6 %</strong>. Sur un achat à 1 000 DA :
+      appliquer 40 % de marge donne un prix de vente de 1 400 DA, dont 400 DA de marge — soit
+      28,6 % du prix de vente, pas 40 %. Pour garder vraiment 40 %, il faut vendre à 1 667 DA.
+    </p>
+    <table class="mt-3">
+      <thead><tr><th id="c1">Ce que vous voulez</th><th id="c2">La formule</th></tr></thead>
+      <tbody>
+        <tr><td id="f1">Marge en dinars</td><td class="num">PV HT − PA HT</td></tr>
+        <tr><td id="f2">Taux de marge</td><td class="num">marge ÷ PA HT × 100</td></tr>
+        <tr><td id="f3">Taux de marque</td><td class="num">marge ÷ PV HT × 100</td></tr>
+        <tr><td id="f4">Coefficient</td><td class="num">PV TTC ÷ PA HT</td></tr>
+      </tbody>
+    </table>
+    <h2 id="t2" class="font-semibold mb-2 mt-5">Le coefficient, pour aller vite au comptoir</h2>
+    <p id="p3" class="text-slate-600 dark:text-slate-400 mb-3">
+      Beaucoup de commerçants ne raisonnent ni en marge ni en marque, mais en
+      <strong>coefficient multiplicateur</strong> : le nombre par lequel on multiplie le prix
+      d’achat pour obtenir le prix affiché, TVA comprise. Un coefficient de 1,5 sur un achat à
+      1 000 DA donne 1 500 DA en rayon. C’est le plus rapide à appliquer sur cent références,
+      et c’est pour cela qu’il figure ici à côté des deux autres.
+    </p>
+    <h2 id="t3" class="font-semibold mb-2 mt-5">La TVA n’est pas votre marge</h2>
+    <p id="p4" class="text-slate-600 dark:text-slate-400">
+      La TVA que vous ajoutez au prix de vente ne vous appartient pas : vous la collectez pour
+      le Trésor et vous la reversez, diminuée de celle que vous avez payée sur vos achats. Elle
+      n’entre donc jamais dans le calcul de la marge, qui se fait toujours hors taxes des deux
+      côtés. Le taux applicable dépend du produit — 19 % en général, 9 % pour certaines
+      catégories : voyez la page <a href="/calcul-tva.html" class="underline">calcul de la TVA</a>,
+      et <a href="/mentions-obligatoires-facture-algerie.html" class="underline">les mentions
+      obligatoires</a> pour ce que la facture doit porter.
+    </p>
+  </section>
+
+  <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">Vos prix sont fixés ? Éditez la facture en une minute.</p>
+    <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
+      <span id="ctaB">Créer une facture gratuitement</span>
+    </a>
+  </div>
+
+  <div class="card p-5 sm:p-6 mt-5">
+    <h2 id="moreT" class="font-semibold mb-3">Autres outils</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="/calcul-pourcentage.html" id="m0" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Pourcentage et remise</a>
+      <a href="/calcul-tva.html" id="m1" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul de la TVA</a>
+      <a href="/droit-de-timbre.html" id="m2" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Droit de timbre</a>
+      <a href="/montant-en-lettres.html" id="m3" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Montant en lettres</a>
+    </div>
+  </div>
+
+  <!-- L'arabe est la langue dans laquelle une grande partie des commerçants
+       cherchent. Ce bloc est servi tel quel, quelle que soit la langue de
+       l'interface, et dit la même chose que le reste de la page. -->
+  <section class="card p-5 sm:p-6 mt-5" dir="rtl" lang="ar">
+    <h2 class="font-semibold mb-3">حساب هامش الربح وسعر البيع</h2>
+    <p class="text-sm leading-7">من سعر الشراء إلى السعر المعروض: أدخل سعر الشراء خارج الرسم، ثمّ اختر ما تعرفه — <b>نسبة الربح من سعر البيع</b> (taux de marque) أو <b>نسبة الربح من سعر الشراء</b> (taux de marge) أو <b>المعامل الضاربي</b> أو سعر البيع مباشرة — فتحصل على الباقي كلّه.</p>
+    <h3 class="font-semibold mt-4 mb-2">الفرق الذي يكلّف كثيرًا</h3>
+    <p class="text-sm leading-7">النسبتان تُحسبان على نفس الربح بالدينار، لكن على أساسين مختلفين: <b>taux de marge</b> ينسبه إلى سعر الشراء، و<b>taux de marque</b> ينسبه إلى سعر البيع.</p>
+    <p class="text-sm leading-7 mt-2">تاجر يريد أن يبقى له 40٪ ممّا يدفعه الزبون، فيطبّق 40٪ على سعر شرائه، لا يبقى له في الحقيقة إلّا <b>28.6٪</b>. على شراء بـ1000 دج: 40٪ ربح تعطي سعر بيع 1400 دج، والربح 400 دج — أي 28.6٪ من سعر البيع لا 40٪. وليبقى له 40٪ فعلاً، عليه أن يبيع بـ1667 دج.</p>
+    <h3 class="font-semibold mt-4 mb-2">المعامل الضاربي</h3>
+    <p class="text-sm leading-7">كثير من التجّار لا يحسبون بالنسب بل <b>بالمعامل</b>: الرقم الذي يُضرب فيه سعر الشراء ليخرج السعر المعروض شاملاً الرسم. معامل 1.5 على شراء بـ1000 دج يعطي 1500 دج في الرفّ. وهو الأسرع حين تكون أمامك مئة سلعة، ولهذا يظهر هنا إلى جانب النسبتين.</p>
+    <h3 class="font-semibold mt-4 mb-2">الرسم ليس ربحًا</h3>
+    <p class="text-sm leading-7">الرسم على القيمة المضافة الذي تضيفه ليس ملكك: تحصّله للخزينة وتُرجعه، منقوصًا منه ما دفعته على مشترياتك. فهو لا يدخل في حساب الربح أبدًا، والربح يُحسب خارج الرسم من الجهتين. والنسبة تتبع نوع السلعة — 19٪ عمومًا و9٪ لبعض الأصناف: انظر <a href="/calcul-tva.html" class="underline">حساب TVA</a>.</p>
+  </section>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="lib-calc.js?v=20260817h"></script>
+<script src="install.js?v=20260817h"></script>
+<script>
+(function(){
+  var T={
+    fr:{h1:'Calcul de marge et prix de vente',sub:'Du prix d’achat au prix affiché, avec la TVA algérienne.',
+        lpa:'Prix d’achat HT (DA)',modelbl:'Ce que je connais ensuite',
+        mMarque:'Taux de marque',mMarge:'Taux de marge',mCoef:'Coefficient',mPv:'Prix de vente',
+        tvalbl:'TVA applicable',rExo:'Exonéré',
+        s1:'Prix d’achat HT',s2:'Marge en dinars',s3:'Prix de vente HT',s4:'TVA',s5:'Prix de vente TTC',
+        k1:'Taux de marge',k2:'Taux de marque',k3:'Coefficient',
+        lMarque:'Taux de marque (%)',hMarque:'Part du prix de vente qui vous reste.',
+        lMarge:'Taux de marge (%)',hMarge:'Ce que vous ajoutez au prix d’achat.',
+        lCoef:'Coefficient multiplicateur',hCoef:'Le prix d’achat multiplié par ce nombre donne le prix TTC.',
+        lPv:'Prix de vente TTC (DA)',hPv:'Le prix affiché au client, taxe comprise.',
+        eMarque:'Un taux de marque de 100 % ou plus est impossible : la marge ne peut pas dépasser le prix de vente.',
+        eCoef:'Un coefficient inférieur à 1 vend à perte. Vérifiez le chiffre.',
+        ePerte:'Ce prix de vente est inférieur au prix d’achat : vous vendez à perte.',
+        t1:'Marge et marque ne sont pas la même chose',
+        t2:'Le coefficient, pour aller vite au comptoir',t3:'La TVA n’est pas votre marge',
+        c1:'Ce que vous voulez',c2:'La formule',
+        f1:'Marge en dinars',f2:'Taux de marge',f3:'Taux de marque',f4:'Coefficient',
+        ctaT:'Vos prix sont fixés ? Éditez la facture en une minute.',
+        ctaB:'Créer une facture gratuitement',
+        moreT:'Autres outils',m0:'Pourcentage et remise',m1:'Calcul de la TVA',
+        m2:'Droit de timbre',m3:'Montant en lettres',
+        other:'العربية',title:'Calcul de marge et prix de vente — Algérie'},
+    ar:{h1:'حساب هامش الربح وسعر البيع',sub:'من سعر الشراء إلى السعر المعروض، مع الرسم الجزائري.',
+        lpa:'سعر الشراء خارج الرسم (دج)',modelbl:'ما تعرفه بعد ذلك',
+        mMarque:'نسبة من سعر البيع',mMarge:'نسبة من سعر الشراء',mCoef:'المعامل',mPv:'سعر البيع',
+        tvalbl:'الرسم المطبَّق',rExo:'معفى',
+        s1:'سعر الشراء خارج الرسم',s2:'الربح بالدينار',s3:'سعر البيع خارج الرسم',s4:'الرسم',s5:'سعر البيع مع الرسم',
+        k1:'نسبة من سعر الشراء',k2:'نسبة من سعر البيع',k3:'المعامل',
+        lMarque:'النسبة من سعر البيع (٪)',hMarque:'ما يبقى لك من السعر الذي يدفعه الزبون.',
+        lMarge:'النسبة من سعر الشراء (٪)',hMarge:'ما تضيفه فوق سعر الشراء.',
+        lCoef:'المعامل الضاربي',hCoef:'سعر الشراء مضروبًا في هذا الرقم يعطي السعر مع الرسم.',
+        lPv:'سعر البيع مع الرسم (دج)',hPv:'السعر المعروض على الزبون، شاملاً الرسم.',
+        eMarque:'نسبة 100٪ أو أكثر من سعر البيع مستحيلة: الربح لا يتجاوز سعر البيع.',
+        eCoef:'معامل أقلّ من 1 يعني البيع بخسارة. راجع الرقم.',
+        ePerte:'سعر البيع هذا أقلّ من سعر الشراء: أنت تبيع بخسارة.',
+        t1:'الفرق بين النسبتين',t2:'المعامل الضاربي',t3:'الرسم ليس ربحًا',
+        c1:'ما تريده',c2:'القاعدة',
+        f1:'الربح بالدينار',f2:'نسبة من سعر الشراء',f3:'نسبة من سعر البيع',f4:'المعامل',
+        ctaT:'حدّدت أسعارك؟ حرّر الفاتورة في دقيقة.',ctaB:'أنشئ فاتورة مجانًا',
+        moreT:'أدوات أخرى',m0:'النسبة والتخفيض',m1:'حساب TVA',
+        m2:'رسم الطابع',m3:'المبلغ بالحروف',
+        other:'Français',title:'حساب هامش الربح وسعر البيع — الجزائر'}
+  };
+
+  var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
+  var mode='marque', rate=19;
+  var $=function(id){return document.getElementById(id);};
+  var fmt=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' DA';};
+  var pct=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:1,maximumFractionDigits:1}).format(n)+' %';};
+  var coefFmt=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:3,maximumFractionDigits:3}).format(n);};
+
+  function d(){return T[loc];}
+
+  function paintField(){
+    var x=d(), L, H, ph;
+    if(mode==='marque'){L=x.lMarque;H=x.hMarque;ph='30';}
+    else if(mode==='marge'){L=x.lMarge;H=x.hMarge;ph='40';}
+    else if(mode==='coef'){L=x.lCoef;H=x.hCoef;ph='1,5';}
+    else {L=x.lPv;H=x.hPv;ph='1500';}
+    $('lval').textContent=L; $('valhint').textContent=H; $('val').placeholder=ph;
+  }
+
+  function apply(){
+    var x=d();
+    document.documentElement.lang=loc==='ar'?'ar':'fr';
+    document.documentElement.dir=loc==='ar'?'rtl':'ltr';
+    document.body.classList.toggle('ar',loc==='ar');
+    ['h1','sub','lpa','modelbl','tvalbl','s1','s2','s3','s4','s5','k1','k2','k3',
+     't1','t2','t3','c1','c2','f1','f2','f3','f4','ctaT','ctaB','moreT','m0','m1','m2','m3']
+      .forEach(function(k){ var el=$(k); if(el) el.textContent=x[k]; });
+    $('m-marque').textContent=x.mMarque; $('m-marge').textContent=x.mMarge;
+    $('m-coef').textContent=x.mCoef;     $('m-pv').textContent=x.mPv;
+    $('r-0').textContent=x.rExo;
+    $('lang').textContent=x.other;
+    document.title=x.title;
+    paintField(); render();
+  }
+
+  function blank(msg){
+    ['v-pa','v-marge','v-pvht','v-tva','v-pvttc','v-tmarge','v-tmarque','v-coef']
+      .forEach(function(k){ $(k).textContent='—'; });
+    var e=$('err');
+    if(msg){ e.textContent=msg; e.classList.remove('hidden'); }
+    else { e.classList.add('hidden'); }
+  }
+
+  function render(){
+    var x=d();
+    var pa=parseFloat($('pa').value);
+    var v=parseFloat($('val').value);
+    if(!isFinite(pa)||pa<=0||!isFinite(v)){ blank(''); return; }
+
+    /* Chaque mode ne fixe qu'une inconnue : le prix de vente hors taxe. Tout
+       le reste en decoule, et se recalcule de la meme facon quel que soit le
+       chemin — sinon deux modes donneraient deux resultats pour un meme prix. */
+    var pvHt;
+    if(mode==='marque'){
+      if(v>=100){ blank(x.eMarque); return; }
+      pvHt = pa/(1-v/100);
+    } else if(mode==='marge'){
+      pvHt = pa*(1+v/100);
+    } else if(mode==='coef'){
+      if(v<1){ blank(x.eCoef); return; }
+      /* Le coefficient des commercants porte sur le prix affiche, taxe
+         comprise : on redescend au hors taxe avant de comparer a l'achat. */
+      pvHt = (pa*v)/(1+rate/100);
+    } else {
+      pvHt = v/(1+rate/100);
+    }
+
+    if(pvHt<pa){ blank(x.ePerte); return; }
+    $('err').classList.add('hidden');
+
+    var marge=pvHt-pa;
+    var tva=vatAmount(pvHt, rate);
+    var pvTtc=pvHt+tva;
+
+    $('v-pa').textContent=fmt(pa);
+    $('v-marge').textContent=fmt(marge);
+    $('v-pvht').textContent=fmt(pvHt);
+    $('v-tva').textContent=fmt(tva);
+    $('v-pvttc').textContent=fmt(pvTtc);
+    $('v-tmarge').textContent=pct(marge/pa*100);
+    $('v-tmarque').textContent=pvHt>0?pct(marge/pvHt*100):'—';
+    $('v-coef').textContent=coefFmt(pvTtc/pa);
+  }
+
+  [].forEach.call(document.querySelectorAll('button.seg[data-mode]'),function(b){
+    b.addEventListener('click',function(){
+      mode=b.dataset.mode;
+      [].forEach.call(document.querySelectorAll('button.seg[data-mode]'),function(o){
+        o.setAttribute('aria-pressed', String(o===b));
+      });
+      paintField(); render();
+    });
+  });
+  [].forEach.call(document.querySelectorAll('button.seg[data-rate]'),function(b){
+    b.addEventListener('click',function(){
+      rate=parseFloat(b.dataset.rate);
+      [].forEach.call(document.querySelectorAll('button.seg[data-rate]'),function(o){
+        o.setAttribute('aria-pressed', String(o===b));
+      });
+      render();
+    });
+  });
+  $('pa').addEventListener('input',render);
+  $('val').addEventListener('input',render);
+  $('lang').addEventListener('click',function(){
+    loc=(loc==='ar')?'fr':'ar';
+    try{ localStorage.setItem('fp_locale',loc); }catch(e){}
+    apply();
+  });
+
+  apply();
+})();
+</script>
+
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

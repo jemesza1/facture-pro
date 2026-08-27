@@ -3895,6 +3895,74 @@ check('and the two carry the same stamp',
   await gen.close();
 }
 
+console.log('\nMarge, remise : l’arithmétique du comptoir');
+{
+  const N = s => parseFloat(String(s).replace(/[^\d,.-]/g, '').replace(/\s/g, '').replace(',', '.'));
+
+  const mg = await browser.newPage();
+  const mgErr = [];
+  mg.on('pageerror', e => { if (!/tailwind|font/i.test(String(e))) mgErr.push(String(e)); });
+  await mg.goto(`${BASE}/calcul-marge.html`);
+  await mg.waitForTimeout(900);
+  const marge = async (pa, val, mode, rate) => {
+    await mg.click(`button.seg[data-mode="${mode}"]`);
+    await mg.click(`button.seg[data-rate="${rate}"]`);
+    await mg.fill('#pa', String(pa)); await mg.fill('#val', String(val));
+    await mg.waitForTimeout(140);
+    return mg.evaluate(() => ({
+      pvht: document.getElementById('v-pvht').textContent,
+      pvttc: document.getElementById('v-pvttc').textContent,
+      tmarque: document.getElementById('v-tmarque').textContent,
+      tmarge: document.getElementById('v-tmarge').textContent,
+      coef: document.getElementById('v-coef').textContent,
+      blocked: !document.getElementById('err').classList.contains('hidden')
+    }));
+  };
+  /* L'exemple que la page raconte doit etre celui qu'elle calcule : 40 % de
+     marge sur 1 000 ne laisse pas 40 % du prix de vente, mais 28,6 %. */
+  let r = await marge(1000, 40, 'marge', 19);
+  check('40 % de marge sur 1 000 vend a 1 400', near(N(r.pvht), 1400, 0.02), r.pvht);
+  check('et ne laisse que 28,6 % du prix de vente', near(N(r.tmarque), 28.6, 0.06), r.tmarque);
+  r = await marge(1000, 40, 'marque', 19);
+  check('40 % de marque demande 1 666,67', near(N(r.pvht), 1666.67, 0.02), r.pvht);
+  check('soit 66,7 % de marge', near(N(r.tmarge), 66.7, 0.06), r.tmarge);
+  r = await marge(1000, 1.5, 'coef', 19);
+  check('un coefficient de 1,5 affiche 1 500 TTC', near(N(r.pvttc), 1500, 0.02), r.pvttc);
+  check('et se relit tel quel', near(N(r.coef), 1.5, 0.002), r.coef);
+  r = await marge(1000, 25, 'marge', 0);
+  check('un produit exonere ne paie pas de taxe', near(N(r.pvttc), 1250, 0.02), r.pvttc);
+  check('une marque de 100 % est refusee, pas divisee par zero',
+        (await marge(1000, 100, 'marque', 19)).blocked);
+  check('un coefficient sous 1 est signale', (await marge(1000, 0.8, 'coef', 19)).blocked);
+  check('et un prix de vente sous le prix d’achat aussi',
+        (await marge(1000, 500, 'pv', 19)).blocked);
+  check('no script error on the margin calculator', mgErr.length === 0, mgErr[0] || '');
+  await mg.close();
+
+  const pcp = await browser.newPage();
+  const pcErr = [];
+  pcp.on('pageerror', e => { if (!/tailwind|font/i.test(String(e))) pcErr.push(String(e)); });
+  await pcp.goto(`${BASE}/calcul-pourcentage.html`);
+  await pcp.waitForTimeout(900);
+  const pc = async (x, y, op) => {
+    await pcp.click(`button.seg[data-op="${op}"]`);
+    await pcp.fill('#a', String(x)); await pcp.fill('#b', String(y));
+    await pcp.waitForTimeout(120);
+    return pcp.evaluate(() => document.getElementById('v3').textContent);
+  };
+  check('une remise de 20 % sur 10 000 laisse 8 000', near(N(await pc(10000, 20, 'remise')), 8000, 0.02));
+  /* Ce que la page promet en toutes lettres, et la raison d'etre de l'outil. */
+  check('une hausse de 20 % ne la rend pas', near(N(await pc(8000, 20, 'hausse')), 9600, 0.02));
+  check('il en faut 25 pour revenir au depart', near(N(await pc(8000, 25, 'hausse')), 10000, 0.02));
+  check('19 % de 10 000 font 1 900', near(N(await pc(10000, 19, 'part')), 1900, 0.02));
+  check('de 10 000 a 12 000 il y a 20 %', near(N(await pc(10000, 12000, 'ecart')), 20, 0.02));
+  check('et de 12 000 a 10 000, 16,67 %', near(N(await pc(12000, 10000, 'ecart')), 16.67, 0.02));
+  check('une variation depuis zero ne s’invente pas',
+        (await pc(0, 100, 'ecart')) === '—');
+  check('no script error on the percentage calculator', pcErr.length === 0, pcErr[0] || '');
+  await pcp.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

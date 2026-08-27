@@ -39,6 +39,8 @@ const GROUPS = [
   ['Calculateurs', 'حاسبات', [
     ['droit-de-timbre.html', 'Droit de timbre', 'حق الطابع'],
     ['calcul-tva.html', 'Calcul TVA', 'حساب TVA'],
+    ['calcul-marge.html', 'Marge et prix de vente', 'الربح وسعر البيع'],
+    ['calcul-pourcentage.html', 'Pourcentage et remise', 'النسبة والتخفيض'],
     ['calcul-salaire.html', 'Calcul de salaire', 'حساب الأجر'],
     ['montant-en-lettres.html', 'Montant en lettres', 'المبلغ بالحروف'],
   ]],
@@ -69,11 +71,14 @@ const GROUPS = [
   ]],
 ];
 
-/* Six links, chosen by what a merchant actually opens twice. Everything else
-   is one scroll away in the footer, and the last chip says so. */
+/* Seven links, chosen by what a merchant actually opens twice. Everything else
+   is one scroll away in the footer, and the last chip says so. Marge earns the
+   seventh place because it is used per article priced, not per document
+   issued — several times a day where the others are several times a month. */
 const BAR = [
   ['droit-de-timbre.html', 'Droit de timbre', 'حق الطابع'],
   ['calcul-tva.html', 'TVA', 'TVA'],
+  ['calcul-marge.html', 'Marge', 'الربح'],
   ['montant-en-lettres.html', 'Montant en lettres', 'المبلغ بالحروف'],
   ['modele-facture-excel.html', 'Modèles', 'نماذج'],
   ['plan-comptable-scf.html', 'Comptabilité', 'محاسبة'],

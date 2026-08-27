@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#006233" />
+<title>Calcul de pourcentage et remise — Algérie | حساب النسبة والتخفيض</title>
+<meta name="description" content="Calculez une remise, une augmentation, un pourcentage d'un montant ou la variation entre deux prix. En dinars, gratuit, sans inscription. حساب النسبة المئوية والتخفيض بالدينار." />
+<meta name="author" content="CheMs SoUu" />
+<meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.facturedz.com/calcul-pourcentage.html" />
+<meta property="og:title" content="Calcul de pourcentage et remise — Algérie" />
+<meta property="og:description" content="Remise, augmentation, part d'un montant, variation entre deux prix. Gratuit, sans inscription." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://www.facturedz.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://www.facturedz.com/og.png" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--brand:#006233;--brand2:#059669}
+  body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+  body.ar{font-family:Cairo,system-ui,sans-serif}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
+  .num{direction:ltr;unicode-bidi:isolate}
+  input[type=number]{direction:ltr;text-align:start}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
+  button.seg{border:1px solid #cbd5e1;background:transparent;color:inherit;
+    padding:.55rem .9rem;border-radius:11px;font-size:.875rem;font-weight:600;
+    cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+  button.seg[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+  .step{display:flex;justify-content:space-between;gap:1rem;padding:.6rem 0;
+    border-bottom:1px solid #e2e8f0;font-size:.9rem}
+  .step:last-child{border-bottom:0}
+  .step .v{font-weight:600;white-space:nowrap}
+  .minus .v{color:#dc2626}
+  .plus .v{color:#059669}
+  @media (prefers-color-scheme: dark){
+    body{background:#0b1220;color:#e2e8f0}
+    .card{background:#111b2e;border-color:#1e293b}
+    th,td,.step{border-color:#1e293b}
+    button.seg{border-color:#334155}
+    .minus .v{color:#f87171}
+    .plus .v{color:#34d399}
+  }
+</style>
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
+</head>
+<body class="min-h-screen">
+
+<header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
+  <a href="/" class="flex items-center gap-2 min-w-0">
+    <img src="/icon.svg" alt="" width="36" height="36" class="w-9 h-9 rounded-xl shrink-0" />
+    <span class="font-bold truncate">FacturePro</span>
+  </a>
+  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 pb-16">
+
+  <h1 id="h1" class="text-2xl sm:text-3xl font-bold mb-2">Calcul de pourcentage et remise</h1>
+  <p id="sub" class="text-slate-500 mb-6">Une remise, une hausse, une part, un écart entre deux prix.</p>
+
+  <div class="card p-5 sm:p-6">
+    <p id="opTitle" class="text-sm font-medium mb-2">Que voulez-vous calculer ?</p>
+    <div class="flex flex-wrap gap-2 mb-5">
+      <button type="button" class="seg" id="o-remise" data-op="remise" aria-pressed="true">Remise</button>
+      <button type="button" class="seg" id="o-hausse" data-op="hausse" aria-pressed="false">Augmentation</button>
+      <button type="button" class="seg" id="o-part"   data-op="part"   aria-pressed="false">Part d’un montant</button>
+      <button type="button" class="seg" id="o-ecart"  data-op="ecart"  aria-pressed="false">Écart entre deux prix</button>
+    </div>
+
+    <label id="lA" class="block text-sm font-medium mb-2" for="a">Prix de départ (DA)</label>
+    <input id="a" type="number" inputmode="decimal" step="0.01" placeholder="10000"
+           class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+
+    <label id="lB" class="block text-sm font-medium mt-5 mb-2" for="b">Remise (%)</label>
+    <input id="b" type="number" inputmode="decimal" step="0.01" placeholder="20"
+           class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
+    <p id="bHint" class="text-xs text-slate-500 mt-1.5">Le pourcentage retiré du prix.</p>
+
+    <div class="mt-6" id="steps">
+      <div class="step"><span id="s1">Prix de départ</span><span class="num v" id="v1">—</span></div>
+      <div class="step" id="row2"><span id="s2">Remise</span><span class="num v" id="v2">—</span></div>
+    </div>
+
+    <div class="rounded-xl p-4 mt-4 text-white flex items-center justify-between gap-3" style="background:var(--brand)">
+      <span id="s3" class="text-sm opacity-90">Prix après remise</span>
+      <span class="num text-2xl font-bold" id="v3">—</span>
+    </div>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5 text-sm leading-relaxed">
+    <h2 id="t1" class="font-semibold mb-2">Une remise de 20 % ne s’annule pas par une hausse de 20 %</h2>
+    <p id="p1" class="text-slate-600 dark:text-slate-400 mb-3">
+      C’est le piège le plus courant, et il se vérifie en deux lignes. Un article à 10 000 DA
+      remisé de 20 % tombe à 8 000 DA. Si vous lui rendez ensuite 20 %, vous n’ajoutez que
+      1 600 DA — parce que les 20 % portent désormais sur 8 000 et non sur 10 000. Vous
+      revenez à 9 600 DA, pas à 10 000. Pour retrouver le prix d’origine il faut une hausse
+      de 25 %.
+    </p>
+    <p id="p2" class="text-slate-600 dark:text-slate-400 mb-3">
+      La règle générale : un pourcentage ne veut rien dire sans la base sur laquelle il porte.
+      C’est la même raison qui fait que le taux de marge et le taux de marque diffèrent, alors
+      qu’ils décrivent la même marge — voyez la page
+      <a href="/calcul-marge.html" class="underline">calcul de marge</a>.
+    </p>
+    <h2 id="t2" class="font-semibold mb-2 mt-5">Deux remises qui se suivent ne s’additionnent pas</h2>
+    <p id="p3" class="text-slate-600 dark:text-slate-400 mb-3">
+      Une remise de 10 % suivie d’une remise de 10 % ne fait pas 20 %, mais 19 % : la seconde
+      s’applique au prix déjà réduit. Sur 10 000 DA, vous arrivez à 8 100 DA et non à 8 000 DA.
+      Si vous voulez vraiment accorder 20 %, accordez-les en une fois.
+    </p>
+    <table class="mt-3">
+      <thead><tr><th id="c1">Ce que vous cherchez</th><th id="c2">La formule</th></tr></thead>
+      <tbody>
+        <tr><td id="f1">Prix après remise</td><td class="num">prix × (1 − taux ÷ 100)</td></tr>
+        <tr><td id="f2">Prix après hausse</td><td class="num">prix × (1 + taux ÷ 100)</td></tr>
+        <tr><td id="f3">Part d’un montant</td><td class="num">montant × taux ÷ 100</td></tr>
+        <tr><td id="f4">Écart entre deux prix</td><td class="num">(arrivée − départ) ÷ départ × 100</td></tr>
+      </tbody>
+    </table>
+    <h2 id="t3" class="font-semibold mb-2 mt-5">Remise et TVA sur une facture</h2>
+    <p id="p4" class="text-slate-600 dark:text-slate-400">
+      Une remise commerciale se déduit <strong>avant</strong> le calcul de la taxe, pas après :
+      elle réduit la base hors taxes, et la TVA se calcule sur le montant déjà remisé. L’inverse
+      ferait payer au client une taxe sur une somme qu’il ne vous doit pas, et fausserait votre
+      déclaration du mois. Sur la facture, la remise apparaît en ligne distincte avant le total
+      hors taxes — voyez <a href="/mentions-obligatoires-facture-algerie.html" class="underline">les
+      mentions obligatoires</a> et <a href="/calcul-tva.html" class="underline">le calcul de la TVA</a>.
+    </p>
+  </section>
+
+  <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">La remise est décidée ? Portez-la sur la facture.</p>
+    <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
+      <span id="ctaB">Créer une facture gratuitement</span>
+    </a>
+  </div>
+
+  <div class="card p-5 sm:p-6 mt-5">
+    <h2 id="moreT" class="font-semibold mb-3">Autres outils</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="/calcul-marge.html" id="m0" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Marge et prix de vente</a>
+      <a href="/calcul-tva.html" id="m1" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul de la TVA</a>
+      <a href="/droit-de-timbre.html" id="m2" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Droit de timbre</a>
+      <a href="/calcul-salaire.html" id="m3" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">Calcul de salaire</a>
+    </div>
+  </div>
+
+  <section class="card p-5 sm:p-6 mt-5" dir="rtl" lang="ar">
+    <h2 class="font-semibold mb-3">حساب النسبة المئوية والتخفيض</h2>
+    <p class="text-sm leading-7">تخفيض، زيادة، نسبة من مبلغ، أو الفرق بين سعرين — أدخل الرقمين وتحصل على النتيجة بالدينار فورًا.</p>
+    <h3 class="font-semibold mt-4 mb-2">تخفيض 20٪ لا تُلغيه زيادة 20٪</h3>
+    <p class="text-sm leading-7">هذا أكثر خطأ شيوعًا. سلعة بـ10000 دج بعد تخفيض 20٪ تصير 8000 دج. وإذا زدت عليها 20٪ فأنت تضيف 1600 دج فقط — لأنّ النسبة صارت تُحسب على 8000 لا على 10000. فترجع إلى 9600 دج لا إلى 10000. ولترجع إلى السعر الأصلي تحتاج زيادة <b>25٪</b>.</p>
+    <p class="text-sm leading-7 mt-2">والقاعدة: النسبة لا معنى لها بلا الأساس الذي تُحسب عليه. وهو نفس سبب اختلاف <a href="/calcul-marge.html" class="underline">نسبة الربح من سعر الشراء عن نسبتها من سعر البيع</a>.</p>
+    <h3 class="font-semibold mt-4 mb-2">تخفيضان متتاليان لا يُجمعان</h3>
+    <p class="text-sm leading-7">تخفيض 10٪ يتبعه تخفيض 10٪ لا يساوي 20٪ بل <b>19٪</b>، لأنّ الثاني يُطبَّق على السعر المخفَّض. على 10000 دج تصل إلى 8100 دج لا إلى 8000. فإن أردت 20٪ فعلاً، امنحها دفعة واحدة.</p>
+    <h3 class="font-semibold mt-4 mb-2">التخفيض والرسم على الفاتورة</h3>
+    <p class="text-sm leading-7">التخفيض التجاري يُخصم <b>قبل</b> حساب الرسم لا بعده: يخفّض الأساس خارج الرسم، ويُحسب الرسم على المبلغ المخفَّض. والعكس يجعل الزبون يدفع رسمًا على مبلغ لا يدينه، ويُفسد تصريحك الشهري. ويظهر التخفيض في سطر مستقلّ قبل المجموع خارج الرسم.</p>
+  </section>
+
+  <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
+</main>
+
+<script src="install.js?v=20260817h"></script>
+<script>
+(function(){
+  var T={
+    fr:{h1:'Calcul de pourcentage et remise',sub:'Une remise, une hausse, une part, un écart entre deux prix.',
+        opTitle:'Que voulez-vous calculer ?',
+        oRemise:'Remise',oHausse:'Augmentation',oPart:'Part d’un montant',oEcart:'Écart entre deux prix',
+        t1:'Une remise de 20 % ne s’annule pas par une hausse de 20 %',
+        t2:'Deux remises qui se suivent ne s’additionnent pas',
+        t3:'Remise et TVA sur une facture',
+        c1:'Ce que vous cherchez',c2:'La formule',
+        f1:'Prix après remise',f2:'Prix après hausse',f3:'Part d’un montant',f4:'Écart entre deux prix',
+        ctaT:'La remise est décidée ? Portez-la sur la facture.',ctaB:'Créer une facture gratuitement',
+        moreT:'Autres outils',m0:'Marge et prix de vente',m1:'Calcul de la TVA',
+        m2:'Droit de timbre',m3:'Calcul de salaire',
+        remise:{lA:'Prix de départ (DA)',lB:'Remise (%)',hB:'Le pourcentage retiré du prix.',
+                s1:'Prix de départ',s2:'Remise',s3:'Prix après remise',phA:'10000',phB:'20'},
+        hausse:{lA:'Prix de départ (DA)',lB:'Augmentation (%)',hB:'Le pourcentage ajouté au prix.',
+                s1:'Prix de départ',s2:'Augmentation',s3:'Prix après augmentation',phA:'10000',phB:'15'},
+        part:{lA:'Montant (DA)',lB:'Pourcentage (%)',hB:'La part que vous cherchez.',
+              s1:'Montant',s2:'Pourcentage appliqué',s3:'Résultat',phA:'10000',phB:'19'},
+        ecart:{lA:'Prix de départ (DA)',lB:'Prix d’arrivée (DA)',hB:'Le nouveau prix, pour mesurer l’écart.',
+               s1:'Différence',s2:'Sur une base de',s3:'Variation',phA:'10000',phB:'12000'},
+        other:'العربية',title:'Calcul de pourcentage et remise — Algérie'},
+    ar:{h1:'حساب النسبة المئوية والتخفيض',sub:'تخفيض أو زيادة أو نسبة من مبلغ أو فرق بين سعرين.',
+        opTitle:'ماذا تريد أن تحسب؟',
+        oRemise:'تخفيض',oHausse:'زيادة',oPart:'نسبة من مبلغ',oEcart:'الفرق بين سعرين',
+        t1:'تخفيض 20٪ لا تُلغيه زيادة 20٪',
+        t2:'تخفيضان متتاليان لا يُجمعان',
+        t3:'التخفيض والرسم على الفاتورة',
+        c1:'ما تبحث عنه',c2:'القاعدة',
+        f1:'السعر بعد التخفيض',f2:'السعر بعد الزيادة',f3:'نسبة من مبلغ',f4:'الفرق بين سعرين',
+        ctaT:'قرّرت التخفيض؟ أدرجه في الفاتورة.',ctaB:'أنشئ فاتورة مجانًا',
+        moreT:'أدوات أخرى',m0:'الربح وسعر البيع',m1:'حساب TVA',
+        m2:'رسم الطابع',m3:'حساب الأجر',
+        remise:{lA:'السعر الأصلي (دج)',lB:'التخفيض (٪)',hB:'النسبة المخصومة من السعر.',
+                s1:'السعر الأصلي',s2:'التخفيض',s3:'السعر بعد التخفيض',phA:'10000',phB:'20'},
+        hausse:{lA:'السعر الأصلي (دج)',lB:'الزيادة (٪)',hB:'النسبة المضافة إلى السعر.',
+                s1:'السعر الأصلي',s2:'الزيادة',s3:'السعر بعد الزيادة',phA:'10000',phB:'15'},
+        part:{lA:'المبلغ (دج)',lB:'النسبة (٪)',hB:'الجزء الذي تبحث عنه.',
+              s1:'المبلغ',s2:'النسبة المطبَّقة',s3:'النتيجة',phA:'10000',phB:'19'},
+        ecart:{lA:'السعر الأوّل (دج)',lB:'السعر الثاني (دج)',hB:'السعر الجديد، لقياس الفرق.',
+               s1:'الفرق',s2:'على أساس',s3:'نسبة التغيّر',phA:'10000',phB:'12000'},
+        other:'Français',title:'حساب النسبة المئوية والتخفيض — الجزائر'}
+  };
+
+  var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
+  var op='remise';
+  var $=function(id){return document.getElementById(id);};
+  var money=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' DA';};
+  var pct=function(n){return new Intl.NumberFormat('fr-DZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' %';};
+  function d(){return T[loc];}
+
+  function apply(){
+    var x=d();
+    document.documentElement.lang=loc==='ar'?'ar':'fr';
+    document.documentElement.dir=loc==='ar'?'rtl':'ltr';
+    document.body.classList.toggle('ar',loc==='ar');
+    ['h1','sub','opTitle','t1','t2','t3','c1','c2','f1','f2','f3','f4',
+     'ctaT','ctaB','moreT','m0','m1','m2','m3']
+      .forEach(function(k){ var el=$(k); if(el) el.textContent=x[k]; });
+    $('o-remise').textContent=x.oRemise; $('o-hausse').textContent=x.oHausse;
+    $('o-part').textContent=x.oPart;     $('o-ecart').textContent=x.oEcart;
+    $('lang').textContent=x.other;
+    document.title=x.title;
+    paintFields(); render();
+  }
+
+  function paintFields(){
+    var f=d()[op];
+    $('lA').textContent=f.lA; $('lB').textContent=f.lB; $('bHint').textContent=f.hB;
+    $('a').placeholder=f.phA; $('b').placeholder=f.phB;
+    $('s1').textContent=f.s1; $('s2').textContent=f.s2; $('s3').textContent=f.s3;
+  }
+
+  function blank(){ ['v1','v2','v3'].forEach(function(k){ $(k).textContent='—'; });
+    $('row2').classList.remove('minus','plus'); }
+
+  function render(){
+    var a=parseFloat($('a').value), b=parseFloat($('b').value);
+    if(!isFinite(a)||!isFinite(b)){ blank(); return; }
+    var row2=$('row2');
+    row2.classList.remove('minus','plus');
+
+    if(op==='remise'){
+      var cut=a*b/100;
+      $('v1').textContent=money(a);
+      $('v2').textContent='− '+money(cut); row2.classList.add('minus');
+      $('v3').textContent=money(a-cut);
+    } else if(op==='hausse'){
+      var add=a*b/100;
+      $('v1').textContent=money(a);
+      $('v2').textContent='+ '+money(add); row2.classList.add('plus');
+      $('v3').textContent=money(a+add);
+    } else if(op==='part'){
+      $('v1').textContent=money(a);
+      $('v2').textContent=pct(b);
+      $('v3').textContent=money(a*b/100);
+    } else {
+      /* Une variation se mesure toujours par rapport au point de depart : le
+         diviseur est le premier prix, et un depart a zero n'a pas de sens. */
+      if(a===0){ blank(); return; }
+      var diff=b-a;
+      $('v1').textContent=(diff>=0?'+ ':'− ')+money(Math.abs(diff));
+      row2.classList.add(diff>=0?'plus':'minus');
+      $('v2').textContent=money(a);
+      $('v3').textContent=(diff>=0?'+ ':'− ')+pct(Math.abs(diff/a*100));
+    }
+  }
+
+  [].forEach.call(document.querySelectorAll('button.seg[data-op]'),function(btn){
+    btn.addEventListener('click',function(){
+      op=btn.dataset.op;
+      [].forEach.call(document.querySelectorAll('button.seg[data-op]'),function(o){
+        o.setAttribute('aria-pressed', String(o===btn));
+      });
+      paintFields(); render();
+    });
+  });
+  $('a').addEventListener('input',render);
+  $('b').addEventListener('input',render);
+  $('lang').addEventListener('click',function(){
+    loc=(loc==='ar')?'fr':'ar';
+    try{ localStorage.setItem('fp_locale',loc); }catch(e){}
+    apply();
+  });
+
+  apply();
+})();
+</script>
+
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
