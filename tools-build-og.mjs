@@ -3,10 +3,10 @@
  *
  * static/og.png is a 319 KB French-only screenshot with no source.
  * Twenty-five pages point at it. This script draws the card in HTML,
- * opens Chromium, and writes two small files into public/:
+ * opens Chromium, and writes two small files into static/:
  *
- *   public/og.png     French
- *   public/og-ar.png  Arabic
+ *   static/og.png     French
+ *   static/og-ar.png  Arabic
  *
  * Chromium is the one the test suite already knows:
  *   CHROMIUM_PATH=/opt/pw-browsers/chromium
@@ -25,7 +25,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
-const OUT = join(ROOT, 'public');
+/* static/, pas public/ : public/ est reconstruit a chaque `npm run build` et
+   n'est pas versionne, si bien qu'une carte ecrite la disparait au deploiement
+   suivant. Les cartes vivent donc dans static/, versionnees comme le classeur
+   SCF, et le build les copie — il le fait deja avec `cp -f static/*.png`. */
+const OUT = join(ROOT, 'static');
 const ICON = join(ROOT, 'static', 'icon.svg');
 
 const FR_LINE = 'Facture Algérie gratuite — NIF, RC, TVA 19 %';
@@ -203,7 +207,7 @@ async function renderOne({ name, rtl, line, font }) {
   if (bytes > MAX_BYTES) {
     throw new Error(`og: ${name} is ${bytes} bytes (limit ${MAX_BYTES})`);
   }
-  console.log(`og: wrote public/${name} (${Math.round(bytes / 1024)} KB)`);
+  console.log(`og: wrote static/${name} (${Math.round(bytes / 1024)} KB)`);
 }
 
 const fr = renderOne({ name: 'og.png', rtl: false, line: FR_LINE, font: 'OgInter' });

@@ -10,6 +10,7 @@
  * a failure of the app, so console errors mentioning them are ignored.
  */
 import { createServer } from 'node:http';
+import { existsSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -3835,6 +3836,24 @@ check('app.js still declares a version stamp', !!vStamp, String(vStamp));
 check('sw.js still names its cache after one', !!cacheStamp, String(cacheStamp));
 check('and the two carry the same stamp',
       !!vStamp && vStamp === cacheStamp, `V=${vStamp} CACHE=${cacheStamp}`);
+
+/* Le deploiement tourne chez Vercel, qui installe package.json a la racine —
+   pas tests/ — et n'a pas de Chromium. Une etape de build qui en demande un
+   fait echouer le deploiement entier, et aucun test local ne le voit puisque
+   Chromium est ici. On verifie donc la chaine elle-meme. */
+{
+  const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  const build = pkg.scripts.build || '';
+  check('the deploy build never asks for a browser',
+        !/\bog\b|playwright|chromium/i.test(build), build.slice(-60));
+  check('the share cards are committed, not rendered at deploy time',
+        existsSync(join(ROOT, 'static', 'og.png')) &&
+        existsSync(join(ROOT, 'static', 'og-ar.png')));
+  const fr = statSync(join(ROOT, 'static', 'og.png')).size;
+  const ar = statSync(join(ROOT, 'static', 'og-ar.png')).size;
+  check('and each one is small enough to load before the preview gives up',
+        fr < 92160 && ar < 92160, `${Math.round(fr/1024)}/${Math.round(ar/1024)} KB`);
+}
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
