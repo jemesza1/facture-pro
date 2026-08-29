@@ -22,19 +22,24 @@ const SIBLINGS = [
   ['devis.html', 'Devis', 'عرض السعر'],
   ['bon-de-livraison.html', 'Bon de livraison', 'وصل التسليم'],
   ['facture-avoir.html', "Facture d'avoir", 'الإشعار الدائن'],
-  ['modele-facture-excel.html', 'Modèle de facture Excel', 'نموذج فاتورة Excel'],
+  ['modele-facture-excel.html', 'Modèle de facture Excel / Word', 'نموذج فاتورة Excel وWord'],
   ['facture-proforma.html', 'Facture proforma', 'الفاتورة الأولية'],
   ['bon-de-commande.html', 'Bon de commande', 'وصل الطلبية'],
   ['mentions-obligatoires-facture-algerie.html', 'Mentions obligatoires', 'البيانات الإجبارية'],
+  ['facture-non-assujetti-tva.html', 'Non assujetti TVA', 'غير خاضع للرسم'],
+  ['auto-entrepreneur-algerie.html', 'Auto-entrepreneur', 'صاحب مشروع ذاتي'],
   ['remplir-g50.html', 'Remplir le G50', 'ملء G50'],
 ];
 
 const dl = (kind, fr, ar) =>
-  `<p class="mt-4"><button type="button" onclick="grab('${kind}')" class="dlbtn">` +
-  `<span data-fr="${fr}" data-ar="${ar}">${fr}</span></button></p>` +
-  `<p class="mt-2 text-xs opacity-70" data-fr="Fichier .xlsx — s'ouvre dans Excel, LibreOffice, WPS et Google Sheets. Les totaux sont des formules."` +
-  ` data-ar="ملف .xlsx — يفتح في Excel وLibreOffice وWPS وGoogle Sheets. والمجاميع صيغ حيّة.">` +
-  `Fichier .xlsx — s'ouvre dans Excel, LibreOffice, WPS et Google Sheets. Les totaux sont des formules.</p>`;
+  `<p class="mt-4 flex flex-wrap gap-2">` +
+  `<button type="button" onclick="grab('${kind}')" class="dlbtn">` +
+  `<span data-fr="${fr}" data-ar="${ar}">${fr}</span></button>` +
+  `<button type="button" onclick="grabDocx('${kind}')" class="dlbtn dlword">` +
+  `<span data-fr="Word" data-ar="Word">Word</span></button></p>` +
+  `<p class="mt-2 text-xs opacity-70" data-fr="Fichier .xlsx ou .docx — s'ouvre dans Excel, Word, LibreOffice, WPS et Google Docs. Les totaux Excel sont des formules."` +
+  ` data-ar="ملف .xlsx أو .docx — يفتح في Excel وWord وLibreOffice وWPS وGoogle Docs. ومجاميع Excel صيغ حيّة.">` +
+  `Fichier .xlsx ou .docx — s'ouvre dans Excel, Word, LibreOffice, WPS et Google Docs. Les totaux Excel sont des formules.</p>`;
 
 /* dl() fabrique le classeur dans le navigateur ; celui-ci pointe un fichier
    que le build a deja copie. Le systeme comptable fait huit feuilles et trois
@@ -271,13 +276,13 @@ const PAGES = [
   },
   {
     file: 'modele-facture-excel.html', kind: 'facture',
-    title: 'Modèle de facture Excel Algérie — gratuit, avec formules | نموذج فاتورة',
-    desc: "Téléchargez un modèle de facture algérienne au format Excel (.xlsx), avec NIF, NIS, RC, AI, TVA 19 % et 9 %, droit de timbre et totaux calculés par formules. Gratuit, sans inscription. حمّل نموذج فاتورة جزائرية بصيغة Excel، فيه NIF وNIS وRC وAI والرسم 19٪ و9٪ وحقّ الطابع ومجاميع بصيغ حيّة. مجاني وبلا تسجيل.",
-    og: 'Modèle de facture Excel pour l’Algérie — gratuit',
-    h1fr: 'Modèle de facture Excel pour l’Algérie',
-    h1ar: 'نموذج فاتورة Excel للجزائر',
-    leadfr: "Un vrai fichier .xlsx, pas une image ni un .xls déguisé. Les totaux sont des formules : changez une quantité et la ligne, la TVA et le net suivent.",
-    leadar: 'ملف .xlsx حقيقي، لا صورة ولا ملف مموّه. المجاميع صيغ حيّة: غيّر الكمّية فيتبعها السطر والرسم والصافي.',
+    title: 'Modèle de facture Excel et Word Algérie — gratuit | نموذج فاتورة Word',
+    desc: "Téléchargez un modèle de facture algérienne au format Excel (.xlsx) ou Word (.docx), avec NIF, NIS, RC, AI, TVA 19 % et 9 %, droit de timbre. Les totaux Excel sont des formules. Gratuit, sans inscription. حمّل نموذج فاتورة جزائرية بصيغة Excel أو Word، فيه NIF وNIS وRC وAI والرسم 19٪ و9٪ وحقّ الطابع. مجاني وبلا تسجيل.",
+    og: 'Modèle de facture Excel et Word pour l’Algérie — gratuit',
+    h1fr: 'Modèle de facture Excel et Word pour l’Algérie',
+    h1ar: 'نموذج فاتورة Excel وWord للجزائر',
+    leadfr: "Un vrai fichier .xlsx ou .docx, pas une image ni un .doc déguisé. En Excel, les totaux sont des formules : changez une quantité et la ligne, la TVA et le net suivent.",
+    leadar: 'ملف .xlsx أو .docx حقيقي، لا صورة ولا ملف مموّه. في Excel المجاميع صيغ حيّة: غيّر الكمّية فيتبعها السطر والرسم والصافي.',
     body: [
       {h: ['Ce que contient le fichier', 'واش فيه الملف'],
        ul: [
@@ -286,6 +291,7 @@ const PAGES = [
          ['Douze lignes avec Total HT = quantité × prix, et la TVA calculée par ligne', 'اثنا عشر سطراً: المجموع = الكمّية × السعر، والرسم يُحسب لكل سطر'],
          ['Total HT, total TVA, total TTC, droit de timbre et net à payer', 'المجموع خارج الرسم، والرسم، والإجمالي، وحقّ الطابع، والصافي للدفع'],
          ['La ligne « Arrêtée la présente facture à la somme de »', 'سطر «أُوقفت هذه الفاتورة على مبلغ»'],
+         ['Le même contenu en Word (.docx), pour qui n’ouvre pas un tableur', 'المحتوى نفسه بصيغة Word، لمن لا يفتح جدولاً'],
        ]},
       {h: ['Deux choses à vérifier avant d’envoyer', 'شيئان تتأكّد منهما قبل الإرسال'],
        p: [['Le droit de timbre ne s’applique qu’aux règlements en espèces, et son barème est fixé par la loi de finances : la case est laissée à remplir plutôt que pré-calculée, pour ne pas imprimer un chiffre périmé sur un document fiscal.',
@@ -464,9 +470,12 @@ const shell = (page) => {
   .dlbtn{display:inline-flex;align-items:center;gap:.5rem;background:var(--brand);color:#fff;
     border:0;border-radius:.75rem;padding:.7rem 1.2rem;font-size:.92rem;font-weight:600;cursor:pointer}
   .dlbtn:hover{background:#00512a}
+  .dlbtn.dlword{background:transparent;color:var(--brand);border:2px solid var(--brand)}
+  .dlbtn.dlword:hover{background:rgba(0,98,51,.08)}
   @media (prefers-color-scheme: dark){
     body{background:#0b1220;color:#e2e8f0}
     .card{background:#111b2e;border-color:#1e293b}
+    .dlbtn.dlword{color:#6ee7b7;border-color:#6ee7b7}
   }
 </style>
 </head>
@@ -502,12 +511,20 @@ const shell = (page) => {
 </main>
 ${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
 <script src="template-xlsx.js?v=${V}"></script>
+<script src="lib-docx.js?v=${V}"></script>
 <script>
   function grab(kind){
     if (!window.downloadTemplate || !downloadTemplate(kind)) {
       alert(document.body.classList.contains('ar')
         ? 'تعذّر إنشاء الملف. أعد تحميل الصفحة.'
         : 'Le fichier n’a pas pu être créé. Rechargez la page.');
+    }
+  }
+  function grabDocx(kind){
+    if (!window.downloadTemplateDocx || !downloadTemplateDocx(kind)) {
+      alert(document.body.classList.contains('ar')
+        ? 'تعذّر إنشاء ملف Word. أعد تحميل الصفحة.'
+        : 'Le fichier Word n’a pas pu être créé. Rechargez la page.');
     }
   }
 </script>` : ''}
