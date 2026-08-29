@@ -2288,7 +2288,8 @@ if (hov.hoverBg) {
 console.log('\nShare cards and structured data');
 
 const INDEXED = ['index.html', 'guide.html', 'droit-de-timbre.html', 'montant-en-lettres.html',
-                 'calcul-tva.html', 'calcul-salaire.html', 'international.html'];
+                 'calcul-tva.html', 'calcul-salaire.html', 'international.html',
+                 'facture-non-assujetti-tva.html', 'auto-entrepreneur-algerie.html'];
 for (const f of INDEXED) {
   const html = await readFile(join(ROOT, f), 'utf8');
   check(`${f} names a canonical URL`, /rel="canonical"/.test(html));
@@ -3346,6 +3347,129 @@ for (const f of CONTENT_PAGES) {
   await ctx.close();
 }
 
+/* Word sits next to Excel on the same six pages. Same legal sentences, a
+   real .docx (a zip of XML parts, written the same way as the workbook),
+   and no prices on the delivery note — that rule does not depend on the
+   file format. */
+{
+  const ctx = await browser.newContext({acceptDownloads: true});
+  const q = await ctx.newPage();
+  const errs = [];
+  q.on('pageerror', e => errs.push(String(e)));
+  for (const [file, name, priced] of [
+        ['modele-facture-excel.html', 'modele-facture-algerie.docx', true],
+        ['facture-proforma.html', 'facture-proforma-modele.docx', true],
+        ['bon-de-commande.html', 'bon-de-commande-modele.docx', true],
+        ['devis.html', 'devis-modele.docx', true],
+        ['facture-avoir.html', 'facture-avoir-modele.docx', true],
+        ['bon-de-livraison.html', 'bon-de-livraison-modele.docx', false]]) {
+    await q.goto(`${BASE}/public/${file}`);
+    await q.waitForTimeout(600);
+    const btn = await q.$('.dlword');
+    check(`${file} offers Word next to Excel`, !!btn);
+    if (!btn) continue;
+    const wait = q.waitForEvent('download', {timeout: 15000});
+    await btn.click();
+    const dl = await wait;
+    const buf = await readFile(await dl.path());
+    const text = buf.toString('latin1');
+    check(`${file} hands over ${name}`, dl.suggestedFilename() === name, dl.suggestedFilename());
+    check(`and it is a real .docx, not a renamed .doc`,
+          buf[0] === 0x50 && buf[1] === 0x4b && /word\/document\.xml/.test(text),
+          buf.slice(0, 2).toString('hex'));
+    check(`and it carries the Algerian identifiers`, /NIF/.test(text) && /NIS/.test(text));
+    check(`and it still names this site`, /www\.facturedz\.com/.test(text));
+    if (priced) {
+      check(`and ${file} Word still prices the lines`,
+            /Prix unitaire HT/.test(text) && /Montant TVA/.test(text));
+    } else {
+      check(`and the Word delivery note prints no price at all`,
+            !/Prix unitaire/.test(text) && !/Montant TVA/.test(text) && !/Total TTC/.test(text));
+      check(`and asks for the two signatures that make it proof`,
+            /Le livreur/.test(text) && /Qt/.test(text));
+    }
+  }
+  {
+    await q.goto(`${BASE}/public/facture-avoir.html`);
+    await q.waitForTimeout(500);
+    const wait = q.waitForEvent('download', {timeout: 15000});
+    await (await q.$('.dlword')).click();
+    const text = (await readFile(await (await wait).path())).toString('latin1');
+    check('the Word credit note carries no stamp duty line', !/Droit de timbre/.test(text));
+    check('and totals as a credit, not as an amount to pay',
+          /TOTAL DE L/.test(text) && !/NET . PAYER/.test(text));
+  }
+  {
+    await q.goto(`${BASE}/public/modele-facture-excel.html`);
+    await q.waitForTimeout(500);
+    const wait = q.waitForEvent('download', {timeout: 15000});
+    await (await q.$('.dlword')).click();
+    const text = (await readFile(await (await wait).path())).toString('latin1');
+    check('the Word invoice repeats the cash-only stamp-duty sentence',
+          /art\. 100 du Code du timbre/.test(text));
+    check('and the amount-in-words line the law asks for',
+          /sente facture/.test(text) && /la somme de/.test(text));
+  }
+  check('no script error on the Word downloads', errs.length === 0, errs.join(' | '));
+  await ctx.close();
+}
+
+{
+  const html = await readFile(join(PUBDIR, 'modele-facture-excel.html'), 'utf8');
+  const title = (html.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+  check('the Excel page title now names Word, which is what people type',
+        /Word/i.test(title), title.slice(0, 80));
+  check('and its description does too',
+        /<meta name="description"[^>]*Word/i.test(html));
+}
+
+/* Two pages that answer searches the associated-queries list actually shows. */
+{
+  const GUIDES = [
+    ['facture-non-assujetti-tva.html', [
+      'TVA non applicable', 'article 8', 'non assujetti', 'exonér', 'taux zéro',
+      'impôt forfaitaire unique'
+    ]],
+    ['auto-entrepreneur-algerie.html', [
+      'ANAE', '22-23', 'TVA non applicable', '5 000 000', 'NIF', 'article 8'
+    ]]
+  ];
+  const chrome = await readFile(join(ROOT, 'tools-build-chrome.mjs'), 'utf8');
+  const sw = await readFile(join(ROOT, 'sw.js'), 'utf8');
+  const smap2 = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+  for (const [f, needles] of GUIDES) {
+    const html = await readFile(join(ROOT, f), 'utf8').catch(() => '');
+    check(`${f} is a real page, not a build leftover`, html.length > 4000);
+    const frAt = html.indexOf('id="fr"');
+    const arAt = html.indexOf('id="ar"');
+    const frChunk = frAt >= 0 && arAt > frAt ? html.slice(frAt, arAt) : '';
+    const arChunk = arAt >= 0 ? html.slice(arAt, html.indexOf('</main>')) : '';
+    const frWords = frChunk.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+    const arWords = arChunk.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
+    check(`${f} is written in both languages`, /id="fr"/.test(html) && /id="ar"/.test(html));
+    check(`${f} French runs past 500 words`, frWords >= 500, frWords + ' words');
+    check(`${f} Arabic runs past 500 words`, arWords >= 500, arWords + ' words');
+    for (const n of needles) {
+      check(`${f} says “${n}”`, html.toLowerCase().includes(n.toLowerCase()));
+    }
+    check(`${f} is in the sitemap`, smap2.includes(f));
+    check(`${f} is in the Guides column`, chrome.includes(f));
+    check(`${f} is in the offline shell`, sw.includes("'/" + f + "'"));
+    const pub = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
+    check(`${f} was copied by the build`, pub.length > 4000);
+    check(`${f} received hreflang at build time`,
+          /rel="alternate" hreflang="fr"/.test(pub) &&
+          /rel="alternate" hreflang="ar"/.test(pub));
+  }
+  check('the non-assujetti page does not invent a French CGI article',
+        !/293 B/.test(await readFile(join(ROOT, 'facture-non-assujetti-tva.html'), 'utf8')) ||
+        /pas une formule magique importée de France/.test(
+          await readFile(join(ROOT, 'facture-non-assujetti-tva.html'), 'utf8')));
+}
+
+const smap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
+for (const f of CONTENT_PAGES) check(`the sitemap offers ${f}`, smap.includes(f));
+
 /* A formula cell must not also carry a stale cached number. */
 {
   const one = await page.evaluate(() => {
@@ -3356,10 +3480,10 @@ for (const f of CONTENT_PAGES) {
     return typeof XLSX !== 'undefined' && typeof XLSX.build === 'function';
   });
   check('the workbook writer is reachable for templates', one === true);
+  const docx = await page.evaluate(() =>
+    typeof downloadTemplateDocx === 'function' && typeof DOCX !== 'undefined' && typeof DOCX.build === 'function');
+  check('the Word writer is reachable too', docx === true);
 }
-
-const smap = await readFile(join(ROOT, 'sitemap.xml'), 'utf8');
-for (const f of CONTENT_PAGES) check(`the sitemap offers ${f}`, smap.includes(f));
 
 /* ---------------------------------------------------------------- *
  * Every control in every dialog has a name a screen reader can read.
@@ -3782,7 +3906,8 @@ console.log('\nhreflang, and one script instead of eighteen');
 
 {
   const pages = ['droit-de-timbre.html', 'calcul-tva.html', 'guide.html',
-                 'conditions.html', 'montant-en-lettres.html', 'calcul-salaire.html'];
+                 'conditions.html', 'montant-en-lettres.html', 'calcul-salaire.html',
+                 'facture-non-assujetti-tva.html', 'auto-entrepreneur-algerie.html'];
   for (const f of pages) {
     const html = await readFile(join(ROOT, 'public', f), 'utf8').catch(() => '');
     check(`${f} received hreflang at build time`,
@@ -3801,16 +3926,18 @@ console.log('\nhreflang, and one script instead of eighteen');
   const core = (appSrc.match(/var core=(\[[^\]]+\])/) || [])[1];
   const files = core ? Function('return ' + core)() : [];
   check('the source still loads scripts one by one, so the tests can',
-        files.includes('releve.js') && files.includes('recurrent.js') && files.length > 5,
+        files.includes('releve.js') && files.includes('recurrent.js') &&
+        files.includes('lib-docx.js') && files.length > 5,
         String(files.length));
   check('and the service worker caches both new files and the bundle',
         swSrc.includes("'/releve.js'") && swSrc.includes("'/recurrent.js'") &&
-        swSrc.includes("'/core.bundle.js'"));
+        swSrc.includes("'/lib-docx.js'") && swSrc.includes("'/core.bundle.js'"));
   const bundled = await readFile(join(ROOT, 'public', 'core.bundle.js'), 'utf8').catch(() => '');
   const pubApp = await readFile(join(ROOT, 'public', 'app.js'), 'utf8').catch(() => '');
   check('the build wrote a single bundle', bundled.length > 50000, bundled ? bundled.length + ' B' : 'missing');
   check('that bundle contains the new modules',
-        bundled.includes('clientLedger') && bundled.includes('runRecurring'));
+        bundled.includes('clientLedger') && bundled.includes('runRecurring') &&
+        bundled.includes('downloadTemplateDocx'));
   check('and public/app.js loads that one file, not the eighteen',
         /var core=\["core\.bundle\.js"\]/.test(pubApp) && !pubApp.includes('releve.js'),
         (pubApp.match(/var core=\[[^\]]+\]/) || [])[0]);
