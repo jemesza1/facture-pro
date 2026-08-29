@@ -4210,6 +4210,26 @@ console.log('\nLe relevé, lu en arabe');
   await c.close();
 }
 
+/* Un titre de niveau 1 en double ne se voit qu'avec JavaScript desactive : le
+   bloc <noscript> n'entre pas dans le DOM tant que les scripts tournent, si
+   bien qu'un controle fait dans un navigateur ordinaire n'en trouve qu'un et
+   passe sans rien regarder. C'est ainsi qu'un second h1 est arrive ici. */
+{
+  const nojs = await browser.newContext({javaScriptEnabled: false});
+  const pg = await nojs.newPage();
+  await pg.goto(`${BASE}/index.html`, {waitUntil: 'load'});
+  await pg.waitForTimeout(300);
+  const r = await pg.evaluate(() => ({
+    h1: document.querySelectorAll('h1').length,
+    words: document.body.innerText.split(/\s+/).filter(Boolean).length,
+    links: document.querySelectorAll('a[href]').length
+  }));
+  check('the door has one h1 even with the scripts off', r.h1 === 1, String(r.h1));
+  check('and says enough for a crawler that runs nothing', r.words > 100, String(r.words));
+  check('and offers a way into the rest of the site', r.links >= 8, String(r.links));
+  await nojs.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
