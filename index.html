@@ -143,8 +143,7 @@
        cdn.tailwindcss.com used to leave the app an unstyled column of links,
        and a blocked cdnjs left the PDF button throwing. Nothing here can be
        taken away by a third party, and nothing follows @latest. -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles.css?v=20260826b" />
+<link rel="stylesheet" href="styles.css?v=20260826b" />
   <!-- Last, because the Play CDN appended its <style> to the end of the head
        and the design was drawn against that cascade: the utilities win the
        ties. Move this above styles.css and the overdue total stops being red
@@ -153,8 +152,37 @@
   <script defer src="vendor/lucide.min.js"></script>
   <script defer src="vendor/jspdf.umd.min.js"></script>
   <script defer src="vendor/html2canvas.min.js"></script>
+<link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased safe-area">
+
+<!-- Sans JavaScript, cette adresse ne montrait que trente mots : le premier
+     passage d'un robot, qui n'execute rien, y voyait une page vide, et un
+     telephone sur Opera Mini en mode economie aussi. La redirection vers la
+     presentation est ecrite en JavaScript et ne pouvait pas les aider. Ce bloc
+     dit ce qu'est le site et ou aller, et disparait des que le script tourne. -->
+<noscript>
+  <div style="max-width:38rem;margin:0 auto;padding:40px 20px;font-family:Inter,system-ui,sans-serif;line-height:1.65">
+    <h1 style="font-size:26px;font-weight:800;margin:0 0 12px">FacturePro — facturation pour l’Algérie</h1>
+    <p style="margin:0 0 14px">Créez des factures conformes à la réglementation algérienne :
+      TVA 19 % et 9 %, NIF, NIS, RC, droit de timbre sur les règlements en espèces et
+      montant en toutes lettres. Gratuit, sans inscription, et vos données restent sur
+      votre appareil.</p>
+    <p style="margin:0 0 14px" dir="rtl" lang="ar">فوترة مطابقة للتنظيم الجزائري: الرسم على القيمة
+      المضافة 19٪ و9٪، NIF وNIS وRC، حقّ الطابع على الدفع نقدًا، والمبلغ بالحروف.
+      مجاني وبلا تسجيل، وبياناتك تبقى على جهازك.</p>
+    <p style="margin:0 0 18px"><strong>L’application a besoin de JavaScript.</strong>
+      Les pages ci-dessous fonctionnent sans.</p>
+    <p style="margin:0 0 8px"><a href="/accueil.html" style="color:#047857;font-weight:600">Présentation du site</a>
+      · <a href="/guide.html" style="color:#047857;font-weight:600">Guide d’utilisation</a></p>
+    <p style="margin:0 0 8px"><a href="/mentions-obligatoires-facture-algerie.html" style="color:#047857">Mentions obligatoires d’une facture</a>
+      · <a href="/calcul-tva.html" style="color:#047857">Calcul de la TVA</a>
+      · <a href="/droit-de-timbre.html" style="color:#047857">Droit de timbre</a></p>
+    <p style="margin:0"><a href="/modele-facture-excel.html" style="color:#047857">Modèles Excel et Word</a>
+      · <a href="/calcul-marge.html" style="color:#047857">Marge et prix de vente</a>
+      · <a href="/montant-en-lettres.html" style="color:#047857">Montant en lettres</a></p>
+  </div>
+</noscript>
   <div id="app" class="flex h-[100dvh] overflow-hidden">
     <aside id="sidebar" class="w-64 bg-white dark:bg-slate-900 border-e border-slate-200 dark:border-slate-800 flex flex-col fixed inset-y-0 start-0 z-30 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-200">
       <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">

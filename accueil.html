@@ -85,13 +85,14 @@
     ]
   }
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
+<style>
     :root {
       --green: #006233;
       --green-2: #059669;
+      /* Le vert de marque descend a 3,77:1 sur blanc : correct derriere du
+         texte blanc, trop clair pour etre du texte. Celui-ci, 5,48:1, ne
+         sert qu'au texte pose sur fond clair. */
+      --green-text: #047857;
       --green-deep: #004d29;
       --ink: #0f172a;
       --muted: #475569;
@@ -172,7 +173,7 @@
     .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
     .eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
-      background: var(--chip-bg); color: var(--green-2); border: 1px solid var(--chip-line);
+      background: var(--chip-bg); color: var(--green-text); border: 1px solid var(--chip-line);
       font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-bottom: 18px;
     }
     h1 { font-size: clamp(32px, 4.4vw, 52px); line-height: 1.08; letter-spacing: -.03em; font-weight: 800; margin-bottom: 16px; }
@@ -252,6 +253,7 @@
       * { transition: none !important; }
     }
   </style>
+<link rel="stylesheet" href="/fonts.css" />
 </head>
 <body>
 <!-- The application says this to a browser asking for neither French nor
@@ -267,7 +269,7 @@
               padding:10px 16px;font-size:14px">
     <span style="flex:1;min-width:0;opacity:.85">
       This is an invoicing app for Algeria.
-      <a href="international.html" style="font-weight:600;text-decoration:underline;color:#059669">Invoicing from another country?</a>
+      <a href="international.html" style="font-weight:600;text-decoration:underline;color:#047857">Invoicing from another country?</a>
     </span>
     <button type="button" onclick="dismissForeign()" aria-label="Close"
             style="flex-shrink:0;border:0;background:none;cursor:pointer;opacity:.55;
@@ -312,7 +314,10 @@
     </div>
   </nav>
 
-  <header class="hero">
+  <!-- Sans repere principal, un lecteur d'ecran parcourt la banniere et la
+     note de langue a chaque visite avant d'atteindre la page. -->
+<main id="main">
+<header class="hero">
     <div class="wrap hero-grid">
       <div>
         <span class="eyebrow" data-fr="Algérie · conforme · gratuit" data-ar="الجزائر · مطابق · مجاني">Algérie · conforme · gratuit</span>
@@ -487,6 +492,8 @@
       });
     })();
   </script>
+</main>
+
 <!-- Vercel Web Analytics — counts page views only. Never touches invoice
      or client data, which stay in the visitor's own browser. -->
 <script>

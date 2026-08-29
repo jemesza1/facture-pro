@@ -455,8 +455,6 @@ const shell = (page) => {
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-
 <link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
 <style>
   :root{--brand:#006233;--brand2:#059669}
@@ -478,6 +476,7 @@ const shell = (page) => {
     .dlbtn.dlword{color:#6ee7b7;border-color:#6ee7b7}
   }
 </style>
+<link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="min-h-screen">
 
