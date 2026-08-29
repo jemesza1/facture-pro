@@ -52,8 +52,8 @@ const dlfile = (href, fr, ar, note_fr, note_ar) =>
 const PAGES = [
   {
     file: 'bon-de-livraison.html', kind: 'livraison',
-    title: 'Bon de livraison — modèle Excel gratuit, sans prix | وصل التسليم',
-    desc: "Modèle de bon de livraison au format Excel : désignation, quantité commandée et livrée, réserves et signatures. Sans prix, comme il se doit. Gratuit, sans inscription. نموذج وصل التسليم بصيغة Excel: البيان والكمّية المطلوبة والمسلَّمة والملاحظات والتوقيعان. بلا أسعار، كما يجب. مجاني وبلا تسجيل.",
+    title: 'Bon de livraison — modèle Word et Excel, sans prix | وصل التسليم',
+    desc: "Modèle de bon de livraison à télécharger en Word (.docx) ou Excel (.xlsx) : désignation, quantité commandée et livrée, réserves et signatures. Sans prix, comme il se doit. Gratuit, sans inscription. نموذج وصل التسليم بصيغة Excel: البيان والكمّية المطلوبة والمسلَّمة والملاحظات والتوقيعان. بلا أسعار، كما يجب. مجاني وبلا تسجيل.",
     og: 'Bon de livraison — modèle Excel gratuit',
     h1fr: 'Le bon de livraison',
     h1ar: 'وصل التسليم',
@@ -82,8 +82,8 @@ const PAGES = [
   },
   {
     file: 'facture-avoir.html', kind: 'avoir',
-    title: "Facture d'avoir — modèle Excel gratuit et mode d'emploi | فاتورة إشعار دائن",
-    desc: "Qu'est-ce qu'une facture d'avoir, quand l'émettre, comment la numéroter et ce qu'elle change pour la TVA du mois. Avec un modèle Excel gratuit à télécharger. ما هي فاتورة الإشعار الدائن، ومتى تُصدَر، وكيف تُرقَّم، وماذا تغيّر في تصريح G50. مع نموذج Excel مجاني.",
+    title: "Facture d'avoir — modèle Word et Excel gratuit | فاتورة إشعار دائن",
+    desc: "Qu'est-ce qu'une facture d'avoir, quand l'émettre, comment la numéroter et ce qu'elle change pour la TVA du mois. Avec un modèle gratuit à télécharger en Word (.docx) ou Excel (.xlsx). ما هي فاتورة الإشعار الدائن، ومتى تُصدَر، وكيف تُرقَّم، وماذا تغيّر في تصريح G50. مع نموذج Excel مجاني.",
     og: "Facture d'avoir — modèle et mode d'emploi",
     h1fr: "La facture d'avoir",
     h1ar: 'فاتورة الإشعار الدائن',
@@ -115,8 +115,8 @@ const PAGES = [
   },
   {
     file: 'devis.html', kind: 'devis',
-    title: 'Devis — modèle Excel gratuit pour l’Algérie | نموذج عرض السعر',
-    desc: "Modèle de devis au format Excel : identifiants, lignes, totaux calculés, durée de validité et bon pour accord. Et comment le transformer en facture. Gratuit, sans inscription. نموذج عرض سعر بصيغة Excel: المعرّفات والسطور والمجاميع ومدّة الصلاحية وسطر الموافقة. وكيف يتحوّل إلى فاتورة. مجاني وبلا تسجيل.",
+    title: 'Devis — modèle Word et Excel gratuit, Algérie | نموذج عرض السعر',
+    desc: "Modèle de devis à télécharger en Word (.docx) ou Excel (.xlsx) : identifiants, lignes, totaux calculés, durée de validité et bon pour accord. Et comment le transformer en facture. Gratuit, sans inscription. نموذج عرض سعر بصيغة Excel: المعرّفات والسطور والمجاميع ومدّة الصلاحية وسطر الموافقة. وكيف يتحوّل إلى فاتورة. مجاني وبلا تسجيل.",
     og: 'Devis — modèle Excel gratuit',
     h1fr: 'Le devis',
     h1ar: 'عرض السعر (devis)',
@@ -306,8 +306,8 @@ const PAGES = [
   },
   {
     file: 'facture-proforma.html', kind: 'proforma',
-    title: 'Facture proforma — modèle Excel gratuit et définition | الفاتورة الأولية',
-    desc: "Qu’est-ce qu’une facture proforma, à quoi elle sert (banque, douane, devis ferme), ce qui la distingue d’une facture, et un modèle Excel gratuit à télécharger. ما هي الفاتورة الأولية، وفيمَ تُستعمل (البنك، الجمارك، عرض سعر ثابت)، وما يميّزها عن الفاتورة. مع نموذج Excel مجاني.",
+    title: 'Facture proforma — modèle Word et Excel gratuit | الفاتورة الأولية',
+    desc: "Qu’est-ce qu’une facture proforma, à quoi elle sert (banque, douane, devis ferme), ce qui la distingue d’une facture, et un modèle gratuit à télécharger en Word (.docx) ou Excel (.xlsx). ما هي الفاتورة الأولية، وفيمَ تُستعمل (البنك، الجمارك، عرض سعر ثابت)، وما يميّزها عن الفاتورة. مع نموذج Excel مجاني.",
     og: 'Facture proforma — modèle gratuit et définition',
     h1fr: 'La facture proforma',
     h1ar: 'الفاتورة الأولية (proforma)',
@@ -330,8 +330,8 @@ const PAGES = [
   },
   {
     file: 'bon-de-commande.html', kind: 'commande',
-    title: 'Bon de commande — modèle Excel gratuit à télécharger | وصل الطلبية',
-    desc: "Modèle de bon de commande au format Excel, avec les identifiants, les lignes, les totaux calculés et le délai de livraison. Gratuit, sans inscription. نموذج وصل الطلبية بصيغة Excel، بالمعرّفات والسطور والمجاميع المحسوبة وأجل التسليم. مجاني وبلا تسجيل.",
+    title: 'Bon de commande — modèle Word et Excel gratuit | وصل الطلبية',
+    desc: "Modèle de bon de commande en Word (.docx) ou Excel (.xlsx), avec les identifiants, les lignes, les totaux calculés et le délai de livraison. Gratuit, sans inscription. نموذج وصل الطلبية بصيغة Excel، بالمعرّفات والسطور والمجاميع المحسوبة وأجل التسليم. مجاني وبلا تسجيل.",
     og: 'Bon de commande — modèle Excel gratuit',
     h1fr: 'Le bon de commande',
     h1ar: 'وصل الطلبية',
