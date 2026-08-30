@@ -2,6 +2,23 @@ const STORAGE_KEY='facturepro_dz_v24';
 const defaultCompany={name:'Mon Entreprise SARL',address:'12 Rue Didouche Mourad\n16000 Alger',nif:'000000000000000',nin:'',nis:'000000000000000',rc:'16/00-0000000B00',ai:'0000',email:'contact@monentreprise.dz',phone:'+213 21 00 00 00',rib:'007 99999 0000000000 00',banque:'BNA',logo:''};
 const STATUS={brouillon:{label:'Brouillon',class:'badge-brouillon'},envoyee:{label:'Envoyée',class:'badge-envoyee'},payee:{label:'Payée',class:'badge-payee'},enretard:{label:'En retard',class:'badge-enretard'},annulee:{label:'Annulée',class:'badge-annulee'}};
 const TEMPLATES=[{id:'classique',name:'Classique',desc:'Sobre et traditionnel',color:'#0f172a',bg:'#f1f5f9',layout:'classic'},{id:'moderne',name:'Moderne',desc:'Bandeau coloré élégant',color:'#0284c7',bg:'#e0f2fe',layout:'modern'},{id:'minimal',name:'Minimal',desc:'Épuré',color:'#334155',bg:'#f8fafc',layout:'classic'},{id:'premium',name:'Premium',desc:'Header sombre',color:'#0f172a',bg:'#1e293b',layout:'premium'},{id:'corporate',name:'Corporate',desc:'Bleu entreprise',color:'#1e40af',bg:'#dbeafe',layout:'modern'},{id:'elegant',name:'Élégant',desc:'Beige raffiné',color:'#78716c',bg:'#f5f5f4',layout:'classic'},{id:'crea',name:'Créatif',desc:'Violet moderne',color:'#7c3aed',bg:'#ede9fe',layout:'modern'},{id:'nature',name:'Nature',desc:'Vert pro',color:'#059669',bg:'#d1fae5',layout:'modern'},{id:'sunset',name:'Sunset',desc:'Orange énergique',color:'#ea580c',bg:'#ffedd5',layout:'modern'},{id:'ocean',name:'Océan',desc:'Turquoise',color:'#0891b2',bg:'#cffafe',layout:'modern'},{id:'noir',name:'Noir & Blanc',desc:'Monochrome',color:'#171717',bg:'#f5f5f5',layout:'classic'},{id:'rose',name:'Rose Soft',desc:'Rose doux',color:'#db2777',bg:'#fce7f3',layout:'modern'},{id:'indigo',name:'Indigo',desc:'Indigo profond',color:'#4338ca',bg:'#e0e7ff',layout:'modern'},{id:'slate',name:'Slate Pro',desc:'Gris ardoise',color:'#475569',bg:'#f1f5f9',layout:'classic'},{id:'gold',name:'Gold',desc:'Or premium',color:'#a16207',bg:'#fef9c3',layout:'premium'},{id:'forest',name:'Forêt',desc:'Vert forêt',color:'#166534',bg:'#dcfce7',layout:'modern'},{id:'sky',name:'Ciel',desc:'Bleu ciel',color:'#0284c7',bg:'#f0f9ff',layout:'modern'},{id:'coral',name:'Corail',desc:'Corail',color:'#e11d48',bg:'#ffe4e6',layout:'modern'},{id:'mint',name:'Menthe',desc:'Menthe',color:'#0d9488',bg:'#ccfbf1',layout:'modern'},{id:'lavender',name:'Lavande',desc:'Lavande',color:'#8b5cf6',bg:'#f5f3ff',layout:'modern'},{id:'charcoal',name:'Charcoal',desc:'Charbon',color:'#1c1917',bg:'#fafaf9',layout:'premium'},{id:'navy',name:'Navy',desc:'Marine',color:'#1e3a8a',bg:'#eff6ff',layout:'modern'},{id:'emerald',name:'Émeraude',desc:'Émeraude',color:'#047857',bg:'#ecfdf5',layout:'modern'},{id:'amber',name:'Ambre',desc:'Ambre',color:'#d97706',bg:'#fffbeb',layout:'modern'},{id:'studio',name:'Studio',desc:'Bandeau dégradé ciel',color:'#0ea5e9',color2:'#0369a1',bg:'#e0f2fe',layout:'studio'},{id:'onyx',name:'Onyx',desc:'Dégradé graphite',color:'#334155',color2:'#0f172a',bg:'#f1f5f9',layout:'studio'},{id:'royal',name:'Royal',desc:'Dégradé indigo',color:'#6366f1',color2:'#4338ca',bg:'#e0e7ff',layout:'studio'},{id:'carmin',name:'Carmin',desc:'Dégradé carmin',color:'#f43f5e',color2:'#be123c',bg:'#ffe4e6',layout:'studio'},{id:'algerie',name:'Algérie',desc:'Bandeau vert officiel',color:'#006233',color2:'#059669',bg:'#d1fae5',layout:'dz'}];
+
+/* Huit modeles mis devant. Vingt-neuf ne sont pas vingt-neuf mises en page :
+   ce sont cinq mises en page — classic, modern, premium, studio, dz — dont
+   seize declinaisons du meme «modern» en couleurs differentes. Un commercant
+   qui ouvre la liste pour emettre une facture ne choisit pas entre vingt-neuf
+   propositions, il renonce.
+
+   Ces huit-la couvrent les cinq mises en page, plus trois couleurs qui
+   repondent a un besoin et non a un gout : corporate pour le bleu d'usage
+   commercial, nature pour le vert de la marque, noir pour l'imprimante qui
+   n'a plus de cartouche couleur — et c'est un cas frequent ici.
+
+   Les vingt et un autres restent dans TEMPLATES et restent choisissables :
+   une facture deja emise porte l'identifiant de son modele, et c1.js retombe
+   sur TEMPLATES[0] quand elle ne le trouve plus. En supprimer un changerait
+   l'apparence d'anciennes factures sans le dire. On range, on ne jette pas. */
+const TEMPLATES_TOP=['algerie','classique','moderne','premium','studio','corporate','nature','noir'];
 let state={company:{...defaultCompany},clients:[],invoices:[],nextInvoiceNumber:1,currentPage:'dashboard',dark:false,search:'',statusFilter:'all',sidebarOpen:false};
 /* A parse failure used to be swallowed, and seedDemoData() then wrote demo
    invoices over the user's own key — destroying the last recoverable copy.

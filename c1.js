@@ -12,7 +12,16 @@ function openNewInvoice(editId){
           </select></div>
         <div><label class="form-label" for="inv-template">${t('inv.template')}</label>
           <select id="inv-template" class="form-select">
-          ${TEMPLATES.map(t=>`<option value="${t.id}" ${inv&&inv.template===t.id?'selected':''}>${t.name}</option>`).join('')}
+          ${(()=>{var opt=function(x){return `<option value="${x.id}" ${inv&&inv.template===x.id?'selected':''}>${x.name}</option>`;};
+             var top=TEMPLATES.filter(function(x){return TEMPLATES_TOP.indexOf(x.id)>=0;})
+                              .sort(function(a,b){return TEMPLATES_TOP.indexOf(a.id)-TEMPLATES_TOP.indexOf(b.id);});
+             var rest=TEMPLATES.filter(function(x){return TEMPLATES_TOP.indexOf(x.id)<0;});
+             /* Deux groupes plutot qu'une liste de vingt-neuf : le commercant
+                emet une facture, il ne visite pas une galerie. Aucun modele
+                n'est retire — celui d'une ancienne facture reste choisissable
+                dans le second groupe. */
+             return `<optgroup label="${esc(t('tpl.recommended'))}">${top.map(opt).join('')}</optgroup>`+
+                    `<optgroup label="${esc(t('tpl.others'))}">${rest.map(opt).join('')}</optgroup>`;})()}
           </select></div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">

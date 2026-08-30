@@ -4507,6 +4507,93 @@ console.log('\nLes outils, depuis l\'application');
   await phone.close();
 }
 
+/* ---------------------------------------------------------------- *
+ * Vingt-neuf modeles, huit devant.
+ *
+ * Vingt-neuf ne sont pas vingt-neuf mises en page : cinq, dont seize
+ * declinaisons du meme «modern». Devant une liste de vingt-neuf, on ne
+ * choisit pas, on renonce. Huit passent devant — les cinq mises en page,
+ * plus le bleu commercial, le vert de la marque et le noir et blanc pour
+ * l'imprimante sans cartouche couleur.
+ *
+ * Aucun n'est supprime, et c'est le point : une facture emise porte
+ * l'identifiant de son modele, et c1.js retombe sur TEMPLATES[0] quand il
+ * ne le trouve plus. Retirer un modele changerait l'apparence d'anciennes
+ * factures sans le dire.
+ * ---------------------------------------------------------------- */
+console.log('\nLes modeles, ranges plutot que jetes');
+{
+  const aSrc = await readFile(join(ROOT, 'a.js'), 'utf8');
+  const line = aSrc.slice(aSrc.indexOf('const TEMPLATES='),
+                          aSrc.indexOf('\n', aSrc.indexOf('const TEMPLATES=')));
+  const all = JSON.parse(JSON.stringify(eval(line.slice(16).replace(/;$/, ''))));
+  const top = eval(aSrc.slice(aSrc.indexOf('const TEMPLATES_TOP=') + 20,
+                              aSrc.indexOf('\n', aSrc.indexOf('const TEMPLATES_TOP='))).replace(/;$/, ''));
+
+  check('every model still exists, none was thrown away', all.length === 29, String(all.length));
+  const ghosts = top.filter(id => !all.some(t => t.id === id));
+  check('and every one put forward is a real model', ghosts.length === 0, ghosts.join(' '));
+  check('eight are put forward', top.length === 8, String(top.length));
+  const layouts = [...new Set(all.map(t => t.layout))].sort();
+  const covered = [...new Set(all.filter(t => top.includes(t.id)).map(t => t.layout))].sort();
+  check('and between them they show every layout the app can draw',
+        layouts.join(' ') === covered.join(' '), covered.join(' ') + ' vs ' + layouts.join(' '));
+
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.renderTemplates === 'function', {timeout: 20000});
+  const g = await pg.evaluate(() => {
+    navigate('templates');
+    const before = document.querySelectorAll('#main-content .card').length;
+    const more = document.querySelector('#main-content button[onclick="showAllTemplates()"]');
+    const label = more ? more.textContent.trim() : '';
+    if (more) more.click();
+    return {before, label, after: document.querySelectorAll('#main-content .card').length,
+            gone: !document.querySelector('#main-content button[onclick="showAllTemplates()"]')};
+  });
+  check('the gallery opens on eight, not on twenty-nine', g.before === 8, String(g.before));
+  check('and says how many more there are', /21/.test(g.label), g.label);
+  check('asking for them shows all twenty-nine', g.after === 29, String(g.after));
+  check('and the invitation goes once it is accepted', g.gone === true);
+
+  /* Le choix, dans le formulaire de facture : deux groupes, aucun modele
+     perdu — celui d'une ancienne facture doit rester selectionnable. */
+  const sel = await pg.evaluate(() => {
+    navigate('invoices');
+    openNewInvoice();
+    const s = document.getElementById('inv-template');
+    if (!s) return {found: false};
+    return {
+      found: true,
+      groups: [...s.querySelectorAll('optgroup')].map(o => o.label),
+      options: s.querySelectorAll('option').length,
+      firstEight: [...s.querySelectorAll('optgroup')][0].querySelectorAll('option').length,
+      first: s.querySelector('option').value
+    };
+  });
+  check('the invoice form offers the models in two groups', sel.groups && sel.groups.length === 2,
+        String(sel.groups));
+  check('with every one of the twenty-nine still choosable', sel.options === 29, String(sel.options));
+  check('the eight coming first', sel.firstEight === 8, String(sel.firstEight));
+  check('and the Algerian model at the head of them', sel.first === 'algerie', String(sel.first));
+  check('neither group heading is a raw key', !/^tpl\./.test(sel.groups[0]) && !/^tpl\./.test(sel.groups[1]),
+        String(sel.groups));
+
+  await pg.evaluate(() => { closeModal(); toggleLocale(); navigate('templates'); });
+  const arTpl = await pg.evaluate(() => {
+    const b = document.querySelector('#main-content button[onclick="showAllTemplates()"]');
+    navigate('invoices'); openNewInvoice();
+    const s = document.getElementById('inv-template');
+    const g = [...s.querySelectorAll('optgroup')].map(o => o.label);
+    closeModal();
+    return {more: b ? b.textContent.trim() : '', groups: g};
+  });
+  check('the two group headings are written in Arabic',
+        arTpl.groups.every(l => /[؀-ۿ]/.test(l)), arTpl.groups.join(' | '));
+  await pg.evaluate(() => toggleLocale());
+  await pg.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
