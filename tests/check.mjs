@@ -1875,10 +1875,17 @@ console.log('\nThe international generator');
     check('it exports a PDF offline', pdf.slice(0, 5).toString() === '%PDF-', pdf.slice(0, 5).toString());
     check('named after the invoice', /\.pdf$/.test(dl.suggestedFilename()), dl.suggestedFilename());
 
-    /* The point of the whole group. */
-    const strayed = offOrigin.filter(u => !/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(u));
-    check('nothing the page asked for left this origin, apart from the font',
-          strayed.length === 0, strayed.slice(0, 3).join(' '));
+    /* The point of the whole group.
+
+       L'exception qui vivait ici — «apart from the font» — a survecu a la
+       fonte elle-meme : les trente-quatre pages avaient cesse d'appeler
+       Google, mais styles.css, la feuille de la seule application, gardait un
+       @import vers fonts.googleapis.com en tete de fichier, bloquant, sur la
+       page que deux mille cent visiteurs ouvrent chaque mois. Le test le
+       voyait et le pardonnait. Il ne pardonne plus rien : c'est la tolerance,
+       pas la fonte, qui cachait le defaut. */
+    check('nothing the page asked for left this origin at all',
+          offOrigin.length === 0, offOrigin.slice(0, 3).join(' '));
     check('no script error on the generator', intlErrors.length === 0, intlErrors.join(' | '));
 
     /* The dépenses bar chart, checked here because it is the only place the
@@ -4228,6 +4235,221 @@ console.log('\nLe relevé, lu en arabe');
   check('and says enough for a crawler that runs nothing', r.words > 100, String(r.words));
   check('and offers a way into the rest of the site', r.links >= 8, String(r.links));
   await nojs.close();
+}
+
+/* ---------------------------------------------------------------- *
+ * Les outils, depuis l'application.
+ *
+ * Le site publie vingt-six pages utiles. L'application n'en nommait cinq
+ * qu'au bas de l'Aide, et les chiffres le disaient : deux mille deux cents
+ * visiteurs par mois, dont deux mille cent sur « / », et 1,35 page par
+ * visite. Quatre-vingt-cinq pour cent arrivent par telephone, ou la barre
+ * laterale dort derriere un hamburger — c'est donc la carte du tableau de
+ * bord qui porte la decouverte, et l'entree de menu qui la rend permanente.
+ *
+ * Le tableau OUTILS de b2b.js recopie GROUPS de tools-build-chrome.mjs, que
+ * le navigateur ne peut pas charger. Cette copie n'est sure que si quelque
+ * chose la relit : c'est ce que fait le premier bloc, et il compte ce qu'il
+ * a lu pour ne pas pouvoir reussir sur une liste vide.
+ * ---------------------------------------------------------------- */
+console.log('\nLes outils, depuis l\'application');
+{
+  const chromeSrc = await readFile(join(ROOT, 'tools-build-chrome.mjs'), 'utf8');
+  const b2bSrc = await readFile(join(ROOT, 'b2b.js'), 'utf8');
+
+  const groupsBlock = chromeSrc.slice(chromeSrc.indexOf('const GROUPS'),
+                                      chromeSrc.indexOf('const BAR'));
+  const published = [...new Set([...groupsBlock.matchAll(/'([a-z0-9-]+\.html)'/g)]
+                    .map(m => m[1]))];
+  /* Sans ce compte, un GROUPS renomme rendrait la tranche vide, la liste
+     publiee vide, et la verification de derive passerait pour toujours en
+     ne comparant rien. */
+  check('the generator still publishes the pages this reads', published.length === 27,
+        String(published.length));
+
+  const outilsBlock = b2bSrc.slice(b2bSrc.indexOf('const OUTILS='),
+                                   b2bSrc.indexOf('const OUTILS_DASH'));
+  const offered = [...new Set([...outilsBlock.matchAll(/'([a-z0-9-]+\.html)'/g)]
+                  .map(m => m[1]))];
+  check('the application offers every page the site publishes',
+        published.filter(f => f !== 'conditions.html' && !offered.includes(f)).length === 0,
+        published.filter(f => f !== 'conditions.html' && !offered.includes(f)).join(' '));
+  check('and offers nothing the site does not publish',
+        offered.filter(f => !published.includes(f)).length === 0,
+        offered.filter(f => !published.includes(f)).join(' '));
+  check('conditions stays out: the menu already goes there',
+        !offered.includes('conditions.html'));
+
+  /* Un lien mort dans l'application est un lien mort sur le telephone d'un
+     commercant. Les pages sont ecrites dans public/ par le build. */
+  const missing = offered.filter(f => !existsSync(join(ROOT, 'public', f)));
+  check('every tool the application names has been built', missing.length === 0,
+        missing.join(' '));
+
+  /* Lucide rend un nom inconnu en carre vide, sans erreur : le libelle reste,
+     l'icone disparait, et rien ne le dit. */
+  const lucideSrc = await readFile(join(ROOT, 'public', 'vendor', 'lucide.min.js'), 'utf8');
+  const homeSrc = await readFile(join(ROOT, 'index.html'), 'utf8');
+  const iconNames = [...new Set([
+    ...[...outilsBlock.matchAll(/\['tools\.g[A-Za-z]+','([a-z-]+)'/g)].map(m => m[1]),
+    ...[...b2bSrc.slice(b2bSrc.indexOf('const OUTILS_DASH'), b2bSrc.indexOf('function outilAr'))
+        .matchAll(/\.html','([a-z-]+)'\]/g)].map(m => m[1]),
+    ...[...homeSrc.matchAll(/data-page="outils"[^>]*>\s*<i data-lucide="([a-z-]+)"/g)].map(m => m[1])
+  ])];
+  const pascal = n => n.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join('');
+  const unknown = iconNames.filter(n => !lucideSrc.includes(pascal(n)));
+  check('every icon the tools name exists in the shipped Lucide',
+        unknown.length === 0, unknown.join(' '));
+  check('and there were icons to check', iconNames.length === 10, String(iconNames.length));
+
+  /* Sans cette entree, un rafraichissement renvoie le commercant au tableau
+     de bord sans rien dire. */
+  const c2Src = await readFile(join(ROOT, 'c2.js'), 'utf8');
+  check('a refresh leaves the merchant on the tools page', /'outils'\]/.test(c2Src));
+
+  /* Les six raccourcis du tableau de bord sont a un doigt de l'ecran
+     d'accueil : ceux-la sont payes a l'installation, les vingt autres se
+     mettent en cache a la premiere visite. */
+  const swSrc = await readFile(join(ROOT, 'sw.js'), 'utf8');
+  const dashFiles = [...b2bSrc.slice(b2bSrc.indexOf('const OUTILS_DASH'),
+                                     b2bSrc.indexOf('function outilAr'))
+                     .matchAll(/'([a-z0-9-]+\.html)'/g)].map(m => m[1]);
+  check('the dashboard offers six shortcuts', dashFiles.length === 6, String(dashFiles.length));
+  const notShelled = dashFiles.filter(f => !swSrc.includes(`'/${f}'`));
+  check('and every one of them opens offline', notShelled.length === 0, notShelled.join(' '));
+  const strays = dashFiles.filter(f => !offered.includes(f));
+  check('and every one of them is on the tools page too', strays.length === 0, strays.join(' '));
+
+  /* La feuille de style de l'application ne demande rien a personne. */
+  const cssSrc = await readFile(join(ROOT, 'styles.css'), 'utf8');
+  check('the application stylesheet fetches nothing off this origin',
+        !/@import\s+url\(\s*['"]?https?:/i.test(cssSrc) && !/fonts\.(googleapis|gstatic)/.test(cssSrc));
+}
+
+/* La page elle-meme, ouverte, dans les deux langues, au doigt. */
+{
+  const phone = await browser.newContext({
+    viewport: {width: 412, height: 915}, hasTouch: true, isMobile: true, locale: 'fr-DZ'
+  });
+  const pg = await phone.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.renderOutils === 'function', {timeout: 20000});
+  await pg.waitForTimeout(400);
+
+  /* Le tableau de bord d'abord : c'est le seul ecran que ces visiteurs
+     voient. La carte se lit avant les dernieres factures, pas apres. */
+  const dash = await pg.evaluate(() => {
+    const c = document.getElementById('dash-outils');
+    if (!c) return {found: false};
+    const recent = document.querySelector('#main-content .card.overflow-hidden');
+    return {
+      found: true,
+      chips: c.querySelectorAll('a.outil-link').length,
+      shortest: Math.min(...[...c.querySelectorAll('a.outil-link')]
+                .map(a => Math.round(a.getBoundingClientRect().height))),
+      rooted: [...c.querySelectorAll('a')].every(a => a.getAttribute('href').startsWith('/')),
+      beforeRecent: !!recent &&
+        !!(c.compareDocumentPosition(recent) & Node.DOCUMENT_POSITION_FOLLOWING)
+    };
+  });
+  check('the dashboard carries the tools card', dash.found === true);
+  check('with the six a merchant opens while working', dash.chips === 6, String(dash.chips));
+  check('each big enough to hit with a thumb', dash.shortest >= 44, dash.shortest + 'px');
+  check('each addressed from the root, PWA or not', dash.rooted === true);
+  check('and the card is read before the invoice list, not after', dash.beforeRecent === true);
+
+  /* Une hauteur ne se mesure que sur le site construit : ce harnais sert la
+     racine, ou vendor/tailwind.css n'existe pas, et une page sans feuille de
+     style empile tout sur 2 500 pixels. On ouvre donc public/, comme le fait
+     le groupe du generateur international, et on mesure la ou le commercant
+     regarde — deuxieme visite, l'avertissement sur le stockage local ecarte. */
+  {
+    const shipped = createServer(async (req, res) => {
+      const f = join(ROOT, 'public',
+                     normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+      try {
+        const body = await readFile(f);
+        res.writeHead(200, {'Content-Type': TYPES[extname(f)] || 'application/octet-stream'});
+        res.end(body);
+      } catch { res.writeHead(404); res.end('not found'); }
+    });
+    await new Promise(r => shipped.listen(0, '127.0.0.1', r));
+    const SHIPPED = `http://127.0.0.1:${shipped.address().port}`;
+    const back = await phone.newPage();
+    await back.addInitScript(() => { try { localStorage.setItem('fp_warn_seen', '1'); } catch (e) {} });
+    await back.goto(`${SHIPPED}/index.html`);
+    await back.waitForFunction(() => typeof window.outilsCard === 'function', {timeout: 20000});
+    await back.waitForTimeout(600);
+    const fold = await back.evaluate(() => {
+      const c = document.getElementById('dash-outils');
+      const grid = document.querySelector('#main-content .grid.grid-cols-2');
+      return {
+        top: Math.round(c.getBoundingClientRect().top),
+        fold: innerHeight,
+        styled: !!grid && getComputedStyle(grid).display === 'grid'
+      };
+    });
+    check('the built dashboard really has its stylesheet', fold.styled === true);
+    check('on a returning visit the card sits inside the first screen',
+          fold.top < fold.fold, `${fold.top}px / ${fold.fold}px`);
+    await back.close();
+    shipped.close();
+  }
+
+  /* La page complete. */
+  const fr = await pg.evaluate(() => {
+    navigate('outils');
+    return {
+      title: document.getElementById('page-title').textContent.trim(),
+      links: document.querySelectorAll('#main-content a.outil-link').length,
+      groups: document.querySelectorAll('#main-content .card').length,
+      active: (document.querySelector('.nav-item.active') || {}).dataset.page,
+      dead: [...document.querySelectorAll('#main-content a.outil-link')]
+            .filter(a => !/^\/[a-z0-9-]+\.html$/.test(a.getAttribute('href'))).length
+    };
+  });
+  check('the tools page names every one of the twenty-six', fr.links === 26, String(fr.links));
+  check('sorted into the four groups the site uses', fr.groups === 4, String(fr.groups));
+  check('the header says where the merchant is', fr.title === 'Outils', fr.title);
+  check('and the menu entry lights up', fr.active === 'outils', String(fr.active));
+  check('every address is a real page address', fr.dead === 0, String(fr.dead));
+
+  /* L'arabe. Une cle manquante retombe en francais sans bruit : on regarde
+     donc l'ecriture, pas la presence de la cle. */
+  const ar = await pg.evaluate(() => {
+    toggleLocale();
+    const links = [...document.querySelectorAll('#main-content a.outil-link')];
+    return {
+      dir: document.documentElement.dir,
+      title: document.getElementById('page-title').textContent.trim(),
+      nav: document.querySelector('[data-page="outils"] span').textContent.trim(),
+      arabic: links.filter(a => /[؀-ۿ]/.test(a.textContent)).length,
+      bdi: links.filter(a => a.querySelector('bdi')).length,
+      lead: (document.querySelector('#main-content p') || {}).textContent || ''
+    };
+  });
+  check('the tools page turns with the rest of the application', ar.dir === 'rtl', ar.dir);
+  check('its title is written in Arabic', /[؀-ۿ]/.test(ar.title), ar.title);
+  check('so is the menu entry', /[؀-ۿ]/.test(ar.nav), ar.nav);
+  check('and its opening line', /[؀-ۿ]/.test(ar.lead), ar.lead.slice(0, 30));
+  check('twenty-two of the twenty-six carry an Arabic name', ar.arabic === 22, String(ar.arabic));
+  check('the four that exist only in English are isolated from the direction',
+        ar.bdi === 4, String(ar.bdi));
+
+  /* Un commercant qui n'a pas encore de facture doit voir « creez votre
+     premiere facture », pas six liens qui sortent de l'application. */
+  const empty = await pg.evaluate(() => {
+    state.invoices = []; state.clients = [];
+    navigate('dashboard');
+    return {
+      card: !!document.getElementById('dash-outils'),
+      start: !!document.querySelector('#main-content button[onclick="openNewInvoice()"]')
+    };
+  });
+  check('the first invoice keeps the screen to itself', empty.card === false);
+  check('and the invitation to write it is still there', empty.start === true);
+
+  await phone.close();
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));

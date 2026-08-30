@@ -1,5 +1,9 @@
 /* FacturePro — Professional + Responsive UI */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;600;700&display=swap');
+/* Les deux familles sont servies par fonts.css et /fonts/*.woff2, depuis ce
+   domaine. L'@import qui vivait ici demandait les memes fontes a Google : une
+   requete externe, bloquante, en tete de la seule feuille de style de
+   l'application — la page que 2 100 visiteurs ouvrent chaque mois. Elle est
+   partie avec le reste des appels sortants ; ne la faites pas revenir. */
 
 :root {
   --brand: #006233;

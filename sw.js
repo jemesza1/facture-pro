@@ -12,7 +12,7 @@
    cache only answers when the network does not.
 
    Bump CACHE whenever the shell changes — keep it in step with V in app.js. */
-var CACHE = 'facturepro-20260829d';
+var CACHE = 'facturepro-20260830a';
 
 /* Cached without their ?v= query, and read back with ignoreSearch, so bumping
    an asset version does not orphan every entry. */
@@ -29,6 +29,13 @@ var SHELL = [
   '/vendor/jspdf.umd.min.js', '/vendor/html2canvas.min.js',
   '/droit-de-timbre.html', '/montant-en-lettres.html', '/calcul-tva.html', '/calcul-salaire.html',
   '/calcul-marge.html', '/calcul-pourcentage.html',
+  /* Le sixieme raccourci du tableau de bord. Les vingt autres pages que la
+     page Outils propose ne sont pas prechargees : elles pesent deux cents
+     kilo-octets compresses, et le gestionnaire fetch ci-dessous met deja en
+     cache toute reponse servie — la premiere visite en ligne suffit donc a
+     les rendre disponibles hors ligne pour toujours. Seuls les six liens que
+     l'ecran d'accueil met a un doigt meritent d'etre payes a l'installation. */
+  '/remplir-g50.html',
   '/international.html',
   '/guide.html', '/conditions.html', '/install.js', '/template-xlsx.js',
   '/facture-non-assujetti-tva.html', '/auto-entrepreneur-algerie.html',

@@ -42,6 +42,14 @@ function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annul
       <p class="stat-value"><span class="count" data-v="thisMonth">${moneyUI(thisMonth)}</span></p>
     </div>
   </div>
+  <!-- Sous les quatre chiffres, au-dessus des dernieres factures : quatre-vingt-
+       cinq pour cent des visiteurs sont sur telephone, ou la barre laterale est
+       cachee derriere un hamburger, et cet emplacement est le seul qui tienne
+       dans le premier ecran. Rien quand le commercant n'a aucune facture : cet
+       ecran-la porte deja « creez votre premiere facture », et lui opposer six
+       liens qui sortent de l'application serait lui prendre le seul geste qui
+       compte. -->
+  ${empty?'':(typeof outilsCard==='function'?outilsCard():'')}
   <div class="card overflow-hidden">
     <div class="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-slate-100 dark:border-slate-800">
       <h3 class="section-title">${t('inv.recent')}</h3>
