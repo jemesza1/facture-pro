@@ -6,7 +6,7 @@ try{localStorage.removeItem("fp_xai_key");}catch(e){}
 core.reduce(function(p,f){return p.then(function(){return load(f+"?v="+V);});},Promise.resolve())
 .then(function(){
   try{if(typeof applyLocale==="function")applyLocale();}catch(e){}
-  try{if(typeof initApp==="function")initApp();else{loadData();var _p=(typeof state!=="undefined"&&state.currentPage)||"dashboard";var _ok=["dashboard","invoices","devis","products","payments","expenses","debts","clients","templates","settings","help","terms","releve","recurring"];navigate(_ok.indexOf(_p)>-1?_p:"dashboard");}}catch(e){console.error(e);}
+  try{if(typeof initApp==="function")initApp();else{loadData();var _p=(typeof state!=="undefined"&&state.currentPage)||"dashboard";var _ok=["dashboard","invoices","devis","products","payments","expenses","debts","clients","templates","settings","help","terms","releve","recurring","outils"];navigate(_ok.indexOf(_p)>-1?_p:"dashboard");}}catch(e){console.error(e);}
   try{if(window.__fpNewInvoice&&typeof openNewInvoice==="function"){window.__fpNewInvoice=false;openNewInvoice();}}catch(e){}
   try{if(typeof paintBackupNotice==="function")paintBackupNotice();}catch(e){}
   try{lucide.createIcons();}catch(e){}

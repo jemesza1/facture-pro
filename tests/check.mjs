@@ -4280,6 +4280,25 @@ console.log('\nLes outils, depuis l\'application');
   check('conditions stays out: the menu already goes there',
         !offered.includes('conditions.html'));
 
+  /* Comparer les noms de fichiers ne prouve que la presence. La derive qui
+     compte est celle des mots : l'application et les vingt-sept pages du site
+     doivent nommer le meme outil de la meme facon, dans les deux langues. */
+  const triples = src => {
+    const out = {};
+    for (const m of src.matchAll(/\['([a-z0-9-]+\.html)',\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'),\s*('(?:[^'\\]|\\.)*'|null)\]/g)) {
+      out[m[1]] = [m[2].slice(1, -1).replace(/\\'/g, "'"),
+                   m[3] === 'null' ? null : m[3].slice(1, -1)];
+    }
+    return out;
+  };
+  const said = triples(groupsBlock), says = triples(outilsBlock);
+  check('the generator still spells out its labels', Object.keys(said).length === 27,
+        String(Object.keys(said).length));
+  const drifted = Object.keys(says).filter(f => !said[f] ||
+        said[f][0] !== says[f][0] || said[f][1] !== says[f][1]);
+  check('and the application calls every tool by the same name, in both languages',
+        drifted.length === 0, drifted.join(' '));
+
   /* Un lien mort dans l'application est un lien mort sur le telephone d'un
      commercant. Les pages sont ecrites dans public/ par le build. */
   const missing = offered.filter(f => !existsSync(join(ROOT, 'public', f)));
@@ -4305,7 +4324,14 @@ console.log('\nLes outils, depuis l\'application');
   /* Sans cette entree, un rafraichissement renvoie le commercant au tableau
      de bord sans rien dire. */
   const c2Src = await readFile(join(ROOT, 'c2.js'), 'utf8');
+  /* Il y a deux listes blanches : celle de c2.js, et celle d'app.js qui la
+     remplace quand initApp manque. Une seule mise a jour laisse un chemin ou
+     la page existe et l'autre ou elle renvoie au tableau de bord sans rien
+     dire — et c'est le chemin de secours, celui que personne ne regarde. */
+  const appSrcOutils = await readFile(join(ROOT, 'app.js'), 'utf8');
   check('a refresh leaves the merchant on the tools page', /'outils'\]/.test(c2Src));
+  check('and so does the fallback path that runs when initApp is missing',
+        /"outils"\]/.test(appSrcOutils));
 
   /* Les six raccourcis du tableau de bord sont a un doigt de l'ecran
      d'accueil : ceux-la sont payes a l'installation, les vingt autres se
@@ -4361,8 +4387,14 @@ console.log('\nLes outils, depuis l\'application');
   /* Une hauteur ne se mesure que sur le site construit : ce harnais sert la
      racine, ou vendor/tailwind.css n'existe pas, et une page sans feuille de
      style empile tout sur 2 500 pixels. On ouvre donc public/, comme le fait
-     le groupe du generateur international, et on mesure la ou le commercant
-     regarde — deuxieme visite, l'avertissement sur le stockage local ecarte. */
+     le groupe du generateur international.
+
+     Et on la mesure sur les hauteurs que les telephones donnent vraiment.
+     412x915 est l'ecran d'un Pixel, pas la place qu'il laisse a la page : la
+     barre d'adresse et les barres systeme en prennent pres de deux cents. Une
+     verification ecrite a 915 passait sur une carte dont aucun telephone reel
+     ne montrait un pixel. On compte donc les puces entieres, sur les hauteurs
+     ou vivent les visiteurs. */
   {
     const shipped = createServer(async (req, res) => {
       const f = join(ROOT, 'public',
@@ -4375,24 +4407,47 @@ console.log('\nLes outils, depuis l\'application');
     });
     await new Promise(r => shipped.listen(0, '127.0.0.1', r));
     const SHIPPED = `http://127.0.0.1:${shipped.address().port}`;
-    const back = await phone.newPage();
-    await back.addInitScript(() => { try { localStorage.setItem('fp_warn_seen', '1'); } catch (e) {} });
-    await back.goto(`${SHIPPED}/index.html`);
-    await back.waitForFunction(() => typeof window.outilsCard === 'function', {timeout: 20000});
-    await back.waitForTimeout(600);
-    const fold = await back.evaluate(() => {
-      const c = document.getElementById('dash-outils');
-      const grid = document.querySelector('#main-content .grid.grid-cols-2');
-      return {
-        top: Math.round(c.getBoundingClientRect().top),
-        fold: innerHeight,
-        styled: !!grid && getComputedStyle(grid).display === 'grid'
-      };
-    });
-    check('the built dashboard really has its stylesheet', fold.styled === true);
-    check('on a returning visit the card sits inside the first screen',
-          fold.top < fold.fold, `${fold.top}px / ${fold.fold}px`);
-    await back.close();
+
+    const measure = async (w, h) => {
+      const c = await browser.newContext({
+        viewport: {width: w, height: h}, hasTouch: true, isMobile: true, locale: 'fr-DZ'
+      });
+      const pgx = await c.newPage();
+      await pgx.addInitScript(() => { try { localStorage.setItem('fp_warn_seen', '1'); } catch (e) {} });
+      await pgx.goto(`${SHIPPED}/index.html`);
+      await pgx.waitForFunction(() => !!document.getElementById('dash-outils'), {timeout: 20000});
+      await pgx.waitForTimeout(500);
+      const r = await pgx.evaluate(() => {
+        const card = document.getElementById('dash-outils');
+        const main = document.getElementById('main-content');
+        const b = card.getBoundingClientRect();
+        const limit = Math.min(innerHeight, main.getBoundingClientRect().bottom);
+        const grid = document.querySelector('#main-content .grid.grid-cols-2');
+        return {
+          styled: !!grid && getComputedStyle(grid).display === 'grid',
+          shown: Math.round(Math.max(0, Math.min(b.bottom, limit) - b.top)),
+          chips: [...card.querySelectorAll('a.outil-link')]
+                 .filter(a => a.getBoundingClientRect().bottom <= limit).length,
+          allBtn: Math.round(card.querySelector('button').getBoundingClientRect().height)
+        };
+      });
+      await c.close();
+      return r;
+    };
+
+    const big = await measure(412, 732);   /* un Pixel, barres deduites */
+    check('the built dashboard really has its stylesheet', big.styled === true);
+    /* Mesuree ici : la taille de ce lien vient d'utilitaires Tailwind, et
+       Tailwind n'est servi que depuis public/. */
+    check('the way to all twenty-six is a target and not a hairline',
+          big.allBtn >= 44, big.allBtn + 'px');
+    check('on a phone the card is opened, not merely present',
+          big.chips >= 3, `${big.chips} chips, ${big.shown}px`);
+
+    const small = await measure(360, 640); /* le plus petit encore courant */
+    check('and on the smallest phone still in use it announces itself',
+          small.shown >= 90, small.shown + 'px');
+
     shipped.close();
   }
 

@@ -31,10 +31,12 @@ var SHELL = [
   '/calcul-marge.html', '/calcul-pourcentage.html',
   /* Le sixieme raccourci du tableau de bord. Les vingt autres pages que la
      page Outils propose ne sont pas prechargees : elles pesent deux cents
-     kilo-octets compresses, et le gestionnaire fetch ci-dessous met deja en
-     cache toute reponse servie — la premiere visite en ligne suffit donc a
-     les rendre disponibles hors ligne pour toujours. Seuls les six liens que
-     l'ecran d'accueil met a un doigt meritent d'etre payes a l'installation. */
+     kilo-octets compresses, payes a chaque deploiement, sur des forfaits
+     algeriens. Le gestionnaire fetch ci-dessous met en cache toute reponse
+     servie, si bien qu'une page ouverte une fois en ligne s'ouvre ensuite
+     hors ligne — jusqu'au prochain deploiement, ou activate efface les caches
+     qui ne portent pas le nom du jour et seul SHELL est repris. Seuls les six
+     liens que l'ecran d'accueil met a un doigt valent ce prix la. */
   '/remplir-g50.html',
   '/international.html',
   '/guide.html', '/conditions.html', '/install.js', '/template-xlsx.js',

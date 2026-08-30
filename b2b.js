@@ -110,8 +110,9 @@ function saveClient(id){const data={name:document.getElementById('cli-name').val
  * Ce tableau recopie GROUPS (tools-build-chrome.mjs) : memes groupes, meme
  * ordre, memes libelles. Un script de build ne se charge pas dans le
  * navigateur, alors la copie est faite a la main et une verification du
- * harnais relit GROUPS et echoue si les deux divergent — c'est elle qui rend
- * la copie sure. Ne reformulez pas un libelle ici sans le reformuler la-bas,
+ * harnais relit GROUPS et echoue si les deux divergent, sur le nom du fichier
+ * comme sur le libelle francais et le libelle arabe — c'est elle qui rend la
+ * copie sure. Ne reformulez pas un libelle ici sans le reformuler la-bas,
  * sinon l'application et les vingt-sept pages du site cessent de dire le
  * meme mot.
  *
@@ -193,19 +194,19 @@ function renderOutils(){
   </div>`).join('')}
 </div>`;}
 
-/* Appelee depuis le litteral de renderDashboard (dash-fix.js), juste sous les
-   quatre chiffres et au-dessus des dernieres factures : sur un telephone de
-   412 px c'est encore le premier ecran, et le harnais mesure cette hauteur
-   plutot que de la supposer. Les libelles sont relus dans OUTILS par leur nom
-   de fichier, si bien que le tableau de bord ne peut pas nommer un outil
-   autrement que la page Outils. */
+/* Appelee depuis le litteral de renderDashboard (dash-fix.js), au-dessus des
+   quatre chiffres — voir le commentaire la-bas pour la mesure qui l'y a mise.
+   Elle reste courte pour cela : un titre, une ligne, une rangee de puces qui
+   se replie. Les libelles sont relus dans OUTILS par leur nom de fichier, si
+   bien que le tableau de bord ne peut pas nommer un outil autrement que la
+   page Outils. */
 function outilsCard(){
   const flat={};
   OUTILS.forEach(g=>g[2].forEach(e=>{flat[e[0]]=e;}));
   return `<div id="dash-outils" class="card p-4 sm:p-5">
   <div class="flex items-center justify-between gap-3">
     <h3 class="section-title">${esc(t('tools.title'))}</h3>
-    <button type="button" onclick="navigate('outils')" class="text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:underline shrink-0">${esc(t('tools.all'))}</button>
+    <button type="button" onclick="navigate('outils')" class="text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:underline shrink-0 -my-3 -me-2 px-2 py-3">${esc(t('tools.all'))}</button>
   </div>
   <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3">${esc(t('tools.dashLead'))}</p>
   <div class="flex flex-wrap gap-2">

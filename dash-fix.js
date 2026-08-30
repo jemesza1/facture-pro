@@ -12,6 +12,22 @@ function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annul
     <p class="text-xs text-slate-500">${t('demo.sub')}</p></div>
     <button onclick="clearDemoData()" class="btn-secondary shrink-0"><i data-lucide="eraser" class="w-4 h-4"></i> ${t('demo.clear')}</button>
   </div>`:''}
+  <!-- Au-dessus des quatre chiffres, et non en dessous. Elle etait en dessous,
+       et la mesure a dit non : 412x915 est l'ecran d'un Pixel, pas la place
+       qu'il donne a la page — une fois la barre d'adresse et les barres
+       systeme retirees il reste environ 732 pixels, et sur un 360x640 il en
+       reste 640. Posee sous les quatre chiffres, la carte commencait a 775 et
+       aucun de ces telephones n'en montrait un seul pixel. Quatre-vingt-cinq
+       pour cent des visiteurs arrivent par telephone, ou la barre laterale
+       dort derriere un hamburger : si cette carte ne se voit pas, rien ne se
+       voit. Le harnais la mesure maintenant sur les hauteurs que les
+       telephones donnent vraiment, et compte les puces entieres, pas le bord
+       superieur de la carte.
+
+       Rien quand le commercant n'a aucune facture : cet ecran-la porte deja
+       « creez votre premiere facture », et lui opposer six liens qui sortent
+       de l'application serait lui prendre le seul geste qui compte. -->
+  ${empty?'':(typeof outilsCard==='function'?outilsCard():'')}
   <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
     <div class="stat-card">
       <div class="flex items-center justify-between gap-2">
@@ -42,14 +58,6 @@ function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annul
       <p class="stat-value"><span class="count" data-v="thisMonth">${moneyUI(thisMonth)}</span></p>
     </div>
   </div>
-  <!-- Sous les quatre chiffres, au-dessus des dernieres factures : quatre-vingt-
-       cinq pour cent des visiteurs sont sur telephone, ou la barre laterale est
-       cachee derriere un hamburger, et cet emplacement est le seul qui tienne
-       dans le premier ecran. Rien quand le commercant n'a aucune facture : cet
-       ecran-la porte deja « creez votre premiere facture », et lui opposer six
-       liens qui sortent de l'application serait lui prendre le seul geste qui
-       compte. -->
-  ${empty?'':(typeof outilsCard==='function'?outilsCard():'')}
   <div class="card overflow-hidden">
     <div class="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-slate-100 dark:border-slate-800">
       <h3 class="section-title">${t('inv.recent')}</h3>
