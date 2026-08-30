@@ -3979,7 +3979,7 @@ check('and the two carry the same stamp',
   const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
   const build = pkg.scripts.build || '';
   check('the deploy build never asks for a browser',
-        !/\bog\b|playwright|chromium/i.test(build), build.slice(-60));
+        !/\bog\b|\bshots\b|playwright|chromium/i.test(build), build.slice(-60));
   check('the share cards are committed, not rendered at deploy time',
         existsSync(join(ROOT, 'static', 'og.png')) &&
         existsSync(join(ROOT, 'static', 'og-ar.png')));
@@ -4592,6 +4592,94 @@ console.log('\nLes modeles, ranges plutot que jetes');
         arTpl.groups.every(l => /[؀-ۿ]/.test(l)), arTpl.groups.join(' | '));
   await pg.evaluate(() => toggleLocale());
   await pg.close();
+}
+
+/* ---------------------------------------------------------------- *
+ * La fiche Google Play.
+ *
+ * L'application se publie en TWA : une coquille Android qui ouvre ce site
+ * sans barre d'adresse. Trois choses la tiennent, et aucune ne se voit a
+ * l'oeil nu si elle casse — Chrome se contente de rendre la barre d'adresse,
+ * et personne ne sait pourquoi.
+ *
+ *   1. /.well-known/assetlinks.json, servi depuis ce domaine, qui prouve que
+ *      le site et l'application ont le meme proprietaire ;
+ *   2. un manifeste qui porte une identite figee et des captures dont les
+ *      dimensions annoncees sont les vraies ;
+ *   3. des images aux formats que Play impose — 1080x1920 pour un telephone,
+ *      1024x500 pour la couverture.
+ * ---------------------------------------------------------------- */
+console.log('\nLa fiche Google Play');
+{
+  const png = async (rel) => {
+    const b = await readFile(join(ROOT, rel));
+    check(`${rel} is a real PNG`, b.subarray(1, 4).toString() === 'PNG', b.subarray(0, 8).toString('hex'));
+    return {w: b.readUInt32BE(16), h: b.readUInt32BE(20)};
+  };
+
+  const man = JSON.parse(await readFile(join(ROOT, 'static', 'manifest.webmanifest'), 'utf8'));
+  /* Sans id, changer start_url ferait naitre une seconde application aux yeux
+     du navigateur : l'installee d'un cote, la nouvelle de l'autre. */
+  check('the manifest fixes the application identity', man.id === '/', String(man.id));
+  check('and still declares the scope Play will trust', man.scope === '/' && man.display === 'standalone',
+        `${man.scope} ${man.display}`);
+
+  check('it carries screenshots for the store listing',
+        Array.isArray(man.screenshots) && man.screenshots.length >= 4,
+        String((man.screenshots || []).length));
+  const narrow = man.screenshots.filter((x) => x.form_factor === 'narrow');
+  check('at least three of them are phone-shaped', narrow.length >= 3, String(narrow.length));
+  for (const sc of man.screenshots) {
+    const {w, h} = await png(join('static', sc.src.replace(/^\//, '')));
+    /* Une taille annoncee et fausse est pire qu'absente : le navigateur
+       reserve la mauvaise place et la fiche saute au chargement. */
+    check(`${sc.src} measures what the manifest says`, `${w}x${h}` === sc.sizes,
+          `${w}x${h} vs ${sc.sizes}`);
+    if (sc.form_factor === 'narrow') {
+      check(`${sc.src} is portrait, as Play requires of a phone`, h > w, `${w}x${h}`);
+      check(`${sc.src} is at least 320px on its short side`, w >= 320, String(w));
+    } else {
+      check(`${sc.src} is landscape`, w > h, `${w}x${h}`);
+    }
+    check(`${sc.src} says what it shows`, typeof sc.label === 'string' && sc.label.length > 3, sc.label);
+  }
+
+  /* Play impose 1024x500 pour l'image de couverture, au pixel pres. */
+  const feat = await png(join('static', 'play-feature.png'));
+  check('the store cover is exactly the size Play demands',
+        feat.w === 1024 && feat.h === 500, `${feat.w}x${feat.h}`);
+
+  /* L'icone de 512 est celle que Play affiche partout. */
+  const icon = await png(join('static', 'icon-512.png'));
+  check('the store icon is 512 square', icon.w === 512 && icon.h === 512, `${icon.w}x${icon.h}`);
+
+  const links = JSON.parse(await readFile(join(ROOT, 'static', '.well-known', 'assetlinks.json'), 'utf8'));
+  check('the asset links file is a list Android can read', Array.isArray(links) && links.length === 1,
+        String(links.length));
+  check('it delegates URL handling, which is what removes the address bar',
+        links[0].relation.includes('delegate_permission/common.handle_all_urls'));
+  check('to an Android package, named after the domain',
+        links[0].target.namespace === 'android_app' &&
+        /^com\.facturedz\./.test(links[0].target.package_name),
+        links[0].target.package_name);
+  /* Les empreintes arrivent de la Play Console apres le premier envoi. Tant
+     qu'elles manquent la barre d'adresse reste, ce qui est visible et se
+     repare ; une empreinte mal formee, elle, echoue en silence. */
+  const prints = links[0].target.sha256_cert_fingerprints;
+  check('its fingerprint list exists', Array.isArray(prints), typeof prints);
+  const malformed = prints.filter((f) => !/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(f));
+  check('and every fingerprint in it is well formed', malformed.length === 0, malformed.join(' '));
+
+  /* Le build doit le recopier, sinon il n'existe que dans le depot et Android
+     ne le trouve jamais. */
+  const pkgSrc = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
+  check('the build copies the asset links into what is deployed',
+        /well-known/.test(pkgSrc.scripts.build), 'absent de npm run build');
+  check('and the screenshots are committed, not rendered at deploy time',
+        typeof pkgSrc.scripts.shots === 'string' &&
+        !/shots/.test(pkgSrc.scripts.build));
+  const served = await fetch(`${BASE}/public/.well-known/assetlinks.json`);
+  check('and the deployed tree really serves it', served.status === 200, String(served.status));
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
