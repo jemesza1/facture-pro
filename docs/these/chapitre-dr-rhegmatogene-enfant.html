@@ -1,0 +1,942 @@
+<title>Rétine décollée de l'enfant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Spectral:wght@300;400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#F5F7F9; --surface:#FFFFFF; --surface-2:#EDF1F5;
+  --ink:#131A21; --ink-2:#39444F; --ink-soft:#5D6975;
+  --rule:#D9E0E7; --rule-soft:#E7ECF1;
+  --blue:#1E5A86; --blue-tint:#E5EEF5;
+  --red:#A32C26; --red-tint:#F7E9E7;
+  --shadow:0 1px 2px rgba(19,26,33,.05), 0 8px 24px -16px rgba(19,26,33,.35);
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --display:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1218; --surface:#131A22; --surface-2:#182029;
+    --ink:#E3E9EF; --ink-2:#BFCAD5; --ink-soft:#93A0AE;
+    --rule:#26303B; --rule-soft:#1E2731;
+    --blue:#79B7DF; --blue-tint:#14293A;
+    --red:#E4837B; --red-tint:#301B1A;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 28px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1218; --surface:#131A22; --surface-2:#182029;
+  --ink:#E3E9EF; --ink-2:#BFCAD5; --ink-soft:#93A0AE;
+  --rule:#26303B; --rule-soft:#1E2731;
+  --blue:#79B7DF; --blue-tint:#14293A;
+  --red:#E4837B; --red-tint:#301B1A;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 28px -18px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--serif); font-size:17px; line-height:1.72;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+::selection{background:var(--blue-tint); color:var(--ink)}
+a{color:var(--blue)}
+a:focus-visible,summary:focus-visible,.tablewrap:focus-visible{
+  outline:2px solid var(--blue); outline-offset:3px; border-radius:2px;
+}
+
+/* ---------- hero ---------- */
+.hero{
+  border-bottom:1px solid var(--rule);
+  background:linear-gradient(180deg,var(--surface),var(--paper));
+}
+.hero__in{
+  max-width:1180px; margin:0 auto; padding:clamp(2.4rem,6vw,4.2rem) clamp(1.1rem,4vw,2.6rem) clamp(2rem,4vw,3rem);
+  display:grid; grid-template-columns:1fr auto; gap:clamp(1.4rem,4vw,3rem); align-items:start;
+}
+.eyebrow{
+  font-family:var(--sans); font-size:.7rem; font-weight:600; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--ink-soft); margin:0 0 1.1rem;
+}
+.eyebrow span{color:var(--blue)}
+h1{
+  font-family:var(--display); font-optical-sizing:auto; font-weight:600;
+  font-size:clamp(1.85rem,4.6vw,3.1rem); line-height:1.1; letter-spacing:-.015em;
+  margin:0 0 1rem; text-wrap:balance; max-width:19ch;
+}
+.deck{
+  font-size:clamp(1rem,1.6vw,1.16rem); color:var(--ink-2); max-width:60ch;
+  margin:0 0 1.6rem; line-height:1.62;
+}
+.meta{
+  display:flex; flex-wrap:wrap; gap:.5rem .55rem; font-family:var(--sans);
+  font-size:.72rem; letter-spacing:.02em; margin:0; padding:0; list-style:none;
+}
+.meta li{
+  border:1px solid var(--rule); border-radius:999px; padding:.24rem .7rem;
+  color:var(--ink-soft); background:var(--surface);
+}
+.meta li.is-accent{border-color:var(--blue); color:var(--blue)}
+.mark{width:clamp(96px,13vw,134px); height:auto; flex:none}
+.mark__grid{stroke:var(--rule); }
+.mark__detach{fill:var(--blue); opacity:.22; stroke:var(--blue); stroke-width:1.1}
+.mark__tear{fill:var(--red); stroke:var(--red); stroke-width:1}
+.mark__disc{fill:none; stroke:var(--ink-soft); stroke-width:.9}
+@media (max-width:640px){ .hero__in{grid-template-columns:1fr} .mark{order:-1} }
+
+/* ---------- layout ---------- */
+.shell{
+  max-width:1180px; margin:0 auto; padding:0 clamp(1.1rem,4vw,2.6rem) 5rem;
+  display:grid; grid-template-columns:1fr; gap:clamp(1.6rem,4vw,3.4rem);
+}
+@media (min-width:1040px){ .shell{grid-template-columns:15.5rem minmax(0,1fr)} }
+
+.rail{ padding-top:2.6rem }
+@media (min-width:1040px){
+  .rail{position:sticky; top:0; max-height:100vh; overflow-y:auto; padding-bottom:2rem}
+}
+.rail__title{
+  font-family:var(--sans); font-size:.68rem; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--ink-soft); margin:0 0 .9rem;
+  padding-bottom:.7rem; border-bottom:1px solid var(--rule);
+}
+.toc{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.toc a{
+  display:grid; grid-template-columns:1.7rem 1fr; gap:.5rem; align-items:baseline;
+  font-family:var(--sans); font-size:.83rem; line-height:1.4; color:var(--ink-2);
+  text-decoration:none; padding:.42rem 0; border-bottom:1px solid var(--rule-soft);
+}
+.toc a:hover{color:var(--blue)}
+.toc__num{
+  font-size:.72rem; font-weight:600; color:var(--blue); font-variant-numeric:tabular-nums;
+}
+
+/* ---------- article ---------- */
+.article{ padding-top:2.6rem; max-width:72ch }
+.chap{ padding-top:1rem; margin-bottom:3.2rem; scroll-margin-top:1.5rem }
+.chap + .chap{ border-top:1px solid var(--rule); padding-top:2.6rem }
+.chap__head{ display:grid; grid-template-columns:auto 1fr; gap:.85rem; align-items:baseline; margin-bottom:1.5rem }
+.chap__num{
+  font-family:var(--sans); font-size:.78rem; font-weight:600; color:var(--surface);
+  background:var(--blue); border-radius:3px; padding:.16rem .5rem;
+  font-variant-numeric:tabular-nums; position:relative; top:-.25rem;
+}
+.chap__title{
+  font-family:var(--display); font-optical-sizing:auto; font-weight:600;
+  font-size:clamp(1.35rem,2.9vw,1.95rem); line-height:1.18; letter-spacing:-.01em;
+  margin:0; text-wrap:balance;
+}
+h3{
+  font-family:var(--display); font-weight:600; font-size:1.16rem; line-height:1.32;
+  margin:2.3rem 0 .7rem; color:var(--ink); text-wrap:balance;
+}
+h4{
+  font-family:var(--sans); font-weight:600; font-size:.82rem; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--blue); margin:1.8rem 0 .5rem;
+}
+p{margin:0 0 1.05rem}
+strong{font-weight:600; color:var(--ink)}
+em{font-style:italic}
+ul,ol{margin:0 0 1.15rem; padding-left:1.35rem}
+li{margin-bottom:.42rem}
+li::marker{color:var(--blue)}
+ol.reflist li::marker{font-family:var(--sans); font-size:.82rem}
+
+/* ---------- callouts ---------- */
+.callout{
+  background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--red);
+  border-radius:2px; padding:1.15rem 1.3rem .4rem; margin:1.8rem 0 1.9rem; box-shadow:var(--shadow);
+}
+.callout--note{ border-left-color:var(--blue); background:var(--surface-2); box-shadow:none; font-size:.93rem }
+.callout__head{
+  font-family:var(--sans); font-size:.75rem; font-weight:600; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--red); margin:0 0 .75rem;
+}
+.callout__list{ padding-left:1.2rem; margin-bottom:.9rem }
+.callout__list li{ margin-bottom:.5rem }
+.callout__list li::marker{ color:var(--red); font-family:var(--sans); font-size:.85rem }
+.callout p:last-child{margin-bottom:.85rem}
+
+/* ---------- tables ---------- */
+.tablewrap{ overflow-x:auto; margin:1.7rem 0 1.9rem; border:1px solid var(--rule); border-radius:3px; background:var(--surface) }
+table{ border-collapse:collapse; width:100%; min-width:34rem; font-family:var(--sans); font-size:.85rem; line-height:1.5 }
+thead th{
+  text-align:left; font-weight:600; font-size:.72rem; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--ink-soft); background:var(--surface-2); padding:.7rem .9rem; border-bottom:1px solid var(--rule);
+  white-space:nowrap;
+}
+tbody th{ text-align:left; font-weight:600; color:var(--ink) }
+tbody th,tbody td{ padding:.68rem .9rem; border-bottom:1px solid var(--rule-soft); vertical-align:top; font-variant-numeric:tabular-nums }
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+
+code{ font-family:var(--sans); font-size:.88em; background:var(--surface-2); padding:.05em .3em; border-radius:2px }
+
+/* ---------- footer ---------- */
+.foot{
+  border-top:1px solid var(--rule); margin-top:1rem; padding:1.8rem 0 0;
+  font-family:var(--sans); font-size:.78rem; color:var(--ink-soft); line-height:1.6;
+}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important; scroll-behavior:auto!important} }
+html{scroll-behavior:smooth}
+</style>
+
+<header class="hero">
+  <div class="hero__in">
+    <div>
+      <p class="eyebrow">Thèse de doctorat en médecine <span>·</span> Ophtalmologie <span>·</span> Chapitre</p>
+      <h1>Le traitement du décollement de rétine rhegmatogène de l'enfant</h1>
+      <p class="deck">Une chirurgie dont les gestes sont ceux de l'adulte, mais dont la stratégie ne l'est pas : vitré formé, diagnostic tardif, œil en croissance et amblyopie imposent leurs propres règles — du bilan sous anesthésie générale à la réhabilitation visuelle.</p>
+      <ul class="meta">
+        <li class="is-accent">10 sections</li>
+        <li>Moyens &amp; indications</li>
+        <li>Résultats &amp; pronostic</li>
+        <li>Prévention</li>
+        <li>33 références</li>
+      </ul>
+    </div>
+    <svg class="mark" viewBox="0 0 124 124" role="img" aria-labelledby="markTitle">
+  <title id="markTitle">Schéma rétinien : décollement supéro-nasal sur déhiscence périphérique</title>
+  <g class="mark__grid" fill="none" stroke-width="0.8">
+    <circle cx="62" cy="62" r="56"/><circle cx="62" cy="62" r="38"/><circle cx="62" cy="62" r="21"/>
+    <line x1="62.00" y1="47.00" x2="62.00" y2="6.00"/><line x1="69.50" y1="49.01" x2="90.00" y2="13.50"/><line x1="74.99" y1="54.50" x2="110.50" y2="34.00"/><line x1="77.00" y1="62.00" x2="118.00" y2="62.00"/><line x1="74.99" y1="69.50" x2="110.50" y2="90.00"/><line x1="69.50" y1="74.99" x2="90.00" y2="110.50"/><line x1="62.00" y1="77.00" x2="62.00" y2="118.00"/><line x1="54.50" y1="74.99" x2="34.00" y2="110.50"/><line x1="49.01" y1="69.50" x2="13.50" y2="90.00"/><line x1="47.00" y1="62.00" x2="6.00" y2="62.00"/><line x1="49.01" y1="54.50" x2="13.50" y2="34.00"/><line x1="54.50" y1="49.01" x2="34.00" y2="13.50"/>
+  </g>
+  <path class="mark__detach" d="M 7.22 50.36 A 56.00 56.00 0 0 1 73.64 7.22 L 66.37 41.46 A 21.00 21.00 0 0 0 41.46 57.63 Z"/>
+  <path class="mark__tear" d="M 25.26 19.74 L 38.33 11.25 L 38.58 25.94 Z"/>
+  <circle class="mark__disc" cx="62" cy="62" r="6.5"/>
+</svg>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="rail">
+    <p class="rail__title">Plan du chapitre</p>
+    <nav aria-label="Plan du chapitre">
+      <ol class="toc">
+        <li><a href="#introduction-les-particularites-qui-conditionnent-le-traitem"><span class="toc__num">1</span><span class="toc__label">Introduction — les particularités qui conditionnent le traitement</span></a></li>
+<li><a href="#buts-et-principes-generaux-du-traitement"><span class="toc__num">2</span><span class="toc__label">Buts et principes généraux du traitement</span></a></li>
+<li><a href="#bilan-pre-therapeutique-et-preparation-a-la-chirurgie"><span class="toc__num">3</span><span class="toc__label">Bilan pré-thérapeutique et préparation à la chirurgie</span></a></li>
+<li><a href="#les-moyens-therapeutiques"><span class="toc__num">4</span><span class="toc__label">Les moyens thérapeutiques</span></a></li>
+<li><a href="#les-indications-strategie-therapeutique-selon-le-terrain"><span class="toc__num">5</span><span class="toc__label">Les indications : stratégie thérapeutique selon le terrain</span></a></li>
+<li><a href="#les-suites-operatoires-et-leur-surveillance"><span class="toc__num">6</span><span class="toc__label">Les suites opératoires et leur surveillance</span></a></li>
+<li><a href="#la-rehabilitation-visuelle-le-second-temps-du-traitement"><span class="toc__num">7</span><span class="toc__label">La réhabilitation visuelle : le second temps du traitement</span></a></li>
+<li><a href="#resultats-et-facteurs-pronostiques"><span class="toc__num">8</span><span class="toc__label">Résultats et facteurs pronostiques</span></a></li>
+<li><a href="#le-traitement-preventif"><span class="toc__num">9</span><span class="toc__label">Le traitement préventif</span></a></li>
+<li><a href="#conclusion"><span class="toc__num">10</span><span class="toc__label">Conclusion</span></a></li>
+<li><a href="#references-bibliographiques-indicatives"><span class="toc__num">•</span><span class="toc__label">Références bibliographiques indicatives</span></a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <article class="article">
+    <section class="chap" id="introduction-les-particularites-qui-conditionnent-le-traitem">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">1</span>
+<h2 class="chap__title">Introduction — les particularités qui conditionnent le traitement</h2>
+</header>
+<p>Le décollement de rétine rhegmatogène (DRR) de l'enfant est une affection rare : il ne représente, selon les séries, que <strong>1,7 à 6,6 % de l'ensemble des décollements de rétine rhegmatogènes</strong> opérés, pour une incidence annuelle estimée entre <strong>0,38 et 0,69 cas pour 100 000 enfants</strong>. Cette rareté a deux conséquences majeures pour le clinicien : d'une part l'expérience individuelle de chaque opérateur reste limitée, d'autre part le niveau de preuve disponible est faible, aucune étude randomisée n'ayant été conduite dans cette population. Les recommandations thérapeutiques reposent donc essentiellement sur des séries rétrospectives, sur l'extrapolation raisonnée des données de l'adulte et sur l'expérience des équipes de rétine pédiatrique.</p>
+<p>Le traitement du DRR de l'enfant est <strong>exclusivement chirurgical</strong>. Aucun traitement médical ne permet la réapplication rétinienne ; les thérapeutiques adjuvantes n'ont qu'un rôle accessoire. Mais la transposition pure et simple des schémas thérapeutiques de l'adulte est une erreur : l'œil de l'enfant, le contexte étiologique et le devenir fonctionnel obéissent à des règles propres, que l'on peut regrouper en six particularités déterminantes.</p>
+<h3>1.1. Un diagnostic habituellement tardif</h3>
+<p>L'enfant, en particulier avant l'âge de 6-7 ans, ne se plaint pas d'une baisse d'acuité visuelle unilatérale : il compense avec l'œil controlatéral, ne perçoit pas son déficit et ne rapporte ni myodésopsies ni phosphènes. Le décollement est donc fréquemment découvert <strong>fortuitement</strong> (dépistage scolaire, strabisme d'apparition récente, leucocorie, examen de l'œil adelphe) ou à l'occasion d'une consultation pour un motif sans rapport. Il en résulte des délais de consultation de plusieurs semaines à plusieurs mois, expliquant que, dans la majorité des séries, <strong>la macula soit décollée dans 65 à 90 % des cas</strong> et que 25 à 50 % des yeux présentent déjà une <strong>prolifération vitréorétinienne (PVR)</strong> au diagnostic. Ce retard est le premier déterminant du pronostic et, en pratique, la principale variable sur laquelle la prévention peut agir.</p>
+<h3>1.2. Un vitré formé et fortement adhérent</h3>
+<p>Le vitré de l'enfant est un gel dense, homogène, sans lacunes, dont le cortex adhère fermement à la limitante interne, au pourtour papillaire, à la macula, le long des vaisseaux et surtout à la base du vitré. Le décollement postérieur du vitré (DPV) est <strong>exceptionnel avant l'adolescence</strong>. Cette donnée anatomique commande à elle seule une grande partie de la stratégie :</p>
+<ul>
+<li>elle explique la <strong>prépondérance des déhiscences non déchirantes</strong> — trous atrophiques, dialyses à l'ora serrata, désinsertions — plutôt que des déchirures à clapet par traction ;</li>
+<li>elle rend l'<strong>induction chirurgicale du DPV difficile, longue et dangereuse</strong>, avec un risque élevé de déhiscences iatrogènes ;</li>
+<li>elle explique en revanche que le décollement puisse rester <strong>longtemps localisé, peu bulleux, d'évolution lente</strong>, avec lignes de démarcation pigmentées, kystes intrarétiniens et rétine amincie — signes de chronicité qui sont la règle plus que l'exception ;</li>
+<li>elle constitue enfin l'argument anatomique majeur en faveur de la <strong>chirurgie ab externo</strong> chaque fois qu'elle est réalisable, puisque la traction vitréenne à neutraliser est faible et périphérique.</li>
+</ul>
+<h3>1.3. Un spectre étiologique différent</h3>
+<p>Là où le DRR de l'adulte est dominé par le DPV du sujet emmétrope vieillissant et la pseudophaquie, celui de l'enfant relève de causes qui sont pour beaucoup <strong>bilatéralisables, évolutives et syndromiques</strong> :</p>
+<ul>
+<li><strong>traumatismes</strong> (25 à 50 % des cas), contusifs ou perforants, avec une nette prédominance masculine ;</li>
+<li><strong>myopie forte</strong>, dégénérative ou syndromique ;</li>
+<li><strong>vitréorétinopathies héréditaires</strong> : syndromes de Stickler (première cause génétique), de Wagner, de Marshall, de Knobloch, rétinoschisis juvénile lié à l'X, vitréorétinopathie exsudative familiale (FEVR), syndrome de Goldmann-Favre ;</li>
+<li><strong>antécédent de chirurgie du segment antérieur</strong>, au premier rang duquel la chirurgie de la <strong>cataracte congénitale</strong>, l'aphaquie chirurgicale multipliant le risque par un facteur considérable ;</li>
+<li><strong>rétinopathie du prématuré (ROP)</strong>, régressée ou cicatricielle, et rétinopathies vasoprolifératives apparentées ;</li>
+<li><strong>malformations</strong> : colobome choriorétinien, fossette colobomateuse, persistance de la vascularisation fœtale, morning glory ;</li>
+<li>formes dites <strong>idiopathiques</strong>, dont la proportion diminue à mesure que le bilan génétique se généralise.</li>
+</ul>
+<p>Cette répartition impose deux réflexes systématiques : <strong>examiner l'œil adelphe</strong> avec le même soin que l'œil atteint, et <strong>rechercher une maladie générale ou familiale</strong>, car le traitement de l'œil malade n'est qu'une partie de la prise en charge.</p>
+<h3>1.4. Un œil en croissance</h3>
+<p>L'œil de l'enfant n'a pas atteint ses dimensions définitives. La distance limbe–ora serrata est plus courte, la sclère plus fine et moins rigide, la pars plana étroite voire virtuelle chez le nourrisson. Toute chirurgie doit tenir compte de la <strong>croissance axiale</strong> et de son corollaire, l'<strong>évolution réfractive</strong> : un cerclage serré modifie durablement la réfraction, une aphaquie chirurgicale impose un suivi optique rapproché, une huile de silicone laissée en place induit une hypermétropisation qu'il faut compenser. Le geste chirurgical n'est jamais réfractivement neutre chez l'enfant.</p>
+<h3>1.5. Une amblyopie qui conditionne le résultat fonctionnel</h3>
+<p>C'est la particularité la plus lourde de conséquences. Chez un enfant de moins de 8-10 ans, la réapplication anatomique de la rétine ne garantit en rien la récupération visuelle : la privation sensorielle induite par le décollement, par la cataracte secondaire, par l'aphaquie ou par l'huile de silicone entraîne une <strong>amblyopie de privation</strong>, souvent profonde et parfois irréversible. <strong>Le traitement du DRR de l'enfant ne s'achève pas au bloc opératoire</strong> ; il se poursuit par la correction optique et le traitement orthoptique, dont la qualité pèse autant sur l'acuité finale que la réussite chirurgicale elle-même. Cette notion doit être expliquée aux parents dès la consultation initiale.</p>
+<h3>1.6. Des contraintes pratiques : anesthésie, positionnement, coopération</h3>
+<p>Tout examen approfondi et tout geste chirurgical requièrent une <strong>anesthésie générale</strong>, y compris pour la surveillance postopératoire et pour le bilan de l'œil adelphe. Le <strong>positionnement postopératoire</strong> — pierre angulaire des tamponnements gazeux chez l'adulte — est difficile voire illusoire chez le jeune enfant, ce qui pèse lourdement sur le choix de l'agent de tamponnement. Enfin, la répétition des anesthésies, la douleur, l'occlusion et l'hospitalisation ont un retentissement psychologique et scolaire qui doit être intégré à la décision.</p>
+<aside class="callout callout--key">
+<p class="callout__head">POINTS CLÉS — Pourquoi le DRR de l'enfant n'est pas un DRR d'adulte</p>
+<ol class="callout__list">
+<li>Diagnostic tardif → macula décollée et PVR fréquentes d'emblée.</li>
+<li>Vitré formé, adhérent, sans DPV → déhiscences atrophiques et dialyses, chirurgie ab externo souvent suffisante, DPV chirurgical dangereux.</li>
+<li>Étiologies traumatiques, myopiques, syndromiques et bilatéralisables → bilan étiologique, génétique et familial obligatoire.</li>
+<li>Œil en croissance → conséquences réfractives durables de tout geste.</li>
+<li>Amblyopie → le succès anatomique ne suffit pas ; réhabilitation visuelle indispensable.</li>
+<li>Anesthésie générale et positionnement aléatoire → choix techniques adaptés (silicone, indentation).</li>
+</ol>
+</aside>
+</section>
+<section class="chap" id="buts-et-principes-generaux-du-traitement">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">2</span>
+<h2 class="chap__title">Buts et principes généraux du traitement</h2>
+</header>
+<h3>2.1. Les buts</h3>
+<p>Le traitement chirurgical poursuit, comme chez l'adulte, quatre objectifs anatomiques classiques, auxquels s'ajoutent chez l'enfant trois objectifs spécifiques :</p>
+<p><strong>Objectifs anatomiques</strong></p>
+<ol start="1">
+<li><strong>Identifier et fermer toutes les déhiscences</strong> rétiniennes, y compris les déhiscences minuscules, multiples ou postérieures, ce qui suppose un examen exhaustif de la périphérie sous indentation, souvent sous anesthésie générale.</li>
+<li><strong>Neutraliser les tractions vitréorétiniennes</strong> qui maintiennent la déhiscence ouverte, par indentation externe ou par ablation interne du vitré.</li>
+<li><strong>Créer une adhérence choriorétinienne définitive</strong> autour de chaque déhiscence (rétinopexie par cryoapplication ou photocoagulation).</li>
+<li><strong>Assurer un tamponnement</strong> du ou des points de rupture le temps que se constitue cette adhérence.</li>
+</ol>
+<p><strong>Objectifs spécifiques à l'enfant</strong></p>
+<ol start="5">
+<li><strong>Prévenir et contrôler la prolifération vitréorétinienne</strong>, particulièrement agressive sur ce terrain.</li>
+<li><strong>Préserver le capital anatomique et optique</strong> — au premier chef le cristallin transparent, dont la conservation est un objectif thérapeutique en soi et non un simple confort technique.</li>
+<li><strong>Restaurer une fonction visuelle utilisable</strong>, ce qui implique une correction optique immédiate et un traitement actif de l'amblyopie, et non la seule réapplication rétinienne.</li>
+</ol>
+<p>À ces objectifs s'ajoute une dimension familiale : <strong>protéger l'œil adelphe</strong> et, le cas échéant, <strong>dépister la fratrie et les apparentés</strong>.</p>
+<h3>2.2. Les principes</h3>
+<p><strong>Principe n° 1 — Une chirurgie de première intention réfléchie.</strong> Chez l'enfant plus encore que chez l'adulte, la première intervention est celle qui a les meilleures chances de succès ; chaque reprise majore le risque de PVR, de cataracte, d'amblyopie et de complications. La planification préopératoire — cartographie exhaustive des déhiscences, choix de la technique, matériel disponible, prévision d'une conversion — doit donc être particulièrement rigoureuse.</p>
+<p><strong>Principe n° 2 — La chirurgie la moins invasive possible, mais suffisante.</strong> L'indentation sclérale, quand elle est adaptée à la situation anatomique, respecte le vitré et le cristallin et doit être préférée. Mais une indentation insuffisante sur un décollement qui relevait d'une vitrectomie fait perdre un temps précieux : la sous-estimation de la PVR est une cause classique d'échec.</p>
+<p><strong>Principe n° 3 — Préserver le cristallin chaque fois que possible.</strong> La cataracte de l'enfant, surtout unilatérale, est un pourvoyeur majeur d'amblyopie ; l'aphaquie est elle-même un facteur de risque de nouveau décollement et de glaucome. La lensectomie ne doit donc être réalisée que sur indication formelle.</p>
+<p><strong>Principe n° 4 — Anticiper le tamponnement en fonction de la coopération.</strong> L'incapacité du jeune enfant à maintenir une position fait de l'huile de silicone une option de première intention beaucoup plus large que chez l'adulte, et non un traitement de dernier recours.</p>
+<p><strong>Principe n° 5 — Considérer le traitement comme bilatéral.</strong> Le bilan et, le cas échéant, la prophylaxie de l'œil adelphe font partie intégrante de la prise en charge, à réaliser dans le même temps anesthésique lorsque cela est possible.</p>
+<p><strong>Principe n° 6 — Informer sans illusion.</strong> Le pronostic fonctionnel doit être exposé aux parents avec réalisme dès le départ : la réapplication est souvent obtenue, la vision rarement normale. Cette information conditionne l'adhésion au long parcours de rééducation.</p>
+</section>
+<section class="chap" id="bilan-pre-therapeutique-et-preparation-a-la-chirurgie">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">3</span>
+<h2 class="chap__title">Bilan pré-thérapeutique et préparation à la chirurgie</h2>
+</header>
+<h3>3.1. L'examen clinique et l'examen sous anesthésie générale</h3>
+<p>L'examen d'un enfant suspect de DRR est un temps thérapeutique à part entière, car c'est de son exhaustivité que dépend le choix de la technique.</p>
+<p><strong>Chez le grand enfant coopérant</strong>, l'examen se déroule comme chez l'adulte : mesure de l'acuité visuelle adaptée à l'âge (Cadet, Pigassou, Sander-Zanlonghi, E de Snellen, échelles logMAR), réfraction sous cycloplégique, examen du segment antérieur (recherche d'une cataracte, d'une subluxation cristallinienne, d'un signe d'Iridodonésis, de séquelles traumatiques), tonus oculaire, recherche d'un déficit pupillaire afférent relatif, puis <strong>examen du fond d'œil après dilatation maximale</strong>, au verre à trois miroirs et à l'ophtalmoscope indirect <strong>avec indentation sclérale sur 360°</strong>.</p>
+<p><strong>Chez le jeune enfant ou l'enfant non coopérant</strong>, l'examen sous anesthésie générale (EAG) est indispensable. Il doit être <strong>systématiquement bilatéral</strong> et comporter :</p>
+<ul>
+<li>une <strong>biométrie et une kératométrie</strong> (utiles pour le suivi de la croissance axiale et pour une éventuelle implantation) ;</li>
+<li>une mesure du <strong>tonus oculaire</strong> ;</li>
+<li>un <strong>examen du segment antérieur</strong> au microscope opératoire ;</li>
+<li>un <strong>fond d'œil indirect avec indentation sur 360°</strong> des deux yeux, réalisé par l'opérateur lui-même ;</li>
+<li>un <strong>schéma rétinien précis</strong>, daté et signé, avec localisation méridienne et horaire de chaque déhiscence, des limites du décollement, des lignes de démarcation, des palissades, des tractions et des signes de PVR ;</li>
+<li>une <strong>documentation photographique grand champ</strong> (RetCam® ou système équivalent).</li>
+</ul>
+<p>Cet EAG constitue en pratique le premier temps opératoire : il est de bonne pratique de <strong>le programmer d'emblée dans des conditions permettant d'enchaîner sur la chirurgie</strong> si l'indication est confirmée, afin d'épargner à l'enfant une anesthésie supplémentaire.</p>
+<h3>3.2. Les examens complémentaires</h3>
+<div class="tablewrap" tabindex="0" role="group" aria-label="Tableau">
+<table>
+<thead><tr><th scope="col">Examen</th><th scope="col">Indication chez l'enfant</th><th scope="col">Apport thérapeutique</th></tr></thead>
+<tbody>
+<tr><th scope="row"><strong>Imagerie grand champ (RetCam®, systèmes ultra-grand champ)</strong></th><td>Systématique quand disponible</td><td>Cartographie, documentation médico-légale, suivi comparatif, transmission entre équipes</td></tr>
+<tr><th scope="row"><strong>Échographie en mode B</strong></th><td>Milieux troubles (cataracte, hémorragie du vitré, membrane rétrocristallinienne)</td><td>Confirme le décollement, apprécie sa hauteur, sa mobilité, la présence de tractions, oriente vers une PVR ou un décollement tractionnel ; élimine formellement un <strong>rétinoblastome</strong> devant une leucocorie</td></tr>
+<tr><th scope="row"><strong>OCT (de préférence portable en EAG)</strong></th><td>Statut maculaire, schisis, membrane épimaculaire, trou maculaire du myope</td><td>Précise le pronostic, argumente une chirurgie maculaire associée</td></tr>
+<tr><th scope="row"><strong>UBM / biomicroscopie ultrasonore</strong></th><td>Suspicion de traction ou de prolifération antérieure, dialyse, corps étranger</td><td>Analyse de la base du vitré et du corps ciliaire, dépistage d'une PVR antérieure</td></tr>
+<tr><th scope="row"><strong>Angiographie à la fluorescéine</strong></th><td>Suspicion de FEVR, de ROP, de maladie de Coats, d'incontinentia pigmenti</td><td>Met en évidence une périphérie avasculaire, des shunts, des néovaisseaux ; indispensable pour l'examen des apparentés dans les FEVR</td></tr>
+<tr><th scope="row"><strong>Électrorétinogramme</strong></th><td>Rétinoschisis lié à l'X, dystrophies associées</td><td>Argument diagnostique et pronostic fonctionnel</td></tr>
+<tr><th scope="row"><strong>Imagerie orbito-cérébrale (TDM/IRM)</strong></th><td>Traumatisme, suspicion de corps étranger, maltraitance</td><td>Bilan lésionnel, recherche d'hématomes sous-duraux</td></tr>
+</tbody></table></div>
+<h3>3.3. Le bilan étiologique, général et génétique</h3>
+<p>La découverte d'un DRR chez un enfant doit systématiquement faire rechercher une cause générale, car celle-ci modifie le pronostic, impose la surveillance de l'œil adelphe et engage le conseil génétique familial.</p>
+<ul>
+<li><strong>Examen morphologique et général</strong> : dysmorphie faciale et hypoplasie médio-faciale, fente palatine ou séquence de Pierre Robin, surdité neurosensorielle, anomalies articulaires et arthropathie précoce, hyperlaxité, grande taille, anomalies cardiaques (orientant vers un <strong>Stickler</strong>, un <strong>Marshall</strong>, un <strong>Marfan</strong>) ; encéphalocèle occipitale (<strong>Knobloch</strong>).</li>
+<li><strong>Consultation ORL et audiogramme</strong> au moindre doute.</li>
+<li><strong>Examen ophtalmologique des apparentés</strong> du premier degré (parents, fratrie), y compris dilatation et, en cas de suspicion de FEVR, angiographie : la mise en évidence d'une périphérie avasculaire chez un parent asymptomatique redresse fréquemment le diagnostic.</li>
+<li><strong>Analyse génétique</strong> ciblée ou par panel « vitréorétinopathies héréditaires » : <em>COL2A1</em>, <em>COL11A1</em>, <em>COL9A1/2/3</em> (Stickler), <em>VCAN</em> (Wagner), <em>FBN1</em> (Marfan), <em>RS1</em> (rétinoschisis lié à l'X), <em>FZD4</em>, <em>LRP5</em>, <em>NDP</em>, <em>TSPAN12</em>, <em>KIF11</em> (FEVR), <em>COL18A1</em> (Knobloch). Le résultat n'influence guère le geste immédiat mais détermine la <strong>prophylaxie de l'œil adelphe</strong>, le <strong>rythme de surveillance à vie</strong> et le <strong>conseil génétique</strong>.</li>
+<li>En contexte traumatique chez le nourrisson : <strong>recherche systématique de maltraitance</strong> (hémorragies rétiniennes multicouches et étendues, décollement, rétinoschisis hémorragique maculaire), avec signalement et bilan pédiatrique complet selon les procédures en vigueur. C'est une obligation médico-légale.</li>
+</ul>
+<h3>3.4. L'évaluation anesthésique et l'organisation</h3>
+<p>La consultation d'anesthésie pédiatrique évalue le terrain (prématurité, cardiopathie, syndrome polymalformatif, syndrome d'apnées, antécédents d'hyperthermie maligne), le jeûne et la prémédication. Les points spécifiques de la chirurgie vitréorétinienne pédiatrique sont :</p>
+<ul>
+<li>la <strong>durée opératoire souvent longue</strong> (deux à quatre heures dans les formes compliquées), imposant une prévention de l'hypothermie et un contrôle glycémique chez le nourrisson ;</li>
+<li>le <strong>réflexe oculo-cardiaque</strong>, fréquent lors des tractions musculaires, du cerclage et de la cryoapplication, prévenu par l'information de l'anesthésiste, une traction douce et, si besoin, l'atropine ;</li>
+<li>la prévention des <strong>nausées et vomissements postopératoires</strong>, particulièrement délétères en cas de tamponnement gazeux ;</li>
+<li>l'<strong>analgésie multimodale</strong> post-opératoire, la douleur étant sous-évaluée chez l'enfant ;</li>
+<li>la question de l'<strong>hospitalisation conventionnelle versus ambulatoire</strong>, la première étant préférable après vitrectomie ou en cas de positionnement à faire respecter.</li>
+</ul>
+<h3>3.5. L'information des parents et de l'enfant</h3>
+<p>L'information doit être <strong>loyale, claire, appropriée, tracée dans le dossier</strong> et recueillir le consentement des deux titulaires de l'autorité parentale, ainsi que l'assentiment de l'enfant en âge de comprendre. Elle porte sur :</p>
+<ul>
+<li>la nature de la maladie et son caractère cécitant en l'absence de traitement ;</li>
+<li>le <strong>caractère souvent multiple des interventions</strong> ;</li>
+<li>la <strong>dissociation entre résultat anatomique et résultat fonctionnel</strong>, et le rôle déterminant de l'amblyopie ;</li>
+<li>la nécessité d'un <strong>suivi prolongé, parfois à vie</strong>, et d'une surveillance de l'œil adelphe ;</li>
+<li>les alternatives, les risques (cataracte, glaucome, récidive, phtise, énucléation dans les formes extrêmes) ;</li>
+<li>le <strong>caractère éventuellement héréditaire</strong> de l'affection.</li>
+</ul>
+<h3>3.6. Le degré d'urgence</h3>
+<p>La notion d'urgence doit être nuancée chez l'enfant. Schématiquement :</p>
+<ul>
+<li><strong>Décollement à macula appliquée (« macula on ») menaçant la macula</strong> : urgence vraie, chirurgie dans les 24 à 72 heures, comme chez l'adulte.</li>
+<li><strong>Décollement à macula décollée récent (&lt; 7 jours)</strong> : chirurgie rapide, dans la semaine, un délai supplémentaire n'améliorant pas le pronostic maculaire mais majorant le risque de PVR.</li>
+<li><strong>Décollement chronique, subtotal, avec lignes de démarcation et kystes</strong> — situation la plus fréquente chez le jeune enfant : l'urgence n'est plus maculaire mais tient au risque évolutif de PVR et à la fenêtre de traitement de l'amblyopie. L'intervention doit être <strong>programmée sans délai excessif</strong> (quelques jours à deux semaines), dans de bonnes conditions techniques, avec l'opérateur et le matériel adaptés — une chirurgie improvisée en garde est ici plus délétère qu'un report de quarante-huit heures.</li>
+<li><strong>Décollement bilatéral ou sur œil unique</strong> : hiérarchiser, opérer d'abord l'œil au meilleur potentiel, informer particulièrement.</li>
+<li><strong>Contexte traumatique perforant</strong> : suture en urgence du globe, puis vitrectomie différée (cf. § 5.4).</li>
+</ul>
+</section>
+<section class="chap" id="les-moyens-therapeutiques">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">4</span>
+<h2 class="chap__title">Les moyens thérapeutiques</h2>
+</header>
+<h3>4.1. Le traitement prophylactique : rétinopexie des lésions prédisposantes</h3>
+<h4>4.1.1. Principes</h4>
+<p>Il s'agit de créer une adhérence choriorétinienne autour d'une lésion à risque <strong>avant</strong> qu'elle ne provoque un décollement, ou d'en limiter l'extension. Chez l'enfant, ce traitement prend une importance particulière du fait de la <strong>bilatéralité</strong> de nombreuses étiologies et de la difficulté du diagnostic précoce à l'œil adelphe.</p>
+<h4>4.1.2. Techniques</h4>
+<p><strong>La photocoagulation au laser</strong> (argon vert 532 nm, ou diode 810 nm) est la technique de référence. Elle est réalisée :</p>
+<ul>
+<li>au <strong>verre de contact</strong> chez l'enfant coopérant, en une ou plusieurs séances ;</li>
+<li>à l'<strong>ophtalmoscope indirect (laser indirect)</strong> sous anesthésie générale chez le jeune enfant, ce qui permet de traiter la périphérie extrême avec indentation.</li>
+</ul>
+<p>On réalise <strong>2 à 3 rangées confluentes d'impacts</strong> encerclant la lésion, en veillant à atteindre l'ora serrata en avant lorsque la lésion est antérieure, faute de quoi le traitement est inefficace. Le laser est préféré à la cryothérapie du fait de sa <strong>précision</strong>, de sa <strong>moindre réaction inflammatoire</strong> et surtout du <strong>moindre relargage de cellules de l'épithélium pigmentaire</strong>, facteur reconnu de PVR.</p>
+<p><strong>La cryoapplication transsclérale</strong> garde des indications : lésions très antérieures, sur la base du vitré ou en avant de l'équateur inaccessibles au laser, milieux troubles, périphérie inaccessible. Elle est réalisée sous contrôle ophtalmoscopique direct, en arrêtant l'application dès le blanchiment rétinien, en évitant les applications répétées au même endroit.</p>
+<h4>4.1.3. Indications</h4>
+<p>Les indications de prophylaxie sont plus larges que chez l'adulte, tout en restant discutées faute d'essais contrôlés :</p>
+<ul>
+<li><strong>Déhiscence rétinienne à plat, symptomatique ou non</strong>, sur un œil à risque ;</li>
+<li><strong>Dialyse à l'ora infraclinique</strong> de l'œil adelphe après dialyse traumatique controlatérale ;</li>
+<li><strong>Palissades étendues, avec trous, chez un myope fort</strong> ou dans un contexte héréditaire ;</li>
+<li><strong>Œil adelphe d'un enfant ayant présenté un DRR</strong>, particulièrement dans les vitréorétinopathies héréditaires ;</li>
+<li><strong>Syndrome de Stickler</strong> : c'est la seule situation où la prophylaxie repose sur des données publiées relativement solides (cf. § 5.6) ;</li>
+<li><strong>Zones avasculaires périphériques</strong> des FEVR et des séquelles de ROP, avec un objectif à la fois anti-ischémique et prophylactique ;</li>
+<li><strong>Bord d'un colobome choriorétinien</strong>, avant ou après chirurgie ;</li>
+<li><strong>Avant chirurgie du cristallin</strong> chez un enfant à très haut risque (myopie forte syndromique, ectopie cristallinienne), sur lésion identifiée.</li>
+</ul>
+<p>Le principal frein reste la <strong>nécessité d'une anesthésie générale</strong>, qui impose de mettre en balance le bénéfice attendu, le risque anesthésique cumulé et la fiabilité de la surveillance.</p>
+<h3>4.2. La rétinopexie pneumatique</h3>
+<p>Elle consiste à injecter une bulle de gaz expansif dans la cavité vitréenne, à tamponner la déhiscence par le positionnement, puis à réaliser une rétinopexie.</p>
+<p>Chez l'enfant, ses indications sont <strong>très restreintes, voire anecdotiques</strong>, pour trois raisons convergentes : le <strong>positionnement rigoureux</strong> qu'elle exige est rarement obtenu ; le <strong>vitré formé</strong> limite la mobilisation de la bulle et expose à une bulle intragel ; les <strong>déhiscences sont souvent multiples, antérieures et inférieures</strong>. On peut l'envisager, exceptionnellement, chez un <strong>adolescent coopérant</strong> présentant un décollement récent, peu étendu, avec une déhiscence unique dans les deux tiers supérieurs, sans PVR — c'est-à-dire dans une situation qui se rapproche de celle de l'adulte jeune. En dehors de ce cadre, elle expose à un échec et à une perte de chance.</p>
+<h3>4.3. La chirurgie ab externo : l'indentation sclérale</h3>
+<p>La chirurgie épisclérale reste, chez l'enfant, la <strong>technique de référence dans les décollements non compliqués sur œil phaque</strong>. Elle est en effet la seule à respecter simultanément le vitré, le cristallin et l'absence de contrainte de positionnement.</p>
+<h4>4.3.1. Principes et avantages chez l'enfant</h4>
+<ul>
+<li><strong>Respect du vitré formé</strong> : on ne cherche pas à séparer un cortex vitréen fermement adhérent, on neutralise la traction en rapprochant la paroi de la rétine.</li>
+<li><strong>Conservation du cristallin</strong> : c'est l'argument majeur en termes de prévention de l'amblyopie.</li>
+<li><strong>Absence de positionnement contraignant</strong>, capital chez le jeune enfant.</li>
+<li><strong>Absence de bulle de gaz</strong>, donc pas d'hypermétropisation ni d'occlusion visuelle prolongée : la réhabilitation optique peut être immédiate.</li>
+<li>Technique reproductible, matériel peu coûteux, accessible dans les structures ne disposant pas d'un plateau de vitrectomie — argument non négligeable dans de nombreux contextes de pratique.</li>
+</ul>
+<h4>4.3.2. Technique opératoire</h4>
+<ol start="1" class="reflist">
+<li><strong>Péritomie conjonctivale</strong> limbique, généralement sur 360° ou sur les quadrants concernés, avec dissection douce de la capsule de Tenon.</li>
+<li><strong>Repérage et chargement des muscles droits</strong> sur fils tracteurs. Chez l'enfant, la manipulation musculaire doit être économe : elle est pourvoyeuse de <strong>strabisme</strong> et de réflexe oculo-cardiaque.</li>
+<li><strong>Localisation précise des déhiscences</strong> à l'ophtalmoscope indirect avec indentation par le localisateur, et <strong>marquage scléral</strong> par diathermie ou au bleu.</li>
+<li><strong>Rétinopexie</strong> : - la <strong>cryoapplication transsclérale</strong> est la plus utilisée, appliquée sous contrôle visuel direct, en une seule application par site, arrêtée au premier blanchiment ; on évite le surtraitement, la cryothérapie excessive étant un facteur de PVR ; - alternativement, <strong>photocoagulation au laser indirect</strong>, notamment en cas de rétine à plat ou après drainage.</li>
+<li><strong>Mise en place du matériel d'indentation</strong> : - <strong>indentation radiaire</strong> (éponge de silicone type 506/507) pour une déhiscence isolée, large, ou une déchirure en fer à cheval, afin d'éviter le « fish-mouthing » ; - <strong>indentation circonférentielle</strong> (bande, pneu) pour des déhiscences multiples sur un même méridien ou une dialyse étendue ; - <strong>cerclage</strong> (bande de silicone 240, 40, 41 ou 42) lorsque les déhiscences sont multiples, réparties sur plusieurs quadrants, non toutes identifiées, ou en présence d'une traction diffuse sur la base du vitré. Les sutures sclérales en U (5/0 ou 6/0 non résorbable) sont posées avec une prudence particulière : <strong>la sclère de l'enfant est fine</strong>, notamment chez le myope fort et le nourrisson, et le risque de perforation est réel. On privilégie des passages sous contrôle visuel, à faible profondeur mais suffisamment tenus, éventuellement en s'aidant d'un tunnel scléral. - Le <strong>serrage</strong> du cerclage doit être mesuré : suffisant pour créer un bourrelet visible soutenant la base du vitré, sans induire d'ischémie du segment antérieur ni de myopisation excessive.</li>
+<li><strong>Drainage du liquide sous-rétinien (LSR)</strong> : il est <strong>facultatif</strong> et doit être pesé. - <em>En faveur</em> : décollement très bulleux empêchant l'apposition, décollement chronique à LSR visqueux, nécessité d'un contrôle peropératoire de la fermeture de la déhiscence, dialyse chronique. - <em>Contre</em> : risque d'hémorragie choroïdienne ou sous-rétinienne, d'incarcération rétinienne, de déhiscence iatrogène, d'hypotonie. - La <strong>non-ponction</strong> est volontiers privilégiée chez l'enfant lorsque le décollement est peu bulleux et la déhiscence bien indentée, la résorption du LSR étant souvent rapide sur une rétine jeune. - En cas de drainage, il est réalisé au niveau du LSR le plus déclive et le plus épais, à distance des vaisseaux choroïdiens visibles, par sclérotomie radiaire et choroïdotomie, sous contrôle ophtalmoscopique.</li>
+<li><strong>Contrôle du tonus</strong> en fin d'intervention ; injection intravitréenne d'air ou de gaz (« buckle + air ») si l'hypotonie est marquée ou si l'apposition est imparfaite.</li>
+<li><strong>Fermeture conjonctivale</strong> soigneuse, le matériel devant être totalement recouvert.</li>
+</ol>
+<h4>4.3.3. Particularités et complications chez l'enfant</h4>
+<ul>
+<li><strong>Modification réfractive</strong> : l'indentation circonférentielle et le cerclage <strong>allongent la longueur axiale</strong> (de l'ordre de 0,5 à 1 mm) et induisent une <strong>myopisation de 1 à 3 dioptries</strong>, avec un astigmatisme fréquent. Sur un œil unique en croissance, cela crée une <strong>anisométropie</strong> qui est elle-même amblyogène : la réfraction sous cycloplégique doit être refaite précocement en postopératoire et la correction prescrite sans attendre.</li>
+<li><strong>Croissance du globe</strong> : la question d'une éventuelle restriction de la croissance oculaire par un cerclage posé chez le nourrisson est débattue. Les données disponibles ne démontrent pas d'effet restrictif majeur, mais certains auteurs proposent de <strong>sectionner la bande</strong> à distance (au-delà de 6 à 12 mois, une fois l'adhérence choriorétinienne constituée) chez les très jeunes enfants, notamment dans le contexte de la ROP. Cette attitude n'est pas consensuelle.</li>
+<li><strong>Strabisme et troubles oculomoteurs</strong> : fréquents, favorisés par les désinsertions musculaires, le volume du matériel et l'adhérence cicatricielle ; ils peuvent nécessiter une chirurgie secondaire, à distance et après stabilisation.</li>
+<li><strong>Complications du matériel</strong> : extrusion, intrusion, infection, granulome, douleur, sensation de corps étranger. L'ablation d'un matériel infecté ou extériorisé doit être envisagée sans excès de délai, la rétine étant généralement fixée à ce stade.</li>
+<li><strong>Ischémie du segment antérieur</strong>, rare mais grave, favorisée par un cerclage trop serré associé à la désinsertion de plusieurs muscles droits.</li>
+<li><strong>Perforation sclérale</strong> lors du passage des sutures, avec risque de déhiscence iatrogène et d'hémorragie.</li>
+</ul>
+<h3>4.4. La vitrectomie par la pars plana</h3>
+<h4>4.4.1. Place et indications de principe</h4>
+<p>La vitrectomie s'impose lorsque l'indentation ne peut, à elle seule, fermer les déhiscences et lever les tractions. Ses <strong>indications reconnues chez l'enfant</strong> sont :</p>
+<ul>
+<li><strong>prolifération vitréorétinienne significative</strong> (stade C ou plus) ;</li>
+<li><strong>déhiscences postérieures</strong> ou situées au pôle postérieur, inaccessibles à une indentation ;</li>
+<li><strong>déchirure géante</strong> (≥ 90°) ;</li>
+<li><strong>milieux troubles</strong> : hémorragie du vitré, cataracte dense, membranes rétrocristalliniennes ;</li>
+<li><strong>œil aphaque ou pseudophaque</strong> ;</li>
+<li><strong>décollements tractionnels-rhegmatogènes</strong> : ROP, FEVR, séquelles traumatiques ;</li>
+<li><strong>traumatisme perforant</strong> avec incarcération vitréenne ou corps étranger intraoculaire ;</li>
+<li><strong>échec d'une chirurgie ab externo</strong> ;</li>
+<li><strong>trou maculaire du myope fort</strong> avec décollement postérieur.</li>
+</ul>
+<h4>4.4.2. Particularités techniques pédiatriques</h4>
+<p><strong>a) Les voies d'abord.</strong> La distance limbe–ora serrata varie avec l'âge et doit impérativement guider le placement des sclérotomies, sous peine de lésion cristallinienne (trocart trop antérieur) ou de déhiscence rétinienne et de décollement de la base du vitré (trocart trop postérieur) :</p>
+<div class="tablewrap" tabindex="0" role="group" aria-label="Tableau">
+<table>
+<thead><tr><th scope="col">Âge</th><th scope="col">Distance limbe–sclérotomie (indicative)</th></tr></thead>
+<tbody>
+<tr><th scope="row">Nouveau-né / &lt; 6 mois</th><td>1,0 – 1,5 mm</td></tr>
+<tr><th scope="row">6 mois – 1 an</th><td>1,5 – 2,0 mm</td></tr>
+<tr><th scope="row">1 – 2 ans</th><td>2,0 – 2,5 mm</td></tr>
+<tr><th scope="row">2 – 6 ans</th><td>2,5 – 3,0 mm</td></tr>
+<tr><th scope="row">6 – 12 ans</th><td>3,0 – 3,5 mm</td></tr>
+<tr><th scope="row">&gt; 12 ans / adulte</th><td>3,5 – 4,0 mm</td></tr>
+</tbody></table></div>
+<p>Ces valeurs sont <strong>indicatives</strong> : elles doivent être adaptées à la longueur axiale mesurée, un œil myope fort autorisant un placement plus postérieur, un œil microphtalme imposant l'inverse. Chez le nourrisson, la pars plana étant quasi virtuelle, certains auteurs proposent une <strong>voie limbique ou pars plicata</strong> après lensectomie.</p>
+<p><strong>b) Le calibre.</strong> Les systèmes transconjonctivaux de <strong>23, 25 et 27 gauges</strong> sont adaptés à l'enfant : ils réduisent le traumatisme conjonctival, la durée opératoire et l'inflammation postopératoire. Toutefois, la <strong>sclère fine et élastique de l'enfant se referme mal</strong> : la <strong>suture systématique des sclérotomies</strong> (Vicryl 7/0 ou 8/0) est recommandée, l'hypotonie postopératoire étant mal tolérée et favorisant hémorragie et décollement choroïdien.</p>
+<p><strong>c) La gestion du vitré et de la hyaloïde postérieure.</strong> C'est la difficulté centrale.</p>
+<ul>
+<li>Le <strong>décollement postérieur du vitré doit être recherché activement</strong>, à l'aspiration à proximité de la papille, à faible taux de coupe et forte aspiration, éventuellement aidé d'une aiguille à silicone ou d'une pince.</li>
+<li>La <strong>coloration par triamcinolone acétonide</strong> (dépourvue de conservateur) est très utile pour visualiser le cortex vitréen résiduel ; le bleu brillant ou le vert d'indocyanine servent au repérage de la limitante interne.</li>
+<li>Lorsque la hyaloïde reste <strong>inséparable</strong>, l'acharnement est dangereux : il vaut mieux <strong>la sectionner en périphérie et en laisser un feuillet adhérent</strong> que de créer une déhiscence maculaire ou paravasculaire iatrogène. La vitrectomie sera alors nécessairement incomplète, ce qui doit être compensé par une indentation associée ou un tamponnement prolongé.</li>
+<li>La <strong>vitrectomie de la base</strong> doit être aussi complète que possible, sous indentation manuelle, mais l'absence de DPV et la proximité du cristallin en limitent l'extension chez le phaque.</li>
+</ul>
+<p><strong>d) Le cristallin.</strong> Sa préservation est un objectif. La <strong>vitrectomie « lens-sparing »</strong>, développée dans la ROP, s'applique aux autres indications pédiatriques. La <strong>lensectomie</strong> est indiquée en cas de cataracte préexistante gênant la visualisation, de traumatisme cristallinien, de prolifération rétrocristallinienne ou de PVR antérieure sévère nécessitant une dissection jusqu'à la base du vitré. Lorsqu'elle est réalisée, la conservation de la capsule postérieure est souhaitable si l'on envisage une implantation secondaire, mais elle est souvent incompatible avec la dissection nécessaire.</p>
+<p><strong>e) La chirurgie de la PVR.</strong> Elle repose sur :</p>
+<ul>
+<li>le <strong>pelage des membranes</strong> épirétiniennes et sous-rétiniennes à la pince et au crochet, sous coloration ;</li>
+<li>la <strong>rétinotomie relaxante</strong> et, en cas de rétine raccourcie et fixée, la <strong>rétinectomie circonférentielle relaxante</strong>, dont l'étendue doit être suffisante d'emblée (une rétinectomie insuffisante est la cause la plus fréquente de récidive) ;</li>
+<li>l'utilisation de <strong>perfluorocarbones liquides (PFCL)</strong> pour dérouler la rétine, stabiliser le pôle postérieur, refouler le LSR vers la périphérie et faciliter la dissection ;</li>
+<li>l'<strong>échange PFCL–air puis air–silicone</strong> (ou air-gaz) sous contrôle direct.</li>
+</ul>
+<p><strong>f) La rétinopexie interne</strong> est assurée par <strong>endophotocoagulation</strong> autour des déhiscences, des berges de rétinectomie et sur 360° en périphérie dans les formes à risque. La cryoapplication endo-oculaire ou transsclérale est réservée aux zones inaccessibles.</p>
+<p><strong>g) La chirurgie combinée</strong> (vitrectomie + cerclage) est fréquemment retenue chez l'enfant : le cerclage soutient une base du vitré non résécable, réduit les tractions périphériques résiduelles et diminue le risque de récidive liée à une PVR antérieure. Son coût réfractif doit toutefois être intégré.</p>
+<h3>4.5. Les agents de tamponnement interne</h3>
+<p>Le choix du tamponnement est <strong>le point où la spécificité pédiatrique s'exprime le plus fortement</strong>, car il dépend moins de la topographie des déhiscences que de la capacité de l'enfant à respecter une position.</p>
+<h4>4.5.1. Les gaz</h4>
+<div class="tablewrap" tabindex="0" role="group" aria-label="Tableau">
+<table>
+<thead><tr><th scope="col">Gaz</th><th scope="col">Concentration non expansive</th><th scope="col">Durée approximative</th></tr></thead>
+<tbody>
+<tr><th scope="row">Air</th><td>—</td><td>3 – 5 jours</td></tr>
+<tr><th scope="row">SF₆</th><td>20 %</td><td>10 – 14 jours</td></tr>
+<tr><th scope="row">C₂F₆</th><td>16 %</td><td>3 – 5 semaines</td></tr>
+<tr><th scope="row">C₃F₈</th><td>14 %</td><td>6 – 8 semaines</td></tr>
+</tbody></table></div>
+<p><em>Avantages</em> : résorption spontanée, pas de seconde intervention, pas de complication liée à une substance permanente, effet tamponnant puissant. <em>Limites chez l'enfant</em> : <strong>positionnement indispensable et rarement obtenu</strong> avant 7-8 ans ; <strong>occlusion visuelle prolongée</strong> de l'œil opéré, potentiellement amblyogène en période sensible ; risque d'hypertonie ; <strong>contre-indication au voyage aérien</strong> et à l'anesthésie au protoxyde d'azote tant que la bulle persiste — élément à préciser aux parents et à consigner (bracelet d'alerte).</p>
+<p>Le gaz reste pertinent chez le <strong>grand enfant ou l'adolescent coopérant</strong>, dans les décollements sans PVR sévère avec déhiscences supérieures, ainsi qu'en complément d'une indentation.</p>
+<h4>4.5.2. L'huile de silicone</h4>
+<p>Les huiles de silicone (polydiméthylsiloxane 1 000 ou 5 000 cSt) occupent chez l'enfant une place <strong>beaucoup plus large que chez l'adulte</strong>, à tel point que de nombreuses équipes les utilisent en première intention dans les formes compliquées.</p>
+<p><em>Avantages déterminants</em> :</p>
+<ul>
+<li><strong>tamponnement efficace quel que soit le positionnement</strong>, ce qui résout la principale contrainte pédiatrique ;</li>
+<li><strong>tamponnement prolongé</strong>, adapté à la PVR agressive et à la cicatrisation lente ;</li>
+<li><strong>transparence</strong> permettant une réhabilitation visuelle et un traitement de l'amblyopie <strong>immédiats</strong>, contrairement au gaz ;</li>
+<li><strong>surveillance du fond d'œil possible</strong> en postopératoire immédiat ;</li>
+<li>prévention de l'hypotonie et de la <strong>phtise</strong> dans les yeux gravement atteints ;</li>
+<li>particulièrement précieuse en cas d'<strong>œil unique</strong>, de <strong>bilatéralité</strong>, de <strong>contexte social empêchant un suivi rapproché</strong> ou de <strong>voyage aérien nécessaire</strong>.</li>
+</ul>
+<p><em>Inconvénients et complications</em> :</p>
+<ul>
+<li><strong>cataracte</strong> quasi constante à moyen terme sur œil phaque ;</li>
+<li><strong>hypertonie et glaucome</strong> (par blocage pupillaire — d'où l'intérêt d'une <strong>iridectomie inférieure périphérique dite « de Ando »</strong> chez l'aphaque —, par émulsification, par inflammation) ;</li>
+<li><strong>kératopathie en bandelette</strong> et décompensation endothéliale, surtout en cas de contact cornéen chez l'aphaque ;</li>
+<li><strong>émulsification</strong>, d'autant plus fréquente que le silicone est laissé longtemps et de faible viscosité ;</li>
+<li><strong>maculopathie au silicone</strong> avec baisse visuelle inexpliquée ;</li>
+<li><strong>hypermétropisation</strong> d'environ +5 à +7 dioptries sur œil phaque rempli, qui <strong>doit impérativement être corrigée par lunettes ou lentille pendant la période de tamponnement</strong>, sous peine d'installer ou d'aggraver une amblyopie ;</li>
+<li>nécessité d'une <strong>seconde intervention</strong> (donc d'une seconde anesthésie générale) pour l'ablation.</li>
+</ul>
+<p><em>Durée et ablation</em> : le silicone est habituellement laissé <strong>3 à 6 mois</strong>, délai adapté à la sévérité de la PVR. L'ablation est réalisée sous anesthésie générale, avec examen complet, complément de photocoagulation si nécessaire, et parfois traitement associé (cataracte, implantation secondaire). Elle expose à un <strong>risque de redécollement de 5 à 25 %</strong> selon les séries, plus élevé en cas de rétinectomie étendue ou de PVR persistante. Dans les yeux à très haut risque de phtise, un <strong>silicone laissé en place de façon prolongée voire définitive</strong> est une option assumée, sous surveillance rapprochée de la cornée et du tonus.</p>
+<h4>4.5.3. Les huiles lourdes</h4>
+<p>Les silicones semi-fluorés de densité supérieure à l'eau (mélanges perfluorohexyloctane–silicone) tamponnent la <strong>périphérie inférieure</strong>, siège fréquent des déhiscences et de la PVR chez l'enfant chroniquement décollé. Leur usage pédiatrique reste limité, l'inflammation et l'émulsification étant plus fréquentes ; ils sont laissés en place moins longtemps (6 à 12 semaines). Ils gardent un intérêt en cas de <strong>déhiscence inférieure irréductible chez un enfant incapable de se positionner</strong>.</p>
+<h3>4.6. Les traitements adjuvants</h3>
+<ul>
+<li><strong>Corticothérapie</strong> : locale intensive en postopératoire (dexaméthasone), sous-conjonctivale ou intravitréenne (triamcinolone sans conservateur) en fin d'intervention dans les yeux très inflammatoires ; corticothérapie générale de courte durée dans les formes hyperinflammatoires ou uvéitiques, à dose adaptée au poids.</li>
+<li><strong>Agents antiprolifératifs</strong> (5-fluorouracile associé à l'héparine de bas poids moléculaire dans la ligne d'infusion, méthotrexate intravitréen) : proposés pour prévenir la PVR sur des critères issus d'études adultes, avec des résultats contradictoires. <strong>Aucune autorisation ni recommandation pédiatrique</strong> ne les soutient ; leur usage relève d'une décision individuelle documentée.</li>
+<li><strong>Anti-VEGF</strong> : leur place est celle des <strong>rétinopathies vasoprolifératives</strong> associées (ROP, FEVR, Coats), en prétraitement pour réduire l'activité néovasculaire et le saignement peropératoire. Ils exposent au <strong>risque de contraction fibreuse accélérée (« crunch »)</strong> aggravant la traction, ce qui impose de programmer la chirurgie dans un délai court (quelques jours) après l'injection. Les questions de passage systémique et d'effets sur le développement chez le nourrisson restent posées.</li>
+<li><strong>Antibioprophylaxie</strong> locale péri-opératoire ; <strong>antisepsie à la povidone iodée</strong> ; <strong>mydriatiques et cycloplégiques</strong> postopératoires, qui ont aussi un effet antalgique.</li>
+<li><strong>Antalgiques</strong> selon les paliers pédiatriques ; <strong>antiémétiques</strong> en cas de tamponnement gazeux.</li>
+</ul>
+</section>
+<section class="chap" id="les-indications-strategie-therapeutique-selon-le-terrain">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">5</span>
+<h2 class="chap__title">Les indications : stratégie thérapeutique selon le terrain</h2>
+</header>
+<h3>5.0. Schéma décisionnel général</h3>
+<p>Le choix entre indentation, vitrectomie et chirurgie combinée repose sur quatre paramètres, hiérarchisés :</p>
+<ol start="1">
+<li><strong>L'état du cristallin</strong> : phaque → privilégier l'ab externo ; aphaque/pseudophaque → vitrectomie.</li>
+<li><strong>La topographie et le nombre des déhiscences</strong> : périphériques, antérieures, peu nombreuses → ab externo ; postérieures, géantes, non identifiées → vitrectomie.</li>
+<li><strong>La présence et le grade de la PVR</strong> : absente ou stade A/B → ab externo possible ; stade C ou plus → vitrectomie.</li>
+<li><strong>La transparence des milieux</strong> : milieux clairs → ab externo possible ; milieux troubles → vitrectomie.</li>
+</ol>
+<p>À quoi s'ajoutent deux paramètres transversaux : l'<strong>âge et la coopération</strong> (qui déterminent le tamponnement) et le <strong>potentiel visuel</strong> (qui détermine l'agressivité thérapeutique acceptable).</p>
+<div class="tablewrap" tabindex="0" role="group" aria-label="Tableau">
+<table>
+<thead><tr><th scope="col">Situation clinique</th><th scope="col">Technique de première intention</th><th scope="col">Tamponnement</th></tr></thead>
+<tbody>
+<tr><th scope="row">Dialyse à l'ora, phaque, sans PVR</th><td>Indentation (radiaire/circonférentielle ± cerclage) + cryo</td><td>Aucun ou air</td></tr>
+<tr><th scope="row">Déhiscences périphériques limitées, phaque, PVR ≤ B</th><td>Indentation ± cerclage</td><td>Aucun ou gaz court</td></tr>
+<tr><th scope="row">Myopie forte, déhiscences multiples, phaque</th><td>Cerclage ± vitrectomie selon PVR</td><td>Gaz ou silicone</td></tr>
+<tr><th scope="row">Trou maculaire du myope avec décollement</th><td>Vitrectomie + pelage de la limitante interne</td><td>Gaz (adolescent) / silicone</td></tr>
+<tr><th scope="row">Aphaque ou pseudophaque</th><td>Vitrectomie + cerclage</td><td>Silicone ou gaz long</td></tr>
+<tr><th scope="row">PVR ≥ C</th><td>Vitrectomie + pelage ± rétinectomie + cerclage</td><td>Silicone</td></tr>
+<tr><th scope="row">Déchirure géante</th><td>Vitrectomie + PFCL + endolaser ± cerclage</td><td>Silicone (ou gaz long)</td></tr>
+<tr><th scope="row">Traumatisme perforant</th><td>Suture en urgence, puis vitrectomie différée (J7–J14)</td><td>Silicone</td></tr>
+<tr><th scope="row">ROP stade 4A</th><td>Vitrectomie « lens-sparing » ou indentation</td><td>Aucun / air</td></tr>
+<tr><th scope="row">ROP stade 4B–5</th><td>Lensectomie-vitrectomie (voie limbique)</td><td>Aucun ou silicone</td></tr>
+<tr><th scope="row">Colobome choriorétinien</th><td>Vitrectomie + endolaser du bord ± rétinectomie</td><td>Silicone</td></tr>
+<tr><th scope="row">Jeune enfant non coopérant, quelle que soit la technique interne</th><td>—</td><td><strong>Silicone à privilégier</strong></td></tr>
+</tbody></table></div>
+<h3>5.1. Le décollement sur dialyse à l'ora serrata</h3>
+<p>C'est la forme la plus « favorable » et l'une des plus fréquentes chez l'enfant et l'adolescent. La dialyse — désinsertion de la rétine à son insertion à l'ora — est le plus souvent <strong>post-traumatique</strong> (contusion du globe, siège inféro-temporal ou supéro-nasal, en général controlatéral au point d'impact) mais peut être <strong>idiopathique voire bilatérale</strong>.</p>
+<p><em>Présentation</em> : décollement <strong>chronique</strong>, peu bulleux, avec <strong>lignes de démarcation pigmentées</strong>, <strong>kystes intrarétiniens</strong>, parfois macrokystes, rétine amincie. La macula est souvent décollée depuis longtemps, mais l'acuité peut rester étonnamment conservée dans les formes très lentes.</p>
+<p><em>Traitement</em> : <strong>indentation sclérale</strong>, technique de choix.</p>
+<ul>
+<li>Cryoapplication de la berge postérieure de la dialyse et de ses extrémités ; l'ora et la partie antérieure sont naturellement soutenues par l'indentation.</li>
+<li><strong>Indentation circonférentielle</strong> couvrant l'ensemble de la dialyse avec une marge de part et d'autre, ou <strong>cerclage</strong> si la dialyse est étendue ou associée à d'autres lésions.</li>
+<li><strong>Drainage du LSR</strong> souvent nécessaire dans les formes chroniques à liquide visqueux, pour obtenir une apposition satisfaisante ; à défaut, la résorption est très lente mais généralement complète en plusieurs semaines.</li>
+<li>Les <strong>macrokystes</strong> ne nécessitent pas de traitement spécifique : ils s'affaissent après réapplication.</li>
+</ul>
+<p><em>Résultats</em> : c'est la meilleure indication du DRR pédiatrique, avec un <strong>taux de succès anatomique de 85 à 95 % en une intervention</strong>. Le pronostic fonctionnel dépend de la durée du décollement maculaire et de l'amblyopie associée.</p>
+<p><em>Point pratique</em> : rechercher systématiquement, à l'œil adelphe, une <strong>dialyse infraclinique ou une désinsertion débutante</strong>, une bilatéralité étant décrite ; la prophylactiser le cas échéant.</p>
+<h3>5.2. Le décollement sur déhiscences périphériques du myope fort</h3>
+<p>La myopie forte est retrouvée chez 20 à 45 % des enfants opérés de DRR selon les séries et les populations, en augmentation avec la progression épidémiologique de la myopie.</p>
+<p><em>Présentation</em> : palissades étendues, trous atrophiques multiples, souvent bilatéraux, sclère fine, chorio-rétine atrophique rendant la cryoapplication et le laser moins efficaces.</p>
+<p><em>Traitement</em> :</p>
+<ul>
+<li><strong>Cerclage</strong> de principe, plutôt qu'une simple indentation segmentaire, du fait de la multiplicité des lésions et du caractère souvent incomplet de leur repérage ; le cerclage soutient l'ensemble de la base du vitré.</li>
+<li><strong>Rétinopexie</strong> préférentiellement au <strong>laser</strong> (la cryothérapie étant moins efficace et plus délétère sur une choriorétine atrophique).</li>
+<li><strong>Vitrectomie associée</strong> si PVR, déhiscence postérieure, hémorragie ou échec.</li>
+<li>Attention à la <strong>majoration de la myopie</strong> induite par le cerclage sur un œil déjà très myope : le retentissement réfractif et amblyogène doit être anticipé.</li>
+<li>Une <strong>prophylaxie de l'œil adelphe</strong> est très largement indiquée dans ce contexte, et l'existence d'un syndrome (Stickler, Marfan, Knobloch, myopie syndromique) doit être recherchée : <strong>une myopie forte de l'enfant n'est jamais banale</strong>.</li>
+</ul>
+<p><em>Cas particulier — le trou maculaire du myope fort avec décollement postérieur</em> : il relève d'une <strong>vitrectomie avec pelage de la membrane limitante interne</strong> (technique de l'inversion du lambeau possible), endotamponnement par gaz chez l'adolescent coopérant, par silicone chez le jeune enfant. Le pronostic anatomique est bon, le pronostic fonctionnel limité par l'atrophie maculaire.</p>
+<h3>5.3. Le décollement traumatique contusif</h3>
+<p>Le traumatisme est la première cause de DRR de l'enfant dans la plupart des séries, avec une <strong>prédominance masculine marquée</strong> (jusqu'à 3 à 5 garçons pour une fille) et un âge moyen plus élevé (grand enfant, adolescent).</p>
+<p><em>Mécanismes et lésions</em> : déformation antéro-postérieure brutale du globe avec expansion équatoriale, provoquant :</p>
+<ul>
+<li><strong>dialyse à l'ora</strong> (cf. § 5.1) ;</li>
+<li><strong>déchirures équatoriales ou nécrose rétinienne d'impact</strong> (« trou de contusion ») ;</li>
+<li><strong>désinsertion de la base du vitré</strong>, pathognomonique ;</li>
+<li>lésions associées : hémorragie du vitré, œdème de Berlin, rupture de la choroïde, trou maculaire traumatique, subluxation cristallinienne, récession angulaire.</li>
+</ul>
+<p><em>Traitement</em> : il dépend des lésions associées.</p>
+<ul>
+<li>Décollement à milieux clairs, déhiscences périphériques, sans PVR → <strong>indentation</strong>.</li>
+<li>Hémorragie du vitré empêchant le bilan → échographie, puis <strong>vitrectomie</strong>, en sachant que chez l'enfant l'hémorragie du vitré est elle-même amblyogène et justifie une intervention plus précoce que chez l'adulte.</li>
+<li><strong>Trou maculaire traumatique</strong> : une surveillance de quelques semaines est licite (fermeture spontanée possible chez l'enfant), avant vitrectomie avec pelage de la limitante interne.</li>
+</ul>
+<p><em>Prévention</em> : le versant essentiel. Recherche du mécanisme (sport, jeu, agression, accident domestique), <strong>prescription d'une protection oculaire en polycarbonate</strong> pour les activités à risque, en particulier chez l'enfant devenu <strong>monophtalme fonctionnel</strong> — indication alors formelle et permanente.</p>
+<h3>5.4. Le décollement après traumatisme perforant ou corps étranger intraoculaire</h3>
+<p><em>Principes de la prise en charge séquentielle</em> :</p>
+<ol start="1">
+<li><strong>Temps d'urgence</strong> : parage et <strong>suture étanche du globe</strong> dans les 24 heures, antibioprophylaxie systémique, prophylaxie antitétanique, ablation d'un corps étranger accessible ; ne pas tenter de chirurgie rétinienne dans le même temps si la visualisation est mauvaise.</li>
+<li><strong>Temps différé, entre J7 et J14</strong> : c'est la fenêtre classiquement retenue pour la <strong>vitrectomie</strong>, une fois le DPV facilité et avant l'installation de la prolifération fibreuse. Ce délai est discuté et se réduit en cas de corps étranger, d'endophtalmie ou de décollement rhegmatogène avéré, situations qui imposent une intervention immédiate.</li>
+<li><strong>Technique</strong> : vitrectomie complète, ablation du corps étranger, section des brides d'incarcération au niveau de la plaie, rétinopexie, cerclage volontiers associé, <strong>tamponnement par silicone</strong>.</li>
+</ol>
+<p><em>Particularités</em> : le risque de <strong>PVR est maximal</strong> dans ce contexte ; le pronostic dépend de la localisation de la plaie (postérieure = péjorative), de l'atteinte maculaire, de l'acuité initiale et de la survenue d'une endophtalmie. Le risque d'<strong>ophtalmie sympathique</strong>, quoique rare, doit être connu, expliqué et surveillé, et pèse dans les discussions d'énucléation d'un œil aveugle et douloureux.</p>
+<h3>5.5. Le décollement de l'œil aphaque ou pseudophaque</h3>
+<p>C'est une situation particulièrement fréquente et redoutée, essentiellement après <strong>chirurgie de la cataracte congénitale ou développementale</strong>. Le risque cumulé de DRR après chirurgie de cataracte de l'enfant est significatif et <strong>croît avec le recul</strong>, avec des décollements survenant parfois <strong>10 à 30 ans</strong> après le geste initial : il s'agit d'une complication à long terme, ce qui justifie un <strong>suivi à vie</strong> de ces patients.</p>
+<p><em>Facteurs de risque</em> : jeune âge à la chirurgie, aphaquie non corrigée par implant, myopie axiale associée, syndrome sous-jacent, capsulotomies et gestes itératifs, complications de la chirurgie initiale.</p>
+<p><em>Présentation</em> : déhiscences <strong>petites, multiples, très antérieures</strong>, situées sur la base du vitré, souvent difficiles à identifier ; PVR fréquente ; retard diagnostique majoré par l'amblyopie préexistante.</p>
+<p><em>Traitement</em> :</p>
+<ul>
+<li><strong>Vitrectomie</strong>, le plus souvent <strong>associée à un cerclage</strong>, la base du vitré étant le siège des déhiscences et de la traction.</li>
+<li>Examen minutieux de la périphérie, si besoin avec <strong>endoscopie</strong> ou dépression sclérale peropératoire ; <strong>photocoagulation circonférentielle</strong> large.</li>
+<li><strong>Tamponnement par silicone</strong> volontiers, avec <strong>iridectomie inférieure</strong> chez l'aphaque pour prévenir le blocage pupillaire.</li>
+<li>Gestion du support capsulaire et de l'implant : un implant clair et bien centré peut être conservé ; les opacités capsulaires gênant la visualisation sont ouvertes ou excisées.</li>
+</ul>
+<p><em>Pronostic</em> : réservé, la conjonction d'une amblyopie préexistante, d'un retard diagnostique et d'une PVR expliquant les mauvais résultats fonctionnels rapportés.</p>
+<h3>5.6. Le décollement des vitréorétinopathies héréditaires</h3>
+<h4>5.6.1. Le syndrome de Stickler</h4>
+<p>Première cause génétique de DRR de l'enfant. Transmission le plus souvent <strong>autosomique dominante</strong> (<em>COL2A1</em> : type 1, phénotype vitréen « membranaire » ; <em>COL11A1</em> : type 2, phénotype « perlé »), plus rarement récessive. L'expression associe <strong>myopie congénitale non évolutive et forte, vitré anormal, dégénérescences périphériques, cataracte, dysmorphie médio-faciale, fente palatine ou séquence de Pierre Robin, surdité, arthropathie précoce</strong>.</p>
+<p><em>Le risque de décollement est considérable</em> — de l'ordre de <strong>50 à 70 % au cours de la vie</strong>, souvent <strong>bilatéral, précoce, par déchirures géantes</strong>, avec des résultats chirurgicaux médiocres. C'est cette gravité qui a conduit à développer une prophylaxie.</p>
+<p><em>Traitement curatif</em> : les décollements sont souvent complexes ; la <strong>vitrectomie avec PFCL, endolaser large et tamponnement par silicone</strong> est la règle dans les déchirures géantes, le cerclage étant fréquemment associé. Le taux d'échec et de récidive est élevé.</p>
+<p><em>Traitement prophylactique</em> : c'est la situation où la prophylaxie a été la plus étudiée.</p>
+<ul>
+<li>Le <strong>protocole de cryothérapie prophylactique de Cambridge</strong> (Fincham et coll.) propose une <strong>cryoapplication circonférentielle de 360°</strong> en arrière de l'ora, réalisée en une séance sous anesthésie générale, chez les patients Stickler de type 1 confirmés ; les séries publiées rapportent une réduction très significative de l'incidence des décollements dans le groupe traité par rapport aux témoins.</li>
+<li>D'autres équipes (Leiba et coll., Ang et coll.) ont proposé une <strong>photocoagulation circonférentielle</strong> avec des résultats favorables.</li>
+<li>Ces données, issues d'études non randomisées et de cohortes historiquement contrôlées, sont considérées comme suffisamment robustes pour que la prophylaxie soit <strong>discutée systématiquement</strong> en centre expert chez tout Stickler de type 1, en particulier après un décollement du premier œil, situation où l'indication à l'œil adelphe est largement admise.</li>
+</ul>
+<h4>5.6.2. Les autres vitréorétinopathies</h4>
+<ul>
+<li><strong>Syndrome de Wagner</strong> (<em>VCAN</em>) : vitré optiquement vide, dégénérescences chorio-rétiniennes, ectopie fovéale ; risque de décollement moindre que dans le Stickler mais réel ; prise en charge classique, prophylaxie discutée au cas par cas. Absence d'atteinte systémique, ce qui le distingue du Stickler.</li>
+<li><strong>Syndrome de Marshall</strong> (<em>COL11A1</em>) : proche du Stickler, avec surdité plus marquée.</li>
+<li><strong>Syndrome de Knobloch</strong> (<em>COL18A1</em>) : myopie très forte, dégénérescence vitréorétinienne, <strong>encéphalocèle occipitale</strong> ; risque élevé de décollement, souvent avec déchirure géante, pronostic sombre.</li>
+<li><strong>Rétinoschisis juvénile lié à l'X</strong> (<em>RS1</em>) : schisis maculaire en rayon de roue et schisis périphérique bulleux. Le DRR complique 5 à 20 % des cas, par déhiscences des <strong>deux feuillets</strong>. La distinction schisis / décollement est capitale : le schisis pur ne se traite pas. En cas de décollement rhegmatogène avéré : vitrectomie avec excision du feuillet interne ou indentation selon les cas, résultats variables. L'hémorragie intravitréenne est une complication fréquente.</li>
+<li><strong>Vitréorétinopathie exsudative familiale (FEVR)</strong> (<em>FZD4, LRP5, NDP, TSPAN12, KIF11</em>) : périphérie avasculaire, tractions, exsudation, pli falciforme. Les décollements sont <strong>mixtes, tractionnels et rhegmatogènes</strong>. Le traitement associe <strong>photocoagulation de la rétine avasculaire</strong>, vitrectomie avec section des tractions, tamponnement adapté, éventuellement anti-VEGF en cas d'exsudation active. L'<strong>examen angiographique des parents</strong> est un temps diagnostique majeur.</li>
+<li><strong>Syndrome de Goldmann-Favre / dystrophie à cônes S augmentés</strong> (<em>NR2E3</em>) : schisis, dégénérescence vitréorétinienne, décollement possible ; pronostic dominé par la dystrophie.</li>
+</ul>
+<p>Dans toutes ces affections, la prise en charge dépasse le geste chirurgical : <strong>conseil génétique, examen de la fratrie, surveillance à vie, information sur les signes d'alerte</strong> en font partie intégrante.</p>
+<h3>5.7. Le décollement compliquant la rétinopathie du prématuré</h3>
+<p>Il s'agit le plus souvent d'un décollement <strong>tractionnel</strong>, à composante rhegmatogène variable, survenant soit en phase aiguë (stades 4A, 4B, 5), soit tardivement sur séquelles cicatricielles chez le grand enfant ou l'adulte jeune (déhiscences sur la ligne de démarcation, traction sur le pli falciforme).</p>
+<p><em>Traitement des formes aiguës</em> :</p>
+<ul>
+<li><strong>Stade 4A</strong> (décollement extra-fovéal) : <strong>vitrectomie « lens-sparing »</strong>, avec section des tractions antéropostérieures et circonférentielles ; l'indentation sclérale garde des partisans. Les résultats anatomiques sont bons et le pronostic fonctionnel acceptable.</li>
+<li><strong>Stade 4B</strong> (décollement incluant la fovéa) : vitrectomie, souvent avec lensectomie ; résultats plus modestes.</li>
+<li><strong>Stade 5</strong> (décollement total en entonnoir) : <strong>lensectomie-vitrectomie par voie limbique ou pars plicata</strong>, chirurgie longue et difficile, taux de réapplication anatomique partielle variable mais <strong>résultats fonctionnels très limités</strong> (perception lumineuse, vision ambulatoire au mieux). L'indication doit être posée après information très claire des parents, la chirurgie n'ayant souvent qu'un objectif de vision ambulatoire ou de préservation du globe.</li>
+</ul>
+<p><em>Traitement des formes tardives, rhegmatogènes</em> : elles se rapprochent d'un DRR classique sur œil séquellaire, avec myopie forte fréquente ; indentation ou vitrectomie selon les critères habituels.</p>
+<p><em>Prévention</em> : elle est celle de la ROP elle-même — dépistage systématique des prématurés selon les critères en vigueur, traitement en temps utile des formes à risque (laser, anti-VEGF) — et constitue de très loin le meilleur traitement du décollement de la ROP.</p>
+<h3>5.8. Le décollement sur colobome choriorétinien</h3>
+<p>Le colobome choriorétinien, par défaut de fermeture de la fente embryonnaire, se complique de décollement dans <strong>environ 25 à 40 % des cas</strong> au cours de la vie.</p>
+<p><em>Difficulté centrale</em> : la déhiscence siège dans la <strong>membrane intercalaire</strong>, translucide, atrophique et avasculaire, où elle est <strong>très difficile à identifier</strong> ; elle peut aussi se situer en périphérie, indépendamment du colobome.</p>
+<p><em>Traitement</em> : la <strong>vitrectomie</strong> est la règle.</p>
+<ul>
+<li>Recherche minutieuse de la déhiscence, colorations, examen sous PFCL ;</li>
+<li><strong>Endophotocoagulation du bord du colobome sur 360°</strong>, l'objectif étant de créer une barrière entre la rétine saine et la zone colobomateuse ; l'efficacité du laser est limitée par l'atrophie choriorétinienne, ce qui impose une puissance adaptée et souvent plusieurs rangées ;</li>
+<li><strong>Rétinectomie du bord colobomateux</strong> possible dans les formes rebelles ;</li>
+<li><strong>Tamponnement par huile de silicone</strong>, préférable au gaz du fait de la difficulté à obtenir une adhérence solide ;</li>
+<li>résultats anatomiques moyens, pronostic fonctionnel limité par l'atteinte maculaire ou papillaire fréquemment associée.</li>
+</ul>
+<p>Une <strong>photocoagulation prophylactique du bord du colobome</strong> sur l'œil adelphe est proposée par certains auteurs, sans consensus.</p>
+<h3>5.9. Le décollement par déchirure géante</h3>
+<p>Défini par une déchirure circonférentielle d'au moins 90°, il survient chez l'enfant dans un contexte de <strong>traumatisme, de myopie forte, de syndrome de Stickler ou de Marfan</strong>, avec une <strong>bilatéralisation fréquente</strong> (jusqu'à 20 à 40 % des cas dans les formes syndromiques).</p>
+<p><em>Traitement</em> :</p>
+<ul>
+<li><strong>Vitrectomie complète</strong>, avec ablation soigneuse du vitré au contact du volet rétinien renversé ;</li>
+<li>déroulement du volet à l'aide des <strong>PFCL</strong>, sous lesquels s'effectuent l'aplatissement de la rétine et l'endolaser ;</li>
+<li><strong>endophotocoagulation</strong> de la déchirure sur toute son étendue, prolongée sur 360° dans les formes à risque ;</li>
+<li><strong>échange PFCL–silicone</strong> direct, le silicone étant le tamponnement préférentiel chez l'enfant, ou gaz longue durée chez l'adolescent coopérant ;</li>
+<li><strong>cerclage associé</strong> fréquemment, pour soutenir la base du vitré ;</li>
+<li>attention à la <strong>glissement du volet rétinien (« slippage »)</strong> lors de l'échange, prévenu par un drainage antérieur soigneux du liquide résiduel.</li>
+</ul>
+<p><em>Prophylaxie de l'œil adelphe</em> : elle est ici <strong>largement indiquée</strong>, compte tenu du taux de bilatéralisation, sous forme d'une photocoagulation circonférentielle, éventuellement complétée par un cerclage prophylactique dans certaines équipes (attitude discutée).</p>
+<h3>5.10. Le décollement avec prolifération vitréorétinienne sévère et le décollement chronique</h3>
+<p>C'est la forme la plus fréquente chez le jeune enfant, conséquence directe du retard diagnostique.</p>
+<p><em>Traitement</em> :</p>
+<ul>
+<li><strong>Vitrectomie large</strong> avec dissection complète des membranes pré- et sous-rétiniennes ;</li>
+<li><strong>rétinectomie relaxante</strong> d'emblée suffisante en cas de rétine raccourcie ; il vaut mieux une rétinectomie large qu'une récidive ;</li>
+<li><strong>cerclage</strong> systématiquement discuté pour la PVR antérieure ;</li>
+<li><strong>tamponnement par silicone</strong>, laissé en place plusieurs mois ;</li>
+<li><strong>planification d'emblée d'une chirurgie itérative</strong> possible, et information des parents en ce sens.</li>
+</ul>
+<p><em>Résultats</em> : la réapplication finale est obtenue dans une majorité de cas au prix de plusieurs interventions, mais l'acuité visuelle reste faible, souvent limitée à un champ visuel utile ou à une vision ambulatoire. L'objectif thérapeutique doit alors être explicitement redéfini avec la famille : <strong>préserver un œil fonctionnellement utile et éviter la phtise</strong> est déjà un succès.</p>
+<h3>5.11. Les situations particulières</h3>
+<ul>
+<li><strong>Décollement bilatéral</strong> (5 à 15 % des cas selon les séries, davantage dans les formes syndromiques) : opérer en premier l'œil au meilleur potentiel visuel ; envisager, quand l'état général le permet, une prise en charge rapprochée des deux yeux ; privilégier le silicone pour permettre une réhabilitation visuelle rapide.</li>
+<li><strong>Œil unique / monophtalmie fonctionnelle</strong> : indication à une stratégie sécurisante (silicone, cerclage associé), à un suivi rapproché et à une <strong>protection oculaire permanente</strong> en polycarbonate.</li>
+<li><strong>Enfant polyhandicapé ou déficient visuel profond</strong> : l'indication chirurgicale se discute en fonction du potentiel visuel résiduel, du bénéfice attendu sur l'autonomie, du risque anesthésique et du confort (prévention de la douleur et de la phtise). L'abstention motivée, tracée et expliquée est une décision médicale légitime.</li>
+<li><strong>Décollement ancien totalement fixé, sur œil aveugle et non douloureux</strong> : l'abstention est licite ; la surveillance porte sur la survenue d'un glaucome néovasculaire ou d'une douleur.</li>
+<li><strong>Œil aveugle et douloureux, ou risque d'ophtalmie sympathique</strong> : discuter au cas par cas les alternatives conservatrices (cycloaffaiblissement, injection rétrobulbaire, silicone) avant toute éviscération/énucléation, décision lourde chez l'enfant, avec accompagnement psychologique et prise en charge prothétique.</li>
+<li><strong>Décollement associé à une uvéite</strong> (arthrite juvénile idiopathique, pars planite, maladie de Behçet, toxoplasmose, toxocarose) : contrôler l'inflammation avant et après la chirurgie, corticothérapie péri-opératoire renforcée, vigilance accrue sur la PVR et l'hypotonie.</li>
+<li><strong>Décollement après traitement d'un rétinoblastome</strong> : situation rare, dans laquelle <strong>toute chirurgie interne est contre-indiquée en cas de doute sur une tumeur active</strong>, en raison du risque de dissémination extraoculaire ; l'avis oncologique est préalable et impératif.</li>
+</ul>
+</section>
+<section class="chap" id="les-suites-operatoires-et-leur-surveillance">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">6</span>
+<h2 class="chap__title">Les suites opératoires et leur surveillance</h2>
+</header>
+<h3>6.1. Le positionnement postopératoire</h3>
+<p>C'est l'une des difficultés spécifiques les plus concrètes. Le maintien d'une position stricte est <strong>illusoire avant l'âge de 6 à 8 ans</strong> et souvent aléatoire au-delà. Les attitudes possibles sont :</p>
+<ul>
+<li><strong>Contourner le problème</strong> : choisir un tamponnement qui ne dépend pas du positionnement (<strong>huile de silicone</strong>, huile lourde pour les déhiscences inférieures) ou une technique qui n'en requiert pas (indentation seule). C'est l'attitude la plus réaliste chez le jeune enfant.</li>
+<li><strong>Adapter la consigne</strong> : positions simplifiées (« regarder par terre », jeu au sol, lecture sur table, coussin de positionnement), périodes fractionnées, implication d'un parent hébergé, jeux et supports numériques placés en position basse.</li>
+<li><strong>Sédation légère</strong> en hospitalisation pour les premières 24 à 48 heures : elle est parfois proposée mais doit rester exceptionnelle, la balance bénéfice-risque étant discutable.</li>
+</ul>
+<p>La consigne doit être <strong>écrite, expliquée aux parents et à l'enfant, et réaliste</strong> : une consigne inapplicable n'est pas respectée et rend l'échec incompréhensible pour la famille.</p>
+<h3>6.2. Le traitement médical postopératoire</h3>
+<ul>
+<li><strong>Corticoïdes topiques</strong> (dexaméthasone) à forte fréquence initiale, en décroissance sur 4 à 8 semaines selon l'inflammation ;</li>
+<li><strong>antibiotiques topiques</strong> pendant 7 à 10 jours ;</li>
+<li><strong>cycloplégique</strong> (atropine 0,3 à 1 % selon l'âge, ou cyclopentolate) : confort, prévention des synéchies ; attention aux effets systémiques de l'atropine chez le nourrisson ;</li>
+<li><strong>antalgiques</strong> de palier adapté ; <strong>antiémétiques</strong> si tamponnement gazeux ;</li>
+<li><strong>hypotonisants</strong> si hypertonie, en évitant les bêtabloquants chez le nourrisson et l'asthmatique, et les inhibiteurs de l'anhydrase carbonique à fortes doses au long cours ;</li>
+<li>prise en charge de la douleur systématiquement évaluée par échelles adaptées à l'âge.</li>
+</ul>
+<h3>6.3. Le rythme de surveillance</h3>
+<div class="tablewrap" tabindex="0" role="group" aria-label="Tableau">
+<table>
+<thead><tr><th scope="col">Échéance</th><th scope="col">Objectifs</th></tr></thead>
+<tbody>
+<tr><th scope="row">J1 – J2</th><td>Tonus, transparence, état de la rétine, position de la bulle/du silicone, douleur</td></tr>
+<tr><th scope="row">J7</th><td>Cicatrisation, inflammation, réapplication, début de la réfraction si possible</td></tr>
+<tr><th scope="row">1 mois</th><td>Réfraction sous cycloplégique <strong>impérative</strong>, correction optique, début du traitement de l'amblyopie, état du matériel</td></tr>
+<tr><th scope="row">3 mois</th><td>Bilan complet, discussion de l'ablation du silicone, bilan de l'œil adelphe</td></tr>
+<tr><th scope="row">6 mois puis semestriel / annuel</th><td>Récidive, cataracte, glaucome, amblyopie, croissance axiale, strabisme</td></tr>
+<tr><th scope="row"><strong>À vie</strong></th><td>Surveillance de l'œil adelphe, en particulier dans les formes syndromiques, myopiques et post-chirurgie de cataracte</td></tr>
+</tbody></table></div>
+<p>Chez le jeune enfant, les contrôles décisifs (bilan complet de la périphérie, indentation, laser complémentaire) nécessitent un <strong>examen sous anesthésie générale</strong>, dont la fréquence doit être pesée : on regroupe autant que possible les gestes (examen des deux yeux, laser complémentaire, ablation de silicone, chirurgie de la cataracte, bilan réfractif et biométrique) dans un même temps anesthésique.</p>
+<h3>6.4. Les complications postopératoires</h3>
+<p><strong>Précoces</strong></p>
+<ul>
+<li>Hypertonie oculaire (gaz expansif, silicone, blocage pupillaire, corticoïdes) ;</li>
+<li>hypotonie et décollement choroïdien, favorisés par des sclérotomies non suturées ;</li>
+<li>hémorragie intravitréenne ou sous-rétinienne ;</li>
+<li>inflammation majeure, membrane fibrineuse pupillaire ;</li>
+<li><strong>endophtalmie</strong> (rare mais grave) ;</li>
+<li>kératopathie, défect épithélial persistant ;</li>
+<li>ptôsis, diplopie, restriction oculomotrice.</li>
+</ul>
+<p><strong>Tardives</strong></p>
+<ul>
+<li><strong>Récidive du décollement</strong>, le plus souvent par PVR ou nouvelle déhiscence — première cause de reprise ;</li>
+<li><strong>cataracte secondaire</strong>, quasi constante après vitrectomie avec tamponnement prolongé chez le grand enfant, plus lente chez le jeune enfant mais redoutable par son effet amblyogène ;</li>
+<li><strong>glaucome secondaire</strong> ;</li>
+<li><strong>kératopathie en bandelette</strong>, décompensation endothéliale (silicone) ;</li>
+<li><strong>strabisme</strong> et amblyopie strabique surajoutée ;</li>
+<li><strong>complications du matériel de cerclage</strong> (extrusion, infection, granulome) ;</li>
+<li><strong>amblyopie</strong>, la plus fréquente et la plus lourde de toutes ;</li>
+<li><strong>phtise du globe</strong> dans les formes les plus sévères.</li>
+</ul>
+<h3>6.5. La chirurgie itérative</h3>
+<p>La reprise chirurgicale est fréquente : <strong>20 à 45 % des enfants</strong> nécessitent au moins une seconde intervention. Elle doit être <strong>anticipée et non subie</strong> : une récidive identifiée précocement, sur une rétine encore mobile, se traite bien mieux qu'une récidive vue à un stade de PVR fixée. Cela justifie le rythme de surveillance rapproché des trois premiers mois. Les principes en sont : identification de la cause de l'échec (déhiscence non traitée, indentation mal positionnée ou insuffisante, PVR, traction résiduelle sur la base), correction spécifique de cette cause, élargissement du geste (vitrectomie si l'ab externo a échoué, rétinectomie si la rétine est raccourcie), et <strong>tamponnement plus soutenu</strong>.</p>
+</section>
+<section class="chap" id="la-rehabilitation-visuelle-le-second-temps-du-traitement">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">7</span>
+<h2 class="chap__title">La réhabilitation visuelle : le second temps du traitement</h2>
+</header>
+<p>Cette étape est, chez l'enfant, <strong>aussi déterminante que la chirurgie</strong>. Elle est pourtant souvent négligée, ce qui explique une partie des mauvais résultats fonctionnels rapportés dans la littérature.</p>
+<h3>7.1. La correction optique</h3>
+<ul>
+<li><strong>Réfraction sous cycloplégique précoce</strong> : dès que l'inflammation le permet, idéalement au premier mois, puis répétée tous les 3 à 6 mois.</li>
+<li><strong>Prise en compte des modifications induites par la chirurgie</strong> : myopisation et astigmatisme après cerclage, <strong>hypermétropisation d'environ +5 à +7 D en présence de silicone sur œil phaque</strong>, aphaquie.</li>
+<li><strong>Prescription systématique de la correction totale</strong>, sans temporisation : chez l'enfant en période sensible, chaque mois compte.</li>
+<li><strong>Correction de l'aphaquie</strong> : lentilles de contact (silicone-hydrogel à port prolongé, rigides perméables, lentilles sclérales) chez le nourrisson et le jeune enfant ; lunettes en cas d'aphaquie bilatérale ; <strong>implantation secondaire</strong> discutée à distance, une fois la rétine stabilisée et la croissance avancée, en tenant compte de l'évolution réfractive.</li>
+<li>Verres <strong>organiques en polycarbonate</strong>, avec monture adaptée, y compris à visée de protection.</li>
+</ul>
+<h3>7.2. Le traitement de l'amblyopie</h3>
+<ul>
+<li><strong>Débuter dès que les milieux le permettent</strong>, sans attendre la fin de la cicatrisation ni l'ablation du silicone : c'est un des arguments majeurs en faveur du silicone par rapport au gaz.</li>
+<li><strong>Occlusion de l'œil sain</strong> selon un protocole adapté à l'âge et à la profondeur de l'amblyopie, ou <strong>pénalisation optique/atropinique</strong> en cas de mauvaise tolérance.</li>
+<li>Suivi <strong>orthoptique régulier</strong>, évaluation de la fixation, de la vision binoculaire résiduelle.</li>
+<li>Le traitement doit être poursuivi <strong>tant que persiste une plasticité</strong>, avec des résultats parfois obtenus au-delà des âges classiquement admis.</li>
+<li><strong>Adhésion de la famille</strong> : l'observance de l'occlusion est le principal déterminant du résultat ; elle suppose une explication répétée et un accompagnement.</li>
+</ul>
+<h3>7.3. Le strabisme et les troubles oculomoteurs</h3>
+<p>Fréquents (amblyopie, chirurgie musculaire, matériel volumineux), ils sont pris en charge <strong>après stabilisation anatomique et réfractive</strong>, généralement au-delà de 6 à 12 mois. La chirurgie du strabisme sur un œil porteur de matériel d'indentation est techniquement plus difficile et doit être confiée à un opérateur averti ; l'ablation du matériel peut être associée si elle est par ailleurs indiquée.</p>
+<h3>7.4. La basse vision et l'accompagnement</h3>
+<p>Lorsque le résultat fonctionnel reste médiocre :</p>
+<ul>
+<li><strong>bilan de basse vision</strong> et prescription d'aides optiques et électroniques ;</li>
+<li><strong>aménagement de la scolarité</strong>, adaptation des supports, orientation vers les services d'accompagnement spécialisés ;</li>
+<li><strong>reconnaissance du handicap visuel</strong> selon les dispositifs en vigueur ;</li>
+<li><strong>accompagnement psychologique</strong> de l'enfant et des parents, notamment lorsque la maladie est héréditaire, ce qui ajoute une culpabilité parentale fréquente ;</li>
+<li><strong>information sur les activités à risque</strong> et sur les métiers déconseillés en cas de monophtalmie ;</li>
+<li><strong>éducation aux signes d'alerte</strong> pour l'œil adelphe, avec consigne écrite de consultation en urgence.</li>
+</ul>
+</section>
+<section class="chap" id="resultats-et-facteurs-pronostiques">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">8</span>
+<h2 class="chap__title">Résultats et facteurs pronostiques</h2>
+</header>
+<h3>8.1. Les résultats anatomiques</h3>
+<p>Les séries pédiatriques publiées rapportent :</p>
+<ul>
+<li>un <strong>taux de réapplication après une seule intervention de l'ordre de 50 à 80 %</strong>, très variable selon la proportion de formes traumatiques, syndromiques et compliquées de PVR ;</li>
+<li>un <strong>taux de réapplication finale, après une ou plusieurs interventions, de 75 à 95 %</strong> ;</li>
+<li>une <strong>nécessité de reprise chirurgicale dans 20 à 45 % des cas</strong>.</li>
+</ul>
+<p>Ces résultats sont globalement <strong>inférieurs à ceux de l'adulte</strong>, l'écart s'expliquant essentiellement par le retard diagnostique, la fréquence de la PVR et la gravité des étiologies.</p>
+<h3>8.2. Les résultats fonctionnels</h3>
+<p>Le contraste entre succès anatomique et résultat fonctionnel est la caractéristique la plus constante de ces séries :</p>
+<ul>
+<li>une acuité visuelle finale <strong>supérieure ou égale à 20/40 (0,5)</strong> n'est obtenue que chez <strong>15 à 35 %</strong> des enfants ;</li>
+<li>une acuité <strong>supérieure ou égale à 20/200 (0,1)</strong>, seuil de vision utile, chez environ <strong>40 à 60 %</strong> ;</li>
+<li>une <strong>amélioration par rapport à l'acuité préopératoire</strong> est en revanche obtenue chez la majorité des patients.</li>
+</ul>
+<p>Les déterminants de ce résultat sont, par ordre d'importance : le <strong>statut maculaire et la durée du décollement</strong>, l'<strong>acuité visuelle préopératoire</strong>, et surtout l'<strong>amblyopie</strong> et la qualité de sa prise en charge.</p>
+<h3>8.3. Les facteurs pronostiques</h3>
+<div class="tablewrap" tabindex="0" role="group" aria-label="Tableau">
+<table>
+<thead><tr><th scope="col">Facteurs de <strong>bon</strong> pronostic</th><th scope="col">Facteurs de <strong>mauvais</strong> pronostic</th></tr></thead>
+<tbody>
+<tr><th scope="row">Macula appliquée au diagnostic</th><td>Macula décollée, décollement ancien</td></tr>
+<tr><th scope="row">Décollement récent (&lt; 1 mois)</th><td>Décollement chronique, lignes de démarcation, kystes</td></tr>
+<tr><th scope="row">Dialyse à l'ora, étiologie traumatique contusive simple</th><td>PVR stade C ou plus au diagnostic</td></tr>
+<tr><th scope="row">Absence de PVR</th><td>Déchirure géante</td></tr>
+<tr><th scope="row">Déhiscence unique, identifiée</th><td>Déhiscences multiples ou non identifiées</td></tr>
+<tr><th scope="row">Œil phaque</th><td>Aphaquie / pseudophaquie, chirurgie de cataracte congénitale</td></tr>
+<tr><th scope="row">Décollement limité (≤ 2 quadrants)</th><td>Décollement total, atteinte de plusieurs quadrants</td></tr>
+<tr><th scope="row">Bonne acuité visuelle préopératoire</th><td>Acuité préopératoire effondrée</td></tr>
+<tr><th scope="row">Enfant plus âgé, coopérant</th><td>Nourrisson, jeune enfant en période sensible</td></tr>
+<tr><th scope="row">Absence de syndrome associé</th><td>Vitréorétinopathie héréditaire, ROP, colobome, microphtalmie</td></tr>
+<tr><th scope="row">Réapplication en une intervention</th><td>Interventions multiples</td></tr>
+<tr><th scope="row">Traitement de l'amblyopie bien conduit et observant</th><td>Amblyopie non traitée ou traitée tardivement</td></tr>
+</tbody></table></div>
+<h3>8.4. Indentation ou vitrectomie ? L'état de la question</h3>
+<p>Aucune étude randomisée ne permet de trancher chez l'enfant, et les comparaisons rétrospectives sont grevées d'un <strong>biais d'indication majeur</strong> : la vitrectomie est proposée aux formes les plus graves, ce qui explique mécaniquement ses résultats apparemment moins bons. Les données convergent néanmoins vers une position pragmatique :</p>
+<ul>
+<li>dans les décollements <strong>non compliqués sur œil phaque</strong>, la <strong>chirurgie ab externo</strong> offre des résultats au moins équivalents, avec l'avantage majeur de la préservation cristallinienne et de l'absence de contrainte de positionnement ;</li>
+<li>dans les formes <strong>compliquées</strong> (PVR, aphaquie, déhiscence postérieure, milieux troubles, déchirure géante, traumatisme perforant), la <strong>vitrectomie est indispensable</strong> et une indentation isolée constitue une perte de chance ;</li>
+<li>la <strong>chirurgie combinée</strong> occupe une place croissante, particulièrement pertinente chez l'enfant du fait de l'impossibilité de réséquer complètement la base du vitré.</li>
+</ul>
+</section>
+<section class="chap" id="le-traitement-preventif">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">9</span>
+<h2 class="chap__title">Le traitement préventif</h2>
+</header>
+<p>Compte tenu de la médiocrité relative des résultats fonctionnels, <strong>la prévention est, chez l'enfant, le meilleur traitement</strong>. Elle se décline sur trois plans.</p>
+<h3>9.1. La prévention primaire</h3>
+<ul>
+<li><strong>Prévention des traumatismes oculaires</strong> : éducation sur les jeux dangereux (projectiles, fléchettes, pistolets à billes, pétards, élastiques), encadrement des sports à risque (balles rapides, sports de raquette, arts martiaux), <strong>port de protections en polycarbonate</strong> ; port <strong>obligatoire et permanent</strong> en cas de monophtalmie fonctionnelle.</li>
+<li><strong>Prévention de la rétinopathie du prématuré</strong> : qualité des soins néonatals, contrôle de l'oxygénothérapie, <strong>dépistage systématique selon les critères en vigueur</strong> et traitement en temps utile.</li>
+<li><strong>Contrôle de la myopie évolutive de l'enfant</strong> (correction optique adaptée, atropine faiblement dosée, verres à défocalisation périphérique, temps passé à l'extérieur) : si le bénéfice sur le risque de décollement n'est pas formellement démontré, la réduction de la myopie finale est un objectif rationnel.</li>
+<li><strong>Prévention de la maltraitance</strong> et repérage du syndrome du bébé secoué.</li>
+</ul>
+<h3>9.2. La prévention secondaire : dépister et traiter les yeux à risque</h3>
+<ul>
+<li><strong>Dépistage visuel de l'enfant</strong> aux âges clés, permettant de repérer une baisse d'acuité unilatérale et de raccourcir le délai diagnostique — c'est le levier le plus efficace sur le pronostic.</li>
+<li><strong>Examen du fond d'œil dilaté, avec indentation, chez tout enfant à risque</strong> : myope fort, opéré de cataracte congénitale, ancien prématuré, porteur d'une vitréorétinopathie ou d'un syndrome associé, apparenté d'un patient atteint.</li>
+<li><strong>Examen systématique et itératif de l'œil adelphe</strong> après un DRR, avec traitement des lésions prédisposantes.</li>
+<li><strong>Prophylaxie ciblée</strong> : Stickler de type 1 (cf. § 5.6.1), œil adelphe après déchirure géante, dialyse infraclinique, lésions à haut risque du myope fort.</li>
+<li><strong>Examen ophtalmologique des apparentés</strong> dans les formes héréditaires, avec angiographie dans les FEVR, et <strong>conseil génétique</strong>.</li>
+</ul>
+<h3>9.3. La prévention tertiaire : éviter la récidive et l'amblyopie</h3>
+<ul>
+<li><strong>Surveillance à vie</strong> des yeux opérés et des yeux à risque, en particulier après chirurgie de cataracte congénitale, où le risque de décollement s'exprime des décennies plus tard ;</li>
+<li><strong>carte ou courrier de suivi</strong> remis à la famille, résumant le diagnostic, les gestes réalisés et les consignes ;</li>
+<li><strong>éducation aux signes d'alerte</strong> : myodésopsies, phosphènes, amputation du champ visuel, baisse d'acuité, strabisme d'apparition récente ;</li>
+<li><strong>traitement systématique et prolongé de l'amblyopie</strong>, seul moyen de convertir un succès anatomique en bénéfice fonctionnel.</li>
+</ul>
+</section>
+<section class="chap" id="conclusion">
+<header class="chap__head">
+<span class="chap__num" aria-hidden="true">10</span>
+<h2 class="chap__title">Conclusion</h2>
+</header>
+<p>Le traitement du décollement de rétine rhegmatogène de l'enfant est une chirurgie difficile, dont les principes techniques sont ceux de l'adulte mais dont la stratégie obéit à une logique propre. Trois idées le résument.</p>
+<p><strong>Première idée : le pronostic se joue avant la chirurgie.</strong> Le retard diagnostique, qui explique la fréquence des maculas décollées, des décollements chroniques et des proliférations vitréorétiniennes, est la principale cause des résultats médiocres. Il est aussi le facteur sur lequel on peut le plus efficacement agir, par le dépistage visuel de l'enfant, la surveillance des yeux à risque et l'éducation des familles.</p>
+<p><strong>Deuxième idée : la technique doit être choisie, non subie.</strong> Sur un œil phaque, à vitré formé, porteur de déhiscences périphériques identifiées et sans prolifération significative, la chirurgie ab externo demeure le traitement de référence : elle respecte le cristallin et n'impose pas de positionnement. Dès que la prolifération vitréorétinienne, l'aphaquie, une déchirure géante, un traumatisme perforant ou des milieux troubles entrent en jeu, la vitrectomie s'impose, volontiers combinée à un cerclage et, chez le jeune enfant, associée à un tamponnement par huile de silicone, qui résout élégamment la double contrainte du positionnement impossible et de la réhabilitation visuelle urgente.</p>
+<p><strong>Troisième idée : la chirurgie n'est que la moitié du traitement.</strong> Réappliquer la rétine sans corriger l'amétrie induite et sans traiter l'amblyopie, c'est réussir une opération et manquer un traitement. La correction optique précoce, l'occlusion, le suivi orthoptique, la prise en charge de la basse vision et l'accompagnement de la famille appartiennent au traitement au même titre que le geste opératoire.</p>
+<p>Enfin, parce que la plupart des étiologies sont bilatéralisables ou héréditaires, la prise en charge d'un enfant atteint de décollement de rétine ne s'arrête ni à l'œil malade, ni à l'enfant lui-même : elle englobe l'œil adelphe, la fratrie et les apparentés, et s'inscrit dans une surveillance de très longue durée. C'est à ce prix que le traitement, aujourd'hui encore souvent décevant sur le plan fonctionnel, peut espérer devenir réellement préventif.</p>
+</section>
+<section class="chap" id="references-bibliographiques-indicatives">
+<header class="chap__head">
+<h2 class="chap__title">Références bibliographiques indicatives</h2>
+</header>
+<aside class="callout callout--note">
+<p><em>Note : cette liste réunit les travaux de référence les plus fréquemment cités sur le sujet. Conformément aux exigences de la rédaction d'une thèse, chaque référence doit être vérifiée sur la source primaire et reformatée selon le style bibliographique imposé par la faculté (Vancouver, AMA, etc.) avant intégration définitive.</em></p>
+</aside>
+<p><strong>Épidémiologie et caractéristiques cliniques</strong></p>
+<ol start="1" class="reflist">
+<li>Fivgas GD, Capone A Jr. Pediatric rhegmatogenous retinal detachment. <em>Retina</em>. 2001;21(2):101-106.</li>
+<li>Weinberg DV, Lyon AT, Greenwald MJ, Mets MB. Rhegmatogenous retinal detachments in children: risk factors and surgical outcomes. <em>Ophthalmology</em>. 2003;110(9):1708-1713.</li>
+<li>Chang PY, Yang CM, Yang CH, et al. Clinical characteristics and surgical outcomes of pediatric rhegmatogenous retinal detachment in Taiwan. <em>Am J Ophthalmol</em>. 2005;139(6):1067-1072.</li>
+<li>Wang NK, Tsai CH, Chen YP, et al. Pediatric rhegmatogenous retinal detachment in East Asians. <em>Ophthalmology</em>. 2005;112(11):1890-1895.</li>
+<li>Gonzales CR, Singh S, Yu F, Kreiger AE, Gupta A, Schwartz SD. Pediatric rhegmatogenous retinal detachment: clinical features and surgical outcomes. <em>Retina</em>. 2008;28(6):847-852.</li>
+<li>Rumelt S, Sarrazin L, Averbukh E, Halpert M, Hemo I. Paediatric vs adult retinal detachment. <em>Eye (Lond)</em>. 2007;21(12):1473-1478.</li>
+<li>Nuzzi R, Lavia C, Spinetta R. Paediatric retinal detachment: a review. <em>Int J Ophthalmol</em>. 2017;10(10):1592-1603.</li>
+</ol>
+<p><strong>Prise en charge chirurgicale et résultats</strong></p>
+<ol start="8">
+<li>Wenick AS, Baranano DE. Evaluation and management of pediatric rhegmatogenous retinal detachment. <em>Saudi J Ophthalmol</em>. 2012;26(3):255-263.</li>
+<li>Soheilian M, Ramezani A, Malihi M, et al. Clinical features and surgical outcomes of pediatric rhegmatogenous retinal detachment. <em>Retina</em>. 2009;29(4):545-551.</li>
+<li>Read SP, Aziz HA, Kuriyan A, et al. Retinal detachment surgery in a pediatric population: visual and anatomic outcomes. <em>Retina</em>. 2018;38(7):1393-1402.</li>
+<li>Smith JM, Ward LT, Townsend JH, et al. Rhegmatogenous retinal detachment in children: clinical factors predictive of successful surgical repair. <em>Ophthalmology</em>. 2019;126(9):1263-1270.</li>
+<li>Wadhwa N, Venkatesh P, Sampangi R, Garg S. Rhegmatogenous retinal detachments in children in India: clinical characteristics, risk factors, and surgical outcomes. <em>J AAPOS</em>. 2008;12(6):551-554.</li>
+<li>Yokoyama T, Kato T, Minamoto A, et al. Characteristics and surgical outcomes of paediatric retinal detachment. <em>Eye (Lond)</em>. 2004;18(9):889-892.</li>
+</ol>
+<p><strong>Étiologies particulières et prophylaxie</strong></p>
+<ol start="14">
+<li>Ang A, Poulson AV, Goodburn SF, Richards AJ, Scott JD, Snead MP. Retinal detachment and prophylaxis in type 1 Stickler syndrome. <em>Ophthalmology</em>. 2008;115(1):164-168.</li>
+<li>Fincham GS, Pasea L, Carroll C, et al. Prevention of retinal detachment in Stickler syndrome: the Cambridge prophylactic cryotherapy protocol. <em>Ophthalmology</em>. 2014;121(8):1588-1597.</li>
+<li>Leiba H, Oliver M, Pollack A. Prophylactic laser photocoagulation in Stickler syndrome. <em>Eye (Lond)</em>. 1996;10(Pt 6):701-708.</li>
+<li>Snead MP, Yates JR. Clinical and molecular genetics of Stickler syndrome. <em>J Med Genet</em>. 1999;36(5):353-359.</li>
+<li>Kanski JJ, Elkington AR, Daniel R. Retinal detachment after congenital cataract surgery. <em>Br J Ophthalmol</em>. 1974;58(1):92-95.</li>
+<li>Haargaard B, Andersen EW, Oudin A, et al. Risk of retinal detachment after pediatric cataract surgery. <em>Invest Ophthalmol Vis Sci</em>. 2014;55(5):2947-2951.</li>
+<li>Hocaoglu M, Karacorlu M, Sayman Muslubas I, et al. Rhegmatogenous retinal detachment in paediatric patients: clinical characteristics and surgical outcomes. <em>Acta Ophthalmol</em>. 2017;95(4):e274-e280.</li>
+<li>Nagpal M, Nagpal K, Nagpal PN. Management of retinal detachment associated with choroidal coloboma. <em>Indian J Ophthalmol</em>. 2011;59(2):111-115.</li>
+<li>Gopal L, Badrinath SS, Sharma T, et al. Surgical management of retinal detachments related to coloboma of the choroid. <em>Ophthalmology</em>. 1998;105(5):804-809.</li>
+<li>George ND, Yates JR, Moore AT. X linked retinoschisis. <em>Br J Ophthalmol</em>. 1995;79(7):697-702.</li>
+<li>Kashani AH, Learned D, Nudleman E, Drenser KA, Capone A, Trese MT. High prevalence of peripheral retinal vascular anomalies in family members of patients with familial exudative vitreoretinopathy. <em>Ophthalmology</em>. 2014;121(1):262-268.</li>
+<li>Hartnett ME. Vitreoretinal surgery for retinopathy of prematurity. <em>Retina</em>. 2020;40(Suppl 1):S1-S9.</li>
+</ol>
+<p><strong>Techniques et tamponnements</strong></p>
+<ol start="26">
+<li>Scott IU, Flynn HW Jr, Azen SP, et al. Silicone oil in the repair of pediatric complex retinal detachments: a prospective, observational, multicenter study. <em>Ophthalmology</em>. 1999;106(7):1399-1408.</li>
+<li>Wang NK, Chen YP, Yeung L, et al. Traumatic pediatric retinal detachment following open globe injury. <em>Ophthalmologica</em>. 2007;221(4):255-263.</li>
+<li>Sarrazin L, Averbukh E, Halpert M, Hemo I, Rumelt S. Traumatic pediatric retinal detachment: a comparison between open and closed globe injuries. <em>Am J Ophthalmol</em>. 2004;137(6):1042-1049.</li>
+<li>Ferrone PJ, Chaudhary KM. Pediatric rhegmatogenous retinal detachment repair. <em>Retina</em>. 2013;33(1):200-207.</li>
+</ol>
+<p><strong>Ouvrages et chapitres de référence</strong></p>
+<ol start="30">
+<li>Ryan SJ, Sadda SR, Hinton DR, et al. <em>Retina</em>. 6ᵉ éd. Elsevier ; volume « Surgical Retina », chapitres consacrés au décollement de rétine pédiatrique et aux vitréorétinopathies héréditaires.</li>
+<li>Hartnett ME. <em>Pediatric Retina</em>. 3ᵉ éd. Wolters Kluwer.</li>
+<li>Société Française d'Ophtalmologie. <em>Rapport SFO : Décollements de rétine</em>. Elsevier Masson.</li>
+<li>Kanski JJ, Bowling B. <em>Clinical Ophthalmology: A Systematic Approach</em>, chapitre « Retinal detachment ».</li>
+</ol>
+<p><em>Chapitre rédigé dans le cadre d'une thèse de doctorat en médecine. Les données chiffrées sont issues de séries rétrospectives hétérogènes et doivent être confrontées aux résultats de la série personnelle présentée dans le travail.</em></p>
+</section>
+    <p class="foot">Chapitre rédigé pour une thèse de doctorat en médecine. Les données chiffrées proviennent de séries rétrospectives hétérogènes et doivent être confrontées aux résultats de la série personnelle présentée dans le travail ; chaque référence est à vérifier sur la source primaire et à reformater selon le style bibliographique imposé par la faculté.</p>
+  </article>
+</div>
