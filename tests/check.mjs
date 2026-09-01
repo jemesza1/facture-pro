@@ -1034,15 +1034,27 @@ console.log('\nUnit of measure and carriage');
         `${register.ttc} + ${register.port} + ${register.timbre} vs ${register.net}`);
 
   /* The sheet is only right if the header, the widths and the data agree on
-     how many columns there are. */
+     how many columns there are.
+
+     Le mois est passe explicitement, et ce n'est pas un detail : sans
+     argument, exportJournalXlsx prend le mois courant, les factures semees
+     ici sont datees d'aout, et le 1er septembre la fonction a repondu
+     « aucune facture ce mois-ci » sans jamais creer de blob. La promesse
+     n'etait alors jamais tenue, l'evaluation restait suspendue jusqu'au
+     delai de Playwright, et le .catch avalait la panne en la faisant passer
+     pour un succes — mais la page ne s'en relevait pas et tout le reste de
+     la suite tombait. Un test qui depend du calendrier ne se voit pas le
+     jour ou on l'ecrit ; il se voit le premier du mois. */
   const sheet = await page.evaluate(async () => {
+    const ym = (state.invoices[0] && state.invoices[0].date || '').slice(0, 7);
     const dl = new Promise(r => { const o = URL.createObjectURL;
       URL.createObjectURL = b => { r(b); URL.createObjectURL = o; return o(b); }; });
-    exportJournalXlsx();
-    const blob = await dl;
-    return blob && blob.size > 0;
-  }).catch(() => null);
-  check('the sales journal still builds', sheet !== false, String(sheet));
+    exportJournalXlsx(ym);
+    const blob = await Promise.race([dl,
+      new Promise(r => setTimeout(() => r(null), 4000))]);
+    return blob ? blob.size > 0 : 'aucun classeur produit pour ' + ym;
+  }).catch((e) => String(e).slice(0, 80));
+  check('the sales journal still builds', sheet === true, String(sheet));
 
   await page.evaluate(() => { state.invoices = []; saveData(); });
 }
@@ -4680,6 +4692,120 @@ console.log('\nLa fiche Google Play');
         !/shots/.test(pkgSrc.scripts.build));
   const served = await fetch(`${BASE}/public/.well-known/assetlinks.json`);
   check('and the deployed tree really serves it', served.status === 200, String(served.status));
+}
+
+/* ---------------------------------------------------------------- *
+ * Les raccourcis clavier.
+ *
+ * Ils sont pilotes ici par de vraies touches, pas en appelant les fonctions
+ * a la main : ce qui casse dans un raccourci n'est presque jamais l'action,
+ * c'est la garde. Une lettre seule qui se declenche pendant la saisie ouvre
+ * une facture au premier caractere du nom d'un client, et aucun test qui
+ * appelle openNewInvoice() directement ne le verra.
+ * ---------------------------------------------------------------- */
+console.log('\nLes raccourcis clavier');
+{
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.showShortcuts === 'function', {timeout: 20000});
+  await pg.waitForTimeout(300);
+
+  /* « ? » ouvre l'aide, Escape la ferme — Escape appartient a b2b.js, et ce
+     test verifie surtout que keys.js ne le lui a pas repris. */
+  await pg.keyboard.press('Shift+Slash');
+  await pg.waitForTimeout(250);
+  const help = await pg.evaluate(() => {
+    const box = document.querySelector('#modal-root .modal');
+    return {
+      open: !!box,
+      rows: box ? box.querySelectorAll('kbd').length : 0,
+      /* openModal ne pose role/aria-labelledby que s'il trouve un .modal :
+         verifier le lien vers le titre, c'est verifier que l'appelant a
+         fourni l'enveloppe que le piege de focus attend. */
+      titled: !!(box && box.getAttribute('aria-labelledby') &&
+                 document.getElementById(box.getAttribute('aria-labelledby'))),
+      dialog: !!(box && box.getAttribute('role') === 'dialog' &&
+                 box.getAttribute('aria-modal') === 'true'),
+      raw: box ? /keys\./.test(box.textContent) : true
+    };
+  });
+  check('a question mark opens the shortcut list', help.open === true);
+  check('and it lists every shortcut', help.rows === 6, String(help.rows));
+  check('under a heading a screen reader can announce', help.titled === true);
+  check('and it is a dialog, so the focus trap holds it', help.dialog === true);
+  check('with no untranslated key left showing', help.raw === false);
+  await pg.keyboard.press('Escape');
+  await pg.waitForTimeout(250);
+  check('escape still closes it, as it always did',
+        await pg.evaluate(() => !document.querySelector('#modal-root .modal')));
+
+  /* n ouvre une facture. */
+  await pg.keyboard.press('n');
+  await pg.waitForTimeout(400);
+  check('n opens a new invoice',
+        await pg.evaluate(() => !!document.querySelector('#modal-root .modal')));
+
+  /* La garde. Le curseur est dans un champ : « n » doit s'ecrire, pas agir. */
+  const guarded = await pg.evaluate(() => {
+    const f = document.querySelector('#modal-root input[type="text"], #modal-root input:not([type])');
+    if (!f) return null;
+    f.focus(); f.value = '';
+    return true;
+  });
+  check('the invoice form offers a field to type in', guarded === true);
+  await pg.keyboard.type('nom');
+  await pg.waitForTimeout(200);
+  const typed = await pg.evaluate(() => {
+    const f = document.activeElement;
+    return {value: f ? f.value : '', modals: document.querySelectorAll('#modal-root .modal').length};
+  });
+  check('typing a name types it, and does not fire the shortcut',
+        typed.value === 'nom', typed.value);
+  check('and no second window was opened underneath', typed.modals === 1, String(typed.modals));
+
+  /* Ctrl+S enregistre le formulaire ouvert : on ne nomme aucune fonction,
+     on clique le bouton que la modale porte — ce qui reste vrai pour les
+     formulaires qui n'existent pas encore. */
+  const before = await pg.evaluate(() => state.invoices.length);
+  await pg.evaluate(() => {
+    const sel = document.getElementById('inv-client');
+    if (sel && sel.options.length > 1) { sel.selectedIndex = 1; sel.dispatchEvent(new Event('change', {bubbles: true})); }
+  });
+  await pg.keyboard.press('Control+s');
+  await pg.waitForTimeout(600);
+  const after = await pg.evaluate(() => ({
+    n: state.invoices.length,
+    closed: !document.querySelector('#modal-root .modal')
+  }));
+  check('control+s saves the form that is open', after.n === before + 1, `${before} -> ${after.n}`);
+  check('and the window closes behind it', after.closed === true);
+
+  /* « / » emmene au bon ecran et pose le curseur dans la recherche. */
+  await pg.evaluate(() => navigate('dashboard'));
+  await pg.waitForTimeout(200);
+  await pg.keyboard.press('/');
+  await pg.waitForTimeout(400);
+  const search = await pg.evaluate(() => ({
+    page: state.currentPage,
+    focused: document.activeElement && document.activeElement.id
+  }));
+  check('a slash goes to the invoices and lands in the search box',
+        search.page === 'invoices' && search.focused === 'inv-search',
+        `${search.page} / ${search.focused}`);
+
+  /* Et une fois dedans, « / » s'ecrit au lieu de tout recommencer. */
+  await pg.keyboard.type('n/9');
+  await pg.waitForTimeout(200);
+  check('and inside it, the same keys are just characters',
+        await pg.evaluate(() => document.getElementById('inv-search').value.indexOf('n/9') >= 0),
+        await pg.evaluate(() => document.getElementById('inv-search').value));
+
+  /* Le fichier est charge et mis en cache comme les autres. */
+  const appSrcK = await readFile(join(ROOT, 'app.js'), 'utf8');
+  const swSrcK = await readFile(join(ROOT, 'sw.js'), 'utf8');
+  check('the shortcuts are in the load order', /"keys\.js"/.test(appSrcK));
+  check('and in the offline shell', /'\/keys\.js'/.test(swSrcK));
+  await pg.close();
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));

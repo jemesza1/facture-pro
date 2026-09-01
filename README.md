@@ -457,7 +457,7 @@ shared state. The line in "The international generator" above is the line.
 
 ## Tests
 
-`cd tests && npm install && npm test` — 1001 checks against a real headless
+`cd tests && npm install && npm test` — 1017 checks against a real headless
 browser. **Run `npm run build` in the root first**, and not only for the
 international generator: eleven pages are written by the build, and the groups
 that check them read `public/`. A stale `public/` fails checks that have
