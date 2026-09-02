@@ -11,7 +11,7 @@
  */
 import { createServer } from 'node:http';
 import { existsSync, statSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -5210,6 +5210,22 @@ console.log('\nLes outils, depuis l\'application');
   /* Sans ce compte, un GROUPS renomme rendrait la tranche vide, la liste
      publiee vide, et la verification de derive passerait pour toujours en
      ne comparant rien. */
+  /* Le generateur lisait la version du shell pour ses scripts mais avait la
+     feuille de style ecrite en dur, restee six mois en arriere. Le meme
+     fichier etait alors demande sous deux adresses et garde deux fois dans le
+     cache du visiteur. Une seule empreinte pour tout le site. */
+  {
+    const V = ((await readFile(join(ROOT, 'app.js'), 'utf8')).match(/var V="([^"]+)"/) || [])[1];
+    const stamps = new Set();
+    for (const f of await readdir(join(ROOT, 'public'))) {
+      if (!f.endsWith('.html')) continue;
+      const raw = await readFile(join(ROOT, 'public', f), 'utf8');
+      (raw.match(/\?v=[A-Za-z0-9]+/g) || []).forEach(x => stamps.add(x.slice(3)));
+    }
+    check('every page asks for the same build of every shared file',
+          stamps.size === 1 && stamps.has(V), [...stamps].join(' ') + ' vs ' + V);
+  }
+
   /* Le generateur ne lit pas le markdown : il pose le texte tel quel. Une
      emphase ecrite **comme ceci** s'imprime avec ses etoiles sur une page que
      Google indexe. C'est arrive. */

@@ -494,7 +494,7 @@ const shell = (page) => {
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=${V}" />
 <style>
   :root{--brand:#006233;--brand2:#059669}
   body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
