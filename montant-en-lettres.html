@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#006233" />
 <title>Montant en lettres en dinars — gratuit | تحويل المبلغ إلى حروف</title>
-<meta name="description" content="Convertissez gratuitement un montant en dinars algériens (DZD) en toutes lettres — le « montant en lettre » d’une facture DZ, pour la mention « Arrêté la présente facture à la somme de » exigée par le décret 05-468. Sans inscription. تحويل المبلغ إلى حروف مجانًا." />
+<meta name="description" content="Convertissez gratuitement un montant en dinars algériens (DZD) en toutes lettres — le « montant en lettre » d’une facture DZ, pour la mention « Arrêté la présente facture à la somme de » exigée par le décret 05-468. En français et en arabe, sans inscription. تحويل المبلغ إلى حروف بالعربية والفرنسية مجانًا." />
 <meta name="author" content="CheMs SoUu" />
 <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://www.facturedz.com/montant-en-lettres.html" />
@@ -25,15 +25,21 @@
   body.ar{font-family:Cairo,system-ui,sans-serif}
   .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
   .out{direction:ltr;unicode-bidi:isolate;text-align:start}
-  input[type=number]{direction:ltr;text-align:start}
+  /* Inter n'a pas d'arabe : sans cette regle, la ligne arabe d'une page en
+     francais tombe sur la police de secours du systeme et ne ressemble a
+     rien de ce que porte le reste du site. */
+  [lang="ar"]{font-family:Cairo,system-ui,sans-serif}
+  #tbl-amounts tr+tr td{border-top:1px solid #eef2f7}
+  #amount{direction:ltr;text-align:start}
   @media (prefers-color-scheme: dark){
     body{background:#0b1220;color:#e2e8f0}
     .card{background:#111b2e;border-color:#1e293b}
+    #tbl-amounts tr+tr td{border-top-color:#1e293b}
   }
 </style>
 <!-- Last in the head: the Play CDN appended its <style> here, after the
      block above, and these pages were drawn against that cascade. -->
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260817h" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902d" />
 <link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="min-h-screen">
@@ -53,7 +59,7 @@
 
   <div class="card p-5 sm:p-6">
     <label id="lbl" class="block text-sm font-medium mb-2" for="amount">Montant en DA</label>
-    <input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="699720"
+    <input id="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="699720"
            class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
 
     <div class="mt-5">
@@ -61,8 +67,18 @@
       <p id="result" class="out text-lg font-semibold leading-relaxed min-h-[2rem]">—</p>
     </div>
 
+    <!-- La requete qui amene le plus de monde ici est « montant en lettre
+         arabe », et la page repondait en francais. Les deux lignes sont
+         donnees ensemble et dans les deux langues d'interface : la facture
+         porte le francais, le cheque et le client lisent l'arabe. -->
+    <div class="mt-4 pt-4" style="border-top:1px solid var(--tw-border,#e2e8f0)">
+      <p id="reslblAr" class="text-xs uppercase tracking-wide text-slate-400 mb-1">En arabe</p>
+      <p id="resultAr" class="text-lg font-semibold leading-loose min-h-[2rem]" dir="rtl" lang="ar" style="unicode-bidi:isolate;text-align:start">—</p>
+    </div>
+
     <div class="mt-4 flex flex-wrap gap-2">
       <button id="copy" class="px-4 py-2 rounded-xl text-white font-medium" style="background:var(--brand)">Copier</button>
+      <button id="copyAr" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-medium">Copier l’arabe</button>
       <button id="copyFull" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-medium">Copier la mention complète</button>
     </div>
     <p id="full" class="out mt-3 text-sm text-slate-500 italic"></p>
@@ -119,6 +135,53 @@
     </p>
   </section>
 
+  <!-- Un tableau, pas cinq cents pages. Les gens cherchent des sommes
+       precises — « 9000 dinars en lettres », « 100000 dinars en lettres »,
+       « 50000 dh en lettre » — et la reponse tient en une ligne chacune. On
+       les reunit ici plutot que de fabriquer une page par montant : ce
+       serait un ensemble de pages satellites, et celui qui arrive voit
+       aussitot les sommes voisines et le convertisseur au-dessus.
+       Les deux colonnes sortent de amountInWords et amountInWordsAr, et un
+       controle du harnais les recalcule : elles ne peuvent pas diverger de
+       l'outil sans faire echouer la suite. -->
+  <section class="card p-5 sm:p-6 mt-5" dir="ltr" lang="fr">
+    <h2 class="font-semibold mb-1">Les montants les plus demandés, écrits en toutes lettres</h2>
+    <p class="text-sm text-slate-500 mb-3">En français pour la facture, en arabe pour le chèque. Pour toute autre somme, le convertisseur ci-dessus.</p>
+    <div style="overflow-x:auto">
+      <table class="text-sm w-full" style="border-collapse:collapse">
+        <thead>
+          <tr class="text-xs uppercase tracking-wide text-slate-400 text-start">
+            <th class="py-2 pe-4 font-medium text-start">Montant</th>
+            <th class="py-2 pe-4 font-medium text-start">En toutes lettres</th>
+            <th class="py-2 font-medium text-start" dir="rtl" lang="ar">بالحروف</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-amounts" class="text-slate-600 dark:text-slate-400" style="border-top:1px solid #e2e8f0">
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">1 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">2 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Deux mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ألفا دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">3 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Trois mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ثلاثة آلاف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">5 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Cinq mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">خمسة آلاف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">9 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Neuf mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">تسعة آلاف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">10 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Dix mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">عشرة آلاف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">15 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Quinze mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">خمسة عشر ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">18 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Dix-huit mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ثمانية عشر ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">20 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Vingt mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">عشرون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">25 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Vingt-cinq mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">خمسة وعشرون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">30 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Trente mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ثلاثون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">50 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Cinquante mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">خمسون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">60 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Soixante mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ستون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">80 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Quatre-vingts mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">ثمانون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">100 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Cent mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">مائة ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">150 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Cent cinquante mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">مائة وخمسون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">170 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Cent soixante-dix mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">مائة وسبعون ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">200 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Deux cents mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">مائتا ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">500 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Cinq cents mille dinars</td><td class="py-1.5" dir="rtl" lang="ar">خمسمائة ألف دينار جزائري</td></tr>
+        <tr><td class="py-1.5 pe-4 font-semibold whitespace-nowrap" dir="ltr">1 000 000 DA</td><td class="py-1.5 pe-4" dir="ltr" lang="fr">Un million dinars</td><td class="py-1.5" dir="rtl" lang="ar">مليون دينار جزائري</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <div class="card p-5 sm:p-6 mt-5 flex flex-wrap items-center justify-between gap-3">
     <p id="ctaT" class="text-sm text-slate-600 dark:text-slate-400">Cette mention est ajoutée automatiquement à vos factures.</p>
     <a href="/" class="px-4 py-2 rounded-xl text-white font-medium shrink-0" style="background:var(--brand2)">
@@ -151,7 +214,7 @@
     <ul class="text-sm leading-7 mt-3" style="padding-inline-start:1.15rem;list-style:disc">
       <li>يُكتب المبلغ <b>الصافي للدفع</b>، أي بعد الرسم وحقّ الطابع إن وُجد.</li>
       <li>العملة تُذكَر: <b>دينار جزائري</b>، والسنتيمات إن وُجدت.</li>
-      <li>هذه الأداة تكتبه لك <b>بالفرنسية</b> كما يُكتب عادةً على الفواتير.</li>
+      <li>هذه الأداة تكتبه لك <b>بالفرنسية</b> كما يُكتب على الفواتير، <b>وبالعربية</b> كما يُكتب على الصكّ.</li>
     </ul>
     <p class="text-sm leading-7 mt-3">اكتب الرقم أعلاه وانسخ النتيجة إلى فاتورتك. مجاني وبلا تسجيل.</p>
   
@@ -165,19 +228,19 @@
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js?v=20260817h"></script>
+<script src="lib-calc.js?v=20260902d"></script>
 <script>
 (function(){
   var T={
     fr:{h1:'Montant en lettres',sub:'Écrivez un montant en dinars, obtenez la somme en toutes lettres pour votre facture.',
-        lbl:'Montant en DA',reslbl:'En toutes lettres',copy:'Copier',copyFull:'Copier la mention complète',
+        lbl:'Montant en DA',reslbl:'En toutes lettres',reslblAr:'En arabe',copy:'Copier',copyAr:'Copier l’arabe',copyFull:'Copier la mention complète',
         whyT:'Pourquoi cette mention ?',
         whyP:"Une facture algérienne doit porter le montant total arrêté en toutes lettres. La formule d’usage est « Arrêté la présente facture à la somme de… ». Le montant en lettres doit correspondre exactement au montant en chiffres — y compris le droit de timbre lorsque le règlement est en espèces.",
         ctaT:'Cette mention est ajoutée automatiquement à vos factures.',ctaB:'Créer une facture gratuitement',
         moreT:'Autres outils',m1:'Calcul du salaire net',m2:'Calcul de la TVA',m3:'Droit de timbre',m4:"Guide d'utilisation",
         other:'العربية',copied:'Copié',title:'Montant en lettres — convertisseur gratuit'},
     ar:{h1:'المبلغ بالحروف',sub:'اكتب المبلغ بالدينار، واحصل على الصيغة الحرفية لفاتورتك.',
-        lbl:'المبلغ بالدينار',reslbl:'بالحروف',copy:'نسخ',copyFull:'نسخ العبارة كاملة',
+        lbl:'المبلغ بالدينار',reslbl:'بالحروف بالفرنسية',reslblAr:'بالحروف بالعربية',copy:'نسخ',copyAr:'نسخ العربية',copyFull:'نسخ العبارة كاملة',
         whyT:'لماذا هذه العبارة؟',
         whyP:'يجب أن تحمل الفاتورة الجزائرية المبلغ الإجمالي محرَّرًا بالحروف، والصيغة المعتمدة هي « Arrêté la présente facture à la somme de… ». ويجب أن يطابق المبلغ بالحروف المبلغ بالأرقام تمامًا — بما في ذلك رسم الطابع عند الدفع نقدًا.',
         ctaT:'هذه العبارة تُضاف تلقائيًا إلى فواتيرك.',ctaB:'أنشئ فاتورة مجانًا',
@@ -192,17 +255,22 @@
     document.documentElement.lang=loc==='ar'?'ar':'fr';
     document.documentElement.dir=loc==='ar'?'rtl':'ltr';
     document.body.classList.toggle('ar',loc==='ar');
-    ['h1','sub','lbl','reslbl','whyT','whyP','ctaT','ctaB',
+    ['h1','sub','lbl','reslbl','reslblAr','whyT','whyP','ctaT','ctaB',
      'moreT','m1','m2','m3','m4'].forEach(function(k){$(k).textContent=d[k];});
-    $('copy').textContent=d.copy; $('copyFull').textContent=d.copyFull; $('lang').textContent=d.other;
+    $('copy').textContent=d.copy; $('copyAr').textContent=d.copyAr;
+    $('copyFull').textContent=d.copyFull; $('lang').textContent=d.other;
     render();
   }
 
   function render(){
-    var v=parseFloat($('amount').value);
-    if(!isFinite(v)||v<0){ $('result').textContent='—'; $('full').textContent=''; return; }
+    /* parseNum plutot que parseFloat : le champ est un texte depuis qu'on a
+       cesse de laisser Chromium avaler la virgule, et « 1 500,50 » doit
+       valoir mille cinq cents dinars et cinquante centimes. */
+    var v=parseNum($('amount').value);
+    if(!isFinite(v)||v<0){ $('result').textContent='—'; $('resultAr').textContent='—'; $('full').textContent=''; return; }
     var words=amountInWords(v);
     $('result').textContent=words;
+    $('resultAr').textContent=amountInWordsAr(v);
     $('full').textContent='Arrêté la présente facture à la somme de : '+words;
   }
 
@@ -223,6 +291,7 @@
 
   $('amount').addEventListener('input',render);
   $('copy').addEventListener('click',function(){ if($('result').textContent!=='—') copy($('result').textContent,this); });
+  $('copyAr').addEventListener('click',function(){ if($('resultAr').textContent!=='—') copy($('resultAr').textContent,this); });
   $('copyFull').addEventListener('click',function(){ if($('full').textContent) copy($('full').textContent,this); });
   $('lang').addEventListener('click',function(){
     loc=(loc==='fr')?'ar':'fr';

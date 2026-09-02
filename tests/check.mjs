@@ -410,6 +410,85 @@ console.log('\nPublic tool pages');
   check('and offers the full invoice wording',
         /Arrêté la présente facture à la somme de/.test(full), full);
 
+  /* « montant en lettre arabe » est la premiere requete de cette page, et la
+     reponse etait en francais. On verifie la chaine exacte, pas seulement la
+     presence d'arabe : le tamyiz et l'annexion sont precisement ce qui se
+     casse, et un test qui se contente de /[\u0600-\u06ff]/ laisserait passer
+     « مائتان دينار » pour « مائتا دينار ». */
+  const wordsAr = await tools.textContent('#resultAr');
+  check('the words page also answers in Arabic',
+        wordsAr.trim() === 'سبعمائة وثلاثة عشر ألفاً وسبعمائة وأربعة عشر ديناراً جزائرياً وأربعون سنتيماً', wordsAr);
+
+  /* Signale depuis un telephone : 506,30 rendait « Cinq cent six dinars ». Les
+     centimes etaient arrondis et disparaissaient — dans l'outil comme sur la
+     facture — alors que toute la raison d'etre de la mention est que les
+     lettres nomment exactement la somme ecrite en chiffres. */
+  await tools.fill('#amount', '506,30');
+  check('the centimes are spelled out, not rounded away',
+        (await tools.textContent('#result')).trim() === 'Cinq cent six dinars et trente centimes',
+        await tools.textContent('#result'));
+  check('and in Arabic too',
+        (await tools.textContent('#resultAr')).trim() === 'خمسمائة وستة دنانير جزائرية وثلاثون سنتيماً',
+        await tools.textContent('#resultAr'));
+  const singular = await tools.evaluate(() => [amountInWords(1), amountInWords(1.01), amountInWords(0)]);
+  check('one dinar is singular, and so is one centime',
+        singular[0] === 'Un dinar' && singular[1] === 'Un dinar et un centime', singular.join(' / '));
+  check('and an empty amount is still zero dinar', singular[2] === 'Zéro dinar', singular[2]);
+
+  const grammar = await tools.evaluate(() => [200, 2000, 3000, 11000, 50000, 100000, 200000,
+                                              1000000, 2000000, 101, 0, -4500]
+    .map(n => n + '=' + amountInWordsAr(n)));
+  const expected = [
+    '200=مائتا دينار جزائري',            /* annexion : le noun du duel tombe */
+    '2000=ألفا دينار جزائري',            /* idem sur ألفان */
+    '3000=ثلاثة آلاف دينار جزائري',      /* tamyiz pluriel de trois a dix */
+    '11000=أحد عشر ألف دينار جزائري',    /* singulier des onze, sans tanwin devant le nom */
+    '50000=خمسون ألف دينار جزائري',
+    '100000=مائة ألف دينار جزائري',
+    '200000=مائتا ألف دينار جزائري',
+    '1000000=مليون دينار جزائري',
+    '2000000=مليونا دينار جزائري',
+    '101=مائة ودينار جزائري واحد',       /* l'unite isolee passe apres la monnaie */
+    '0=صفر دينار جزائري',
+    '-4500=ناقص أربعة آلاف وخمسمائة دينار جزائري'  /* un avoir */
+  ];
+  for (let i = 0; i < expected.length; i++) {
+    check('Arabic wording: ' + expected[i].split('=')[0],
+          grammar[i] === expected[i], grammar[i]);
+  }
+
+  /* Le champ etait un input[type=number], ou Chromium efface la virgule tapee
+     au lieu de la refuser : « 1500,50 » y devenait 150050, et la page
+     annoncait cent cinquante mille dinars a qui en tapait mille cinq cents. */
+  await tools.fill('#amount', '1500,50');
+  const comma = await tools.textContent('#result');
+  check('a comma typed into the amount is read as a decimal separator',
+        comma.trim() === 'Mille cinq cents dinars et cinquante centimes', comma);
+
+  /* Le tableau des montants courants repond a des recherches precises
+     — « 9000 dinars en lettres » — sans fabriquer une page par montant. Il
+     est ecrit en dur dans le HTML pour qu'un robot le voie, donc rien
+     n'empeche mecaniquement une colonne de vieillir a cote de l'outil : on
+     recalcule chaque ligne avec les fonctions que la page charge. */
+  const table = await tools.evaluate(() => {
+    const rows = [...document.querySelectorAll('#tbl-amounts tr')];
+    return rows.map(tr => {
+      const c = [...tr.children].map(td => td.textContent.trim());
+      const n = Number(c[0].replace(/[^0-9]/g, ''));
+      return { n, fr: c[1], ar: c[2], wantFr: amountInWords(n), wantAr: amountInWordsAr(n) };
+    });
+  });
+  check('the reference table carries the amounts people search for',
+        table.length >= 15, table.length + ' rows');
+  check('and every French spelling in it comes from amountInWords',
+        table.every(r => r.fr === r.wantFr),
+        (table.find(r => r.fr !== r.wantFr) || {}).fr || 'all match');
+  check('and every Arabic spelling from amountInWordsAr',
+        table.every(r => r.ar === r.wantAr),
+        (table.find(r => r.ar !== r.wantAr) || {}).ar || 'all match');
+  check('and it is served in the HTML, not painted by script',
+        /9\s*000\s*DA/.test(await readFile(join(ROOT, 'montant-en-lettres.html'), 'utf8')));
+
   await tools.goto(`${BASE}/droit-de-timbre.html`);
   await tools.waitForFunction(() => typeof timbreFor === 'function', {timeout: 20000});
   await tools.fill('#amount', '699720');
@@ -5342,6 +5421,18 @@ console.log('\nUn papier qui s\'additionne');
         withCents.replace(/\n/g, ' | ').slice(0, 110));
   check('and one without keeps the round dinars it always had',
         !/,\d\d\s*DA/.test(whole), whole.replace(/\n/g, ' | ').slice(0, 110));
+
+  /* La meme perte de centimes que sur la page publique, mais sur le document
+     qui compte : la facture imprimait « 506,30 DA » en chiffres et « cinq cent
+     six dinars » en lettres. Les deux doivent nommer la meme somme — c'est la
+     seule raison d'etre de la mention, et en cas de desaccord ce sont les
+     lettres qui l'emportent. */
+  const mention = await pg.evaluate(() => amountInWords(calcInvoiceTotals(state.invoices[0]).net));
+  check('the invoice spells the centimes of its net', /et .+ centimes?$/.test(mention), mention);
+  check('and the paper carries exactly that wording', withCents.includes(mention),
+        (withCents.match(/Arrêté[^\n]*/) || [''])[0].slice(0, 120));
+  check('a round invoice keeps a mention without centimes',
+        !/centimes?/.test(await pg.evaluate(() => amountInWords(calcInvoiceTotals(state.invoices[1]).net))));
 
   /* Les vingt-neuf modeles portaient un nom et une description francais, et
      l'ecran arabe les affichait tels quels. */

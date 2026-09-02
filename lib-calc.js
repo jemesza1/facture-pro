@@ -19,12 +19,20 @@ function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','tr
    whole preview down with it. The wording is spelt out rather than made
    positive because the law asks the letters to match the figures, and the
    figures on an avoir are negative. */
+/* Les centimes etaient arrondis et disparaissaient : 506,30 s'arretait a
+   « cinq cent six dinars ». C'est precisement ce que la mention doit empecher
+   — les lettres et les chiffres d'une facture doivent nommer la meme somme, et
+   ici la facture disait 506,30 pendant que les lettres disaient 506. Les
+   centimes s'ecrivent apres le dinar, et un montant rond n'en porte pas. */
 function amountInWords(amount){
-  const v=Math.round(amount||0);
-  if(v===0)return'Zéro dinar';
-  const w=numberToWords(Math.abs(v));
-  const s=w.charAt(0).toUpperCase()+w.slice(1)+' dinars';
-  return v<0 ? 'Moins '+s.charAt(0).toLowerCase()+s.slice(1) : s;
+  const cents=Math.round(Math.abs(Number(amount)||0)*100);
+  if(cents===0)return'Zéro dinar';
+  const d=Math.floor(cents/100), c=cents%100;
+  let s=d===0 ? 'zéro dinar'
+      : numberToWords(d)+(d>1?' dinars':' dinar');
+  if(c) s+=' et '+numberToWords(c)+(c>1?' centimes':' centime');
+  s=s.charAt(0).toUpperCase()+s.slice(1);
+  return (Number(amount)||0)<0 ? 'Moins '+s.charAt(0).toLowerCase()+s.slice(1) : s;
 }
 
 /* ---- TVA ----
@@ -204,3 +212,134 @@ window.numOr = function (v, fallback) {
   var n = parseNum(v);
   return isFinite(n) ? n : fallback;
 };
+
+/* ---- Le montant en lettres, en arabe ----
+ *
+ * « montant en lettre arabe » est la requete qui amene le plus de monde sur
+ * l'outil, et jusqu'ici la page repondait en francais en s'en excusant. Ce
+ * qui suit ecrit reellement le nombre en arabe, dans la forme des cheques et
+ * des factures.
+ *
+ * Trois regles font tout le travail, et ce sont elles qui expliquent la
+ * longueur du code :
+ *
+ *   L'ordre. L'arabe dit l'unite avant la dizaine — « خمسة وعشرون », cinq et
+ *   vingt — mais la centaine avant l'unite. On ne peut donc pas se contenter
+ *   d'inverser la lecture francaise.
+ *
+ *   Le tamyiz. Le mot compte s'accorde avec le dernier element du nombre, pas
+ *   avec le nombre entier : trois mille donne « آلاف » au pluriel, cinquante
+ *   mille donne « ألفاً » au singulier accusatif, cent mille « ألف » nu.
+ *
+ *   L'annexion. Des qu'un nom suit — ici « دينار » — le duel et le tanwin
+ *   tombent : « ألفان » seul, mais « ألفا دينار » ; « خمسون ألفاً » seul, mais
+ *   « خمسون ألف دينار ». D'ou le drapeau `construct` : la meme somme ne
+ *   s'ecrit pas pareil selon qu'elle est suivie de la monnaie ou non.
+ */
+(function () {
+  var ONES = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+  var TEENS = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر',
+               'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+  var TENS = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+  var HUND = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة',
+              'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+
+  /* ألف / مليون / مليار : quatre formes chacun, choisies par le dernier
+     element du groupe, plus une cinquieme quand un nom suit. */
+  var SCALES = [
+    null,
+    { one: 'ألف',   two: 'ألفان',   dual: 'ألفا',   few: 'آلاف',    many: 'ألفاً',   bare: 'ألف' },
+    { one: 'مليون', two: 'مليونان', dual: 'مليونا', few: 'ملايين',  many: 'مليوناً', bare: 'مليون' },
+    { one: 'مليار', two: 'ملياران', dual: 'مليارا', few: 'مليارات', many: 'ملياراً', bare: 'مليار' }
+  ];
+
+  function under100(n) {
+    if (n < 10) return ONES[n];
+    if (n < 20) return TEENS[n - 10];
+    var u = n % 10, t = Math.floor(n / 10);
+    return u ? ONES[u] + ' و' + TENS[t] : TENS[t];
+  }
+
+  /* `construct` ne concerne que deux cents : « مائتان » isole, « مائتا ألف »
+     annexe. */
+  function under1000(n, construct) {
+    var h = Math.floor(n / 100), r = n % 100;
+    var head = h ? (construct && h === 2 ? 'مائتا' : HUND[h]) : '';
+    if (!r) return head;
+    return head ? head + ' و' + under100(r) : under100(r);
+  }
+
+  /* Un groupe de trois chiffres suivi de son ordre de grandeur. `construct`
+     vaut vrai quand la monnaie viendra juste apres. */
+  function group(g, level, construct) {
+    /* Deux cents dinars sont « مائتا دينار » et non « مائتان دينار » : la
+       centaine aussi tombe en annexion, mais seulement quand elle finit le
+       nombre — « مائتان وخمسة دنانير » garde son noun. */
+    if (!level) return under1000(g, construct && g % 100 === 0);
+    var s = SCALES[level], rem = g % 100;
+    if (g === 1) return s.one;
+    if (g === 2) return construct ? s.dual : s.two;
+    if (g <= 10) return under1000(g) + ' ' + s.few;
+    if (rem === 0) return under1000(g, true) + ' ' + s.bare;
+    if (rem >= 3 && rem <= 10) return under1000(g) + ' ' + s.few;
+    return under1000(g) + ' ' + (construct ? s.bare : s.many);
+  }
+
+  /* construct : le nombre sera suivi d'un nom. Seul le dernier groupe change. */
+  function words(n, construct) {
+    n = Math.floor(Math.abs(Number(n) || 0));
+    if (n === 0) return 'صفر';
+    if (n >= 1e12) return String(n);
+    var parts = [], levels = [], g = [];
+    for (var i = 0; n > 0 && i < 4; i++) { g.push(n % 1000); n = Math.floor(n / 1000); }
+    var last = 0;
+    for (var j = 0; j < g.length; j++) if (g[j]) { last = j; break; }
+    for (var k = g.length - 1; k >= 0; k--) {
+      if (!g[k]) continue;
+      parts.push(group(g[k], k, construct && k === last));
+      levels.push(k);
+    }
+    return parts.join(' و');
+  }
+
+  /* Le dinar s'accorde lui aussi, et sur le meme dernier element : deux
+     dinars sont un duel, trois a dix un pluriel brise, onze a
+     quatre-vingt-dix-neuf un singulier accusatif, et apres « ألف » un
+     singulier nu. */
+  function currency(n) {
+    if (n % 1000 === 0 && n >= 1000) return 'دينار جزائري';
+    if (n === 1) return 'دينار جزائري واحد';
+    if (n === 2) return 'ديناران جزائريان';
+    var rem = n % 100;
+    if (rem >= 3 && rem <= 10) return 'دنانير جزائرية';
+    if (rem === 0) return 'دينار جزائري';
+    return 'ديناراً جزائرياً';
+  }
+
+  /* Le centime a son propre accord, sur le meme principe que le dinar. */
+  function centimes(c) {
+    if (c === 1) return 'سنتيم واحد';
+    if (c === 2) return 'سنتيمان اثنان';
+    if (c <= 10) return words(c, false) + ' سنتيمات';
+    return words(c, false) + ' سنتيماً';
+  }
+
+  window.numberToWordsAr = function (n) { return words(n, false); };
+  /* Les deux lignes de la meme page doivent nommer la meme somme, centimes
+     compris : elles s'arretent donc au meme endroit que amountInWords. */
+  window.amountInWordsAr = function (amount) {
+    var cents = Math.round(Math.abs(Number(amount) || 0) * 100);
+    if (cents === 0) return 'صفر دينار جزائري';
+    var a = Math.floor(cents / 100), c = cents % 100, v = (Number(amount) || 0) < 0 ? -1 : 1, s;
+    if (a === 0) { s = 'صفر دينار جزائري و' + centimes(c); return v < 0 ? 'ناقص ' + s : s; }
+    if (a === 1 || a === 2) s = currency(a);
+    /* Cent un dinars ne se dit pas « مائة وواحد ديناراً » : l'unite isolee
+       s'efface devant la monnaie, qui se met au singulier et prend le nombre
+       apres elle — « مائة ودينار جزائري واحد ». Le cas ne se presente que
+       quand la dizaine est nulle : vingt et un reste « واحد وعشرون ديناراً ». */
+    else if (a % 100 === 1 || a % 100 === 2) s = words(a - (a % 100), false) + ' و' + currency(a % 100);
+    else s = words(a, true) + ' ' + currency(a);
+    if (c) s += ' و' + centimes(c);
+    return v < 0 ? 'ناقص ' + s : s;
+  };
+})();
