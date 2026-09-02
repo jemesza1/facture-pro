@@ -16,6 +16,12 @@
          documents on restore, which works, so nothing was visibly broken —
          but it guessed what the file could have carried. */
       nextAvoirNumber:state.nextAvoirNumber||1,
+      /* Et la troisieme serie, restee dehors quand applyBackup s'est mis a la
+         lire. Sans elle le compteur est reconstruit depuis les bons presents
+         dans le fichier : juste tant qu'aucun n'a ete supprime, faux des
+         qu'un l'a ete, et deux bons de livraison finissent par porter le
+         meme numero. */
+      nextBlNumber:state.nextBlNumber||1,
       products:state.products||[],
       devis:state.devis||[],
       payments:state.payments||[],

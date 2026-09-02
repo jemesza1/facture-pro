@@ -2220,6 +2220,26 @@ check('the backup carries the récurrences', payload.recurring.length === 1);
 check('the backup carries the avoir counter', payload.nextAvoirNumber === 7, String(payload.nextAvoirNumber));
 check('the backup carries the devis counter', payload.nextDevisNumber === 4, String(payload.nextDevisNumber));
 
+/* La troisieme serie etait restee dehors : applyBackup lisait nextBlNumber,
+   buildBackup ne l'ecrivait pas. Le compteur etait donc reconstruit depuis les
+   bons presents dans le fichier — juste tant qu'aucun n'a ete supprime, faux
+   des qu'un l'a ete, et deux bons de livraison finissent par porter le meme
+   numero chez un client qui les a deja recus. */
+const bl = await page.evaluate(() => {
+  state.invoices = [{id:'bl1', number:'BL-2026-004', type:'bl', clientId:'c1',
+                     date:'2026-05-03', status:'envoyee', paymentMode:'virement',
+                     items:[{description:'x', qty:1, unitPrice:0, tva:0}]}];
+  /* Neuf bons emis, cinq supprimes depuis : le fichier n'en montre qu'un. */
+  state.nextBlNumber = 9;
+  const saved = JSON.parse(JSON.stringify(window.buildBackup()));
+  state.invoices = []; delete state.nextBlNumber;
+  const ok = window.applyBackup(saved);
+  return {carried: saved.nextBlNumber, ok, after: state.nextBlNumber};
+});
+check('the backup carries the delivery-note counter too', bl.carried === 9, String(bl.carried));
+check('and a restore does not hand out a number already given to a customer',
+      bl.ok && bl.after === 9, String(bl.after));
+
 /* An emptied ledger restored from its own backup must come back whole. This
    is the path a merchant walks after a cleared cache or a new phone. */
 const trip = await page.evaluate(() => {
