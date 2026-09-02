@@ -59,8 +59,17 @@ function createAvoir(invoiceId){
        of Créances and away from the sweep that stamps invoices "en retard". */
     status:'payee',
     /* Carried over so the stamp duty is credited back exactly as it was
-       charged: on a cash invoice it was part of what the client paid. */
+       charged: on a cash invoice it was part of what the client paid.
+
+       Le port l'accompagne, et ce n'est pas un detail de forme : le timbre est
+       calcule sur ttc + port (a.js, calcInvoiceTotals). Sans le port, l'avoir
+       recalcule le timbre sur une base plus petite et ne rend pas ce qui a ete
+       pris. Une facture de 77 546 DA entierement avoiree laissait 5 075 DA de
+       chiffre d'affaires fantome et 75 DA de timbre au journal du mois — pour
+       une operation qui doit se solder a zero. Le port a ete ajoute a
+       l'application apres l'avoir, et personne n'est revenu ici. */
     paymentMode:src.paymentMode,
+    fraisPort:Number(src.fraisPort)||0,
     items:JSON.parse(JSON.stringify(src.items||[])),
     notes:t('avoir.notes').replace('{n}',src.number)
   });

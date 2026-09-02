@@ -4808,6 +4808,137 @@ console.log('\nLes raccourcis clavier');
   await pg.close();
 }
 
+const _i18nSrc = await readFile(join(ROOT, 'i18n.js'), 'utf8');
+const _I18N = (() => {
+  const a = _i18nSrc.indexOf('const I18N='), b = _i18nSrc.indexOf('let locale');
+  return eval('(' + _i18nSrc.slice(a + 11, b).trim().replace(/;$/, '') + ')');
+})();
+const _pick = (o, p) => p.split('.').reduce((x, k) => x && x[k], o);
+const t_fr = (k) => _pick(_I18N.fr, k);
+const t_ar = (k) => _pick(_I18N.ar, k);
+
+/* ---------------------------------------------------------------- *
+ * Six defauts trouves en conduisant l'application, pas en la lisant.
+ *
+ * Mille dix-sept verifications les avaient laisses passer, et la raison est
+ * la meme pour tous : chacun n'apparait que dans un ENCHAINEMENT — avoirer
+ * une facture qui porte un port, vider les exemples puis recharger, taper
+ * zero au lieu de rien, ouvrir deux onglets. Une verification qui appelle
+ * une fonction avec un objet bien forme ne les rencontre jamais.
+ * ---------------------------------------------------------------- */
+console.log('\nCe qui ne se voit qu\'en enchainant');
+{
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.createAvoir === 'function', {timeout: 20000});
+  await pg.evaluate(() => { window.confirm = () => true; });
+
+  /* 1. L'avoir et le port. Le timbre se calcule sur ttc + port ; un avoir qui
+     ne reprend pas le port le recalcule sur une base plus petite et ne rend
+     pas ce qui a ete pris. 77 546 DA entierement avoires laissaient 5 075 DA
+     de chiffre d'affaires fantome au journal du mois. */
+  const avoir = await pg.evaluate(() => {
+    state.clients = [{id: 'k1', name: 'Client', nif: '000000000000000'}];
+    state.invoices = [{id: 'f1', number: 'FAC-2026-001', clientId: 'k1', template: 'algerie',
+                       date: '2026-09-01', status: 'envoyee', paymentMode: 'especes',
+                       fraisPort: 5000, items: [{description: 'M', qty: 2, unitPrice: 30000, tva: 19}]}];
+    state.nextAvoirNumber = 1; saveData();
+    createAvoir('f1');
+    const src = state.invoices.find(i => i.id === 'f1');
+    const av = state.invoices.find(i => i.id !== 'f1');
+    const a = calcInvoiceTotals(src), b = calcInvoiceTotals(av);
+    return {nets: Math.round((a.net + b.net) * 100) / 100,
+            duty: Math.round((a.timbre + b.timbre) * 100) / 100,
+            port: b.port};
+  });
+  check('a full credit note nets the invoice to zero', avoir.nets === 0, String(avoir.nets));
+  check('and hands back every dinar of stamp duty', avoir.duty === 0, String(avoir.duty));
+  check('because the carriage travels onto it too', avoir.port === -5000, String(avoir.port));
+
+  /* 2. Zero n'est pas rien. parseFloat(v)||19 rendait 19 % pour une ligne
+     exoneree, sur le devis puis sur la facture qui en sort. */
+  const zero = await pg.evaluate(async () => {
+    state.devis = []; state.nextDevisNumber = 1; saveData();
+    openDevisModal();
+    await new Promise(r => setTimeout(r, 250));
+    document.getElementById('dev-client').value = 'k1';
+    document.querySelector('.di-desc').value = 'Export hors TVA';
+    document.querySelector('.di-qty').value = '0';
+    document.querySelector('.di-price').value = '80000';
+    document.querySelector('.di-tva').value = '0';
+    saveDevis();
+    await new Promise(r => setTimeout(r, 250));
+    return state.devis[0] ? state.devis[0].items[0] : null;
+  });
+  check('a zero-rated line stays at zero per cent', zero && zero.tva === 0, JSON.stringify(zero));
+  check('and a quantity of zero stays zero', zero && zero.qty === 0, JSON.stringify(zero));
+  check('the helper tells nothing from zero', await pg.evaluate(
+    () => numOr('', 19) === 19 && numOr('0', 19) === 0 && numOr('abc', 1) === 1 && numOr('2.5', 1) === 2.5));
+
+  /* 3. Une ligne chiffree sans designation etait retiree en silence, et
+     l'application annoncait « facture enregistree ». */
+  const muette = await pg.evaluate(async () => {
+    state.invoices = []; state.nextInvoiceNumber = 1; saveData();
+    openNewInvoice();
+    await new Promise(r => setTimeout(r, 250));
+    document.getElementById('inv-client').value = 'k1';
+    const rows = document.querySelectorAll('.item-row');
+    rows[0].querySelector('.item-desc').value = 'Vraie ligne';
+    rows[0].querySelector('.item-qty').value = '1';
+    rows[0].querySelector('.item-price').value = '1000';
+    addInvoiceItem();
+    await new Promise(r => setTimeout(r, 200));
+    document.querySelectorAll('.item-row')[1].querySelector('.item-price').value = '50000';
+    saveInvoice();
+    await new Promise(r => setTimeout(r, 300));
+    return state.invoices.length;
+  });
+  check('a priced line with no name refuses the save instead of vanishing',
+        muette === 0, String(muette));
+
+  /* 4. moneyUI rend du HTML. L'echapper affichait « <bdi>5 000 DA</bdi> »
+     dans la fenetre qui s'ouvre toute seule au demarrage. */
+  const rec = await pg.evaluate(() => {
+    state.recurring = [{id: 'r1', clientId: 'k1', template: 'algerie', period: 'mois',
+                        active: true, nextDate: '2026-01-01', paymentMode: 'virement',
+                        items: [{description: 'Loyer', qty: 1, unitPrice: 5000, tva: 19}]}];
+    saveData();
+    askRecurring();
+    const m = document.querySelector('#modal-root .modal');
+    const r = {text: m ? m.innerText : '', bdi: m ? m.querySelectorAll('bdi').length : 0};
+    closeModal();
+    return r;
+  });
+  check('the recurring window shows amounts, not markup',
+        rec.text.indexOf('<bdi>') < 0 && rec.text.length > 0, rec.text.slice(0, 70));
+  check('and the amount is isolated from the reading direction', rec.bdi > 0, String(rec.bdi));
+
+  /* 5. Le registre vide est une decision. Il etait re-seme au chargement
+     suivant, ce qui remettait quatre factures inventees dans le journal du
+     mois et faisait reculer nextInvoiceNumber sur des numeros deja emis. */
+  const aSrc = await readFile(join(ROOT, 'a.js'), 'utf8');
+  check('the demo is seeded on a first visit, not on an empty ledger',
+        /if\(!loadFailed&&!raw\)seedDemoData\(\);/.test(aSrc));
+
+  /* 6. Deux onglets. Chaque ecriture porte un numero d'ordre, et celui qui
+     est en retard adopte au lieu d'ecraser. */
+  const exSrc = await readFile(join(ROOT, 'extra.js'), 'utf8');
+  check('every write is stamped with an order number', /__rev:_fpRev/.test(exSrc));
+  check('and a stale tab is refused rather than obeyed', /live>_fpRev/.test(exSrc));
+  check('and told why, in both languages',
+        !!t_fr('toast.staleTab') && !!t_ar('toast.staleTab'));
+  check('and the other tab adopts what was written',
+        /addEventListener\('storage'/.test(exSrc));
+
+  /* 7. Le repli d'urgence, quand la memoire du navigateur est pleine, ecrit
+     une charge sans produits, devis, paiements, depenses ni recurrentes. On
+     n'y a droit que s'il n'y a rien a y perdre. */
+  check('the emergency save cannot drop five sections without saying so',
+        /rienAPerdre/.test(exSrc));
+
+  await pg.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

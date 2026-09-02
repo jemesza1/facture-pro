@@ -90,11 +90,25 @@ function saveInvoice(editId){
   const clientId=document.getElementById('inv-client').value;
   if(!clientId)return toast(t('toast.pickClient'),'err');
   const items=[];
+  /* Une ligne sans designation est ignoree — c'est voulu, la derniere ligne
+     vide du formulaire ne doit pas entrer dans la facture. Mais une ligne qui
+     porte un prix ou une quantite et pas de mot n'est pas une ligne vide :
+     c'est une ligne qu'on a oublie de nommer, et la faire disparaitre en
+     annoncant « facture enregistree » retire de l'argent du document sans
+     le dire. On la compte, et on refuse d'enregistrer. */
+  let nommees=0, muettes=0;
   document.querySelectorAll('.item-row').forEach(row=>{
     const desc=row.querySelector('.item-desc').value.trim();
-    if(!desc)return;
+    if(!desc){
+      const q=parseFloat(row.querySelector('.item-qty').value);
+      const p=parseFloat(row.querySelector('.item-price').value);
+      if((isFinite(q)&&q!==0)||(isFinite(p)&&p!==0)) muettes++;
+      return;
+    }
+    nommees++;
     items.push({description:desc,qty:parseFloat(row.querySelector('.item-qty').value)||0,unite:(row.querySelector('.item-unit').value||'').trim(),unitPrice:parseFloat(row.querySelector('.item-price').value)||0,tva:parseFloat(row.querySelector('.item-tva').value)||0});
   });
+  if(muettes)return toast(t('toast.lineNoDesc'),'err');
   if(!items.length)return toast(t('toast.addLine'),'err');
   const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',fraisPort:parseFloat((document.getElementById('inv-port')||{}).value)||0,items,notes:document.getElementById('inv-notes').value.trim()};
   if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);

@@ -187,9 +187,9 @@
       if(!desc) return;
       items.push({
         description:desc,
-        qty:parseFloat(row.querySelector('.ri-qty').value)||1,
+        qty:numOr(row.querySelector('.ri-qty').value,1),
         unitPrice:parseFloat(row.querySelector('.ri-price').value)||0,
-        tva:parseFloat(row.querySelector('.ri-tva').value)||19
+        tva:numOr(row.querySelector('.ri-tva').value,19)
       });
     });
     if(!items.length) return toast(t('toast.addLine'),'err');
@@ -284,11 +284,16 @@
     if(!due.length) return false;
     var rows=due.map(function(d){
       var c=(typeof getClient==='function') ? getClient(d.rule.clientId) : {name:''};
-      var amount=(typeof moneyUI==='function') ? moneyUI(d.ht) : String(d.ht);
+      /* moneyUI rend du HTML — un <bdi> qui empeche l'algorithme bidi de
+         retourner « 5 000 د.ج ». Le passer dans esc() plus bas affichait donc
+         les balises en toutes lettres, dans la fenetre qui s'ouvre toute seule
+         au demarrage. On echappe la branche de secours ici, et on laisse
+         passer le HTML de moneyUI tel quel. */
+      var amount=(typeof moneyUI==='function') ? moneyUI(d.ht) : esc(String(d.ht));
       return '<div class="flex items-center justify-between gap-3 py-2 border-b border-slate-100 dark:border-slate-800">'+
              '<div class="min-w-0"><p class="font-medium truncate">'+esc(c.name||'')+'</p>'+
              '<p class="text-xs text-slate-500 ltr-code">'+esc(d.date)+'</p></div>'+
-             '<span class="font-semibold whitespace-nowrap">'+esc(amount)+'</span></div>';
+             '<span class="font-semibold whitespace-nowrap">'+amount+'</span></div>';
     }).join('');
     openModal('<div class="modal" onclick="event.stopPropagation()">'+
       '<div class="modal-header"><h3 class="font-semibold">'+esc(t('rec.askTitle'))+'</h3>'+

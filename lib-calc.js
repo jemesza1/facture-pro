@@ -136,3 +136,13 @@ function waLink(phone, text){
   var n = waNumber(phone);
   return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(text) : '';
 }
+
+/* Lire un nombre saisi, avec un defaut — sans confondre « zero » et « vide ».
+   Trois editeurs ecrivaient parseFloat(v)||19 pour le taux de TVA : un
+   commercant qui tapait 0 sur une ligne exoneree se retrouvait avec 19 %,
+   sur le devis, sur la facture recurrente, puis sur la facture emise et son
+   papier. Le ou-logique ne distingue pas 0 de NaN ; isFinite, si. */
+window.numOr = function (v, fallback) {
+  var n = parseFloat(v);
+  return isFinite(n) ? n : fallback;
+};

@@ -12,11 +12,40 @@
     if(!state.nextDevisNumber) state.nextDevisNumber=1;
   }
 
+  /* Deux onglets ouverts sur la meme application ecrivaient la meme cle sans
+     se voir. L'onglet A emettait une facture, l'onglet B — charge avant —
+     enregistrait n'importe quoi ensuite et rendait l'etat qu'il avait en
+     memoire : la facture de A disparaissait du registre, son numero etait
+     redistribue a un autre client, et A continuait de l'afficher, imprimable
+     et envoyable. Un document hors registre, dont le numero appartient a
+     quelqu'un d'autre.
+
+     Chaque ecriture porte donc un numero d'ordre. On refuse d'ecrire par
+     dessus plus recent que soi, et l'evenement storage plus bas fait adopter
+     a l'onglet en retard ce que l'autre vient d'ecrire — de sorte que le
+     refus reste l'exception et non l'etat permanent. */
+  var _fpRev=0;
+  function _fpStoredRev(){
+    try{
+      var r=localStorage.getItem(STORAGE_KEY);
+      if(!r) return 0;
+      var m=/"__rev":(\d+)/.exec(r);
+      return m?parseInt(m[1],10):0;
+    }catch(e){ return 0; }
+  }
+
   var _save=window.saveData;
   window.saveData=function(){
     ensure();
+    var live=_fpStoredRev();
+    if(live>_fpRev){
+      try{toast(t('toast.staleTab'),'err');}catch(e){}
+      return;
+    }
+    _fpRev=live+1;
     try{
       localStorage.setItem(STORAGE_KEY,JSON.stringify({
+        __rev:_fpRev,
         company:state.company,
         clients:state.clients,
         invoices:state.invoices,
@@ -35,8 +64,35 @@
     }catch(e){
       /* The fallback used to write the same oversized payload through the a.js
          version, throw again, and let the error escape — the user saw nothing
-         and kept working on data that was no longer being stored. */
-      try{ if(typeof _save==='function') _save(); window.__saveWarned=false; return; }catch(e2){}
+         and kept working on data that was no longer being stored.
+
+         Mais ce recours ecrit une charge SANS produits, devis, paiements,
+         depenses ni recurrentes : il tenait sur mille factures parce que ces
+         listes etaient vides. Avec quatre cents devis dedans, il reussissait,
+         n'avertissait de rien, et cinq sections disparaissaient au
+         rechargement suivant — l'ecran continuant de les montrer jusque-la.
+         On n'y a donc droit que s'il n'y a rien a y perdre. Avant cela, on
+         rend la seule chose qui ne coute rien : la copie que le dernier
+         import laisse derriere lui et que personne ne relit. */
+      try{ localStorage.removeItem(STORAGE_KEY+'_avant_import'); }catch(e0){}
+      try{
+        localStorage.setItem(STORAGE_KEY,JSON.stringify({
+          __rev:_fpRev,
+          company:state.company, clients:state.clients, invoices:state.invoices,
+          nextInvoiceNumber:state.nextInvoiceNumber, currentPage:state.currentPage,
+          products:state.products, devis:state.devis, payments:state.payments,
+          expenses:state.expenses, recurring:state.recurring,
+          nextDevisNumber:state.nextDevisNumber, nextAvoirNumber:state.nextAvoirNumber,
+          nextBlNumber:state.nextBlNumber
+        }));
+        window.__saveWarned=false; return;
+      }catch(e1){}
+      var rienAPerdre = !((state.products||[]).length || (state.devis||[]).length ||
+                          (state.payments||[]).length || (state.expenses||[]).length ||
+                          (state.recurring||[]).length);
+      if(rienAPerdre){
+        try{ if(typeof _save==='function') _save(); window.__saveWarned=false; return; }catch(e2){}
+      }
       if(!window.__saveWarned){
         window.__saveWarned=true;
         try{toast(t('toast.saveFailed'),'err');}catch(e3){}
@@ -52,6 +108,7 @@
       var r=localStorage.getItem(STORAGE_KEY);
       if(!r) return;
       var d=JSON.parse(r);
+      _fpRev=Number(d.__rev)||0;
       if(Array.isArray(d.products)) state.products=d.products;
       if(Array.isArray(d.devis)) state.devis=d.devis;
       if(Array.isArray(d.payments)) state.payments=d.payments;
@@ -60,6 +117,16 @@
       if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
     }catch(e){}
   };
+
+  /* L'autre onglet vient d'ecrire : on relit et on repeint, plutot que de
+     laisser cet onglet-ci travailler sur un registre perime — c'est ce qui
+     rend le refus ci-dessus rare au lieu de bloquant. L'evenement ne se
+     declenche que dans les AUTRES onglets, jamais dans celui qui a ecrit. */
+  window.addEventListener('storage', function (e) {
+    if(e.key!==STORAGE_KEY || !e.newValue) return;
+    try{ loadData(); }catch(err){ return; }
+    try{ renderPage(); }catch(err){}
+  });
 
   var _render=window.renderPage;
   window.renderPage=function(){
@@ -227,9 +294,9 @@
       if(!desc) return;
       items.push({
         description:desc,
-        qty:parseFloat(row.querySelector('.di-qty').value)||1,
+        qty:numOr(row.querySelector('.di-qty').value,1),
         unitPrice:parseFloat(row.querySelector('.di-price').value)||0,
-        tva:parseFloat(row.querySelector('.di-tva').value)||19
+        tva:numOr(row.querySelector('.di-tva').value,19)
       });
     });
     if(!items.length) return toast(locale==='ar'?'\u0623\u0636\u0641 \u0628\u0646\u062f\u0627\u064b':'Ajoutez une ligne','err');
