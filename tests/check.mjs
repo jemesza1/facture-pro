@@ -3956,7 +3956,82 @@ console.log('\nLe relevé et les créances tombent sur le même nombre');
         drift === 3, String(drift));
 }
 
+/* Minuit et demi a Alger.
+ *
+ * Vingt et un endroits lisaient la date en UTC. L'Algerie vit une heure
+ * devant : entre minuit et une heure du matin, une facture etablie
+ * aujourd'hui portait la date d'hier — et la date d'une facture la rattache a
+ * un exercice et a un G50. Le commercant qui ferme boutique et fait ses
+ * papiers dans la foulee est precisement celui a qui cela arrive.
+ *
+ * On fige l'horloge a 00 h 30, heure d'Alger, et on regarde ce que le
+ * formulaire propose. */
+console.log('\nMinuit et demi a Alger');
+{
+  const ctx = await browser.newContext({timezoneId: 'Africa/Algiers'});
+  await ctx.clock.setFixedTime(new Date(Date.UTC(2026, 8, 2, 23, 30, 0)));
+  const pg = await ctx.newPage();
+  await pg.goto(`${BASE}/index.html?app=1`);
+  await pg.waitForFunction(() => typeof todayISO === 'function', {timeout: 30000});
+  const d = await pg.evaluate(() => ({
+    local: todayISO(),
+    utc: new Date().toISOString().slice(0, 10),
+    zone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  }));
+  check('the clock is really an hour behind midnight in Algiers',
+        d.zone === 'Africa/Algiers' && d.utc === '2026-09-02', JSON.stringify(d));
+  check('and today is read from the local calendar, not from Greenwich',
+        d.local === '2026-09-03', d.local);
+
+  await pg.evaluate(() => {
+    state.clients = [{id: 'k', name: 'C'}]; state.invoices = []; saveData(); openNewInvoice();
+  });
+  await pg.waitForTimeout(500);
+  check('so a new invoice is dated today, not yesterday',
+        (await pg.inputValue('#inv-date')) === '2026-09-03',
+        await pg.inputValue('#inv-date'));
+  await ctx.close();
+}
+
 console.log('\nFactures récurrentes');
+{
+  /* Le jour du mois est une decision : le loyer tombe le 31. Il se perdait
+     deux fois. Par debordement d'abord — fevrier n'a pas de 31, le report
+     ramenait au 28, et le mois suivant repartait de ce 28 : l'echeance
+     devenait celle du 28 pour toujours, alors que mars en a bien un. Sans
+     rattrapage du tout ensuite, sur l'annuel : le 29 fevrier plus un an
+     rendait le 1er mars, et l'echeance changeait de mois. */
+  const dates = await page.evaluate(() => {
+    const chain = (start, freq, anchor, n) => {
+      const out = [start]; let d = start;
+      for (let i = 0; i < n; i++) { d = addRecurringPeriod(d, freq, anchor); out.push(d); }
+      return out;
+    };
+    return {
+      month31: chain('2026-01-31', 'month', 31, 6),
+      leap: chain('2024-02-29', 'year', 29, 4),
+      plain: chain('2026-01-15', 'month', 15, 3),
+      week: addRecurringPeriod('2026-01-28', 'week'),
+      yearEnd: addRecurringPeriod('2026-12-31', 'month', 31),
+      noAnchor: addRecurringPeriod('2026-03-15', 'month')
+    };
+  });
+  check('a monthly rule set on the 31st comes back to the 31st after February',
+        dates.month31.join(' ') ===
+        '2026-01-31 2026-02-28 2026-03-31 2026-04-30 2026-05-31 2026-06-30 2026-07-31',
+        dates.month31.join(' '));
+  check('a yearly rule on 29 February stays in February',
+        dates.leap.join(' ') === '2024-02-29 2025-02-28 2026-02-28 2027-02-28 2028-02-29',
+        dates.leap.join(' '));
+  check('an ordinary day of the month is untouched',
+        dates.plain.join(' ') === '2026-01-15 2026-02-15 2026-03-15 2026-04-15',
+        dates.plain.join(' '));
+  check('a weekly rule still adds seven days', dates.week === '2026-02-04', dates.week);
+  check('and December rolls into January', dates.yearEnd === '2027-01-31', dates.yearEnd);
+  check('a rule saved before the anchor existed keeps its old behaviour',
+        dates.noAnchor === '2026-04-15', dates.noAnchor);
+}
+
 
 check('the menu offers récurrences',
       await page.evaluate(() => !!document.querySelector('.nav-item[data-page="recurring"]')));

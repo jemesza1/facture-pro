@@ -203,7 +203,7 @@
   /* A quote with no date stays binding for ever, which is why the field is
      worth having at all. Compared as ISO strings — both sides are YYYY-MM-DD. */
   window.devisExpired=function(d){
-    return !!(d && d.validUntil && d.validUntil < new Date().toISOString().slice(0,10));
+    return !!(d && d.validUntil && d.validUntil < todayISO());
   };
 
   window.renderDevis=function(){
@@ -249,7 +249,7 @@
           '<div><label class="form-label" for="dev-client">'+(ar?'\u0627\u0644\u0639\u0645\u064a\u0644 *':'Client *')+'</label><select id="dev-client" class="form-select"><option value="">\u2014</option>'+
             state.clients.map(function(c){return '<option value="'+c.id+'" '+(d&&d.clientId===c.id?'selected':'')+'>'+esc(c.name)+'</option>';}).join('')+
           '</select></div>'+
-          '<div><label class="form-label" for="dev-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input type="date" id="dev-date" class="form-input" value="'+(d&&d.date||new Date().toISOString().slice(0,10))+'"/></div>'+
+          '<div><label class="form-label" for="dev-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input type="date" id="dev-date" class="form-input" value="'+(d&&d.date||todayISO())+'"/></div>'+
           '<div><label class="form-label" for="dev-valid">'+esc(t('devis.validUntil'))+'</label><input type="date" id="dev-valid" class="form-input" value="'+esc(d&&d.validUntil||'')+'"/>'+
             '<p class="text-xs text-slate-500 mt-1">'+esc(t('devis.validHint'))+'</p></div>'+
         '</div>'+
@@ -345,7 +345,7 @@
       id:uid(),
       number:number,
       clientId:d.clientId,
-      date:new Date().toISOString().slice(0,10),
+      date:todayISO(),
       dueDate:'',
       status:'brouillon',
       items:JSON.parse(JSON.stringify(d.items||[])),
@@ -401,7 +401,7 @@
           invs.map(function(i){ var cl=getClient(i.clientId)||{}; return '<option value="'+i.id+'">'+esc(i.number)+' \u2014 '+esc(cl.name||'')+'</option>'; }).join('')+
         '</select></div>'+
         '<div><label class="form-label" for="pay-amount">'+(ar?'\u0627\u0644\u0645\u0628\u0644\u063a *':'Montant *')+'</label><input id="pay-amount" type="text" inputmode="decimal" min="0" step="0.01" class="form-input ltr-code"/></div>'+
-        '<div><label class="form-label" for="pay-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input id="pay-date" type="date" class="form-input" value="'+new Date().toISOString().slice(0,10)+'"/></div>'+
+        '<div><label class="form-label" for="pay-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input id="pay-date" type="date" class="form-input" value="'+todayISO()+'"/></div>'+
         '<div><label class="form-label" for="pay-method">'+(ar?'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062f\u0641\u0639':'Mode')+'</label><select id="pay-method" class="form-select">'+
           ['virement','especes','cheque','ccp','autre'].map(function(m){return '<option value="'+m+'">'+esc(t('payment.method.'+m))+'</option>';}).join('')+
         '</select></div>'+
@@ -438,7 +438,7 @@
       /* Marquee a la main, sans rien au registre : c'est une decision, pas
          une deduction, et on ne la defait pas. */
       if(!fromRegister && paid<=0) return;
-      var today=new Date().toISOString().slice(0,10);
+      var today=todayISO();
       inv.status=(inv.dueDate&&inv.dueDate<today)?'enretard':'envoyee';
     }else if(paid>0&&inv.status==='brouillon'){inv.status='envoyee';}
   };

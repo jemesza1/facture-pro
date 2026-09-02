@@ -347,7 +347,7 @@ function previewInvoice(id){
   try{lucide.createIcons();}catch(e){}
 }
 function previewTemplate(tid){
-  const demo={id:'demo',number:'FAC-DEMO-001',clientId:state.clients[0]&&state.clients[0].id||'',template:tid,date:new Date().toISOString().slice(0,10),status:'brouillon',items:[{description:'Prestation exemple',qty:1,unitPrice:100000,tva:19}],notes:''};
+  const demo={id:'demo',number:'FAC-DEMO-001',clientId:state.clients[0]&&state.clients[0].id||'',template:tid,date:todayISO(),status:'brouillon',items:[{description:'Prestation exemple',qty:1,unitPrice:100000,tva:19}],notes:''};
   const root=document.getElementById('preview-root');
   const body=document.getElementById('preview-body');
   if(!root||!body)return;

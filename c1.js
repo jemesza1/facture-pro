@@ -25,7 +25,7 @@ function openNewInvoice(editId){
           </select></div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div><label class="form-label" for="inv-date">${t('inv.date')}</label><input type="date" id="inv-date" class="form-input" value="${inv&&inv.date||new Date().toISOString().slice(0,10)}"/></div>
+        <div><label class="form-label" for="inv-date">${t('inv.date')}</label><input type="date" id="inv-date" class="form-input" value="${inv&&inv.date||todayISO()}"/></div>
         <div><label class="form-label" for="inv-due">${t('inv.due')}</label><input type="date" id="inv-due" class="form-input" value="${inv&&inv.dueDate||''}"/></div>
         <div><label class="form-label" for="inv-status">${t('inv.status')}</label><select id="inv-status" class="form-select">
           ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${inv&&inv.status===k?'selected':''}>${v.label}</option>`).join('')}

@@ -33,7 +33,7 @@
       var blob=new Blob([JSON.stringify(window.buildBackup(),null,2)],{type:'application/json'});
       var a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
-      a.download='facturepro-'+new Date().toISOString().slice(0,10)+'.json';
+      a.download='facturepro-'+todayISO()+'.json';
       a.click();
       toast(t('toast.exportOk'));
     }catch(e){

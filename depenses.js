@@ -232,7 +232,7 @@
           '<input id="exp-label" class="form-input" value="'+esc(x&&x.label||'')+'"/></div>'+
         '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">'+
           '<div><label class="form-label" for="exp-date">'+esc(t('exp.date'))+'</label>'+
-            '<input id="exp-date" type="date" class="form-input" value="'+esc(x&&x.date||new Date().toISOString().slice(0,10))+'"/></div>'+
+            '<input id="exp-date" type="date" class="form-input" value="'+esc(x&&x.date||todayISO())+'"/></div>'+
           '<div><label class="form-label" for="exp-cat">'+esc(t('exp.category'))+'</label>'+
             '<select id="exp-cat" class="form-select">'+CATEGORIES.map(function(k){
               return '<option value="'+k+'"'+((x&&x.category||'achats')===k?' selected':'')+'>'+esc(t('exp.cat.'+k))+'</option>';
@@ -271,7 +271,7 @@
     if(!isFinite(tva)) tva=19;
     var data={
       label:label,
-      date:(document.getElementById('exp-date')||{}).value||new Date().toISOString().slice(0,10),
+      date:(document.getElementById('exp-date')||{}).value||todayISO(),
       category:(document.getElementById('exp-cat')||{}).value||'autre',
       amount:amount,
       tva:tva,

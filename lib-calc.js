@@ -348,3 +348,22 @@ window.numOr = function (v, fallback) {
     return v < 0 ? 'ناقص ' + s : s;
   };
 })();
+
+
+/* ---- La date d'aujourd'hui, telle que la voit celui qui tape ----
+ *
+ * Vingt et un endroits ecrivaient new Date().toISOString().slice(0,10). C'est
+ * la date UTC, et l'Algerie vit une heure devant : entre minuit et une heure
+ * du matin, une facture etablie aujourd'hui portait la date d'hier. Le
+ * commercant qui ferme boutique et fait ses papiers dans la foulee est
+ * exactement celui a qui cela arrive, et la date d'une facture n'est pas un
+ * detail d'affichage — c'est elle qui la rattache a un exercice et a un G50.
+ *
+ * On lit donc le calendrier local, pas le meridien de Greenwich. L'argument
+ * optionnel sert aux dates calculees (echeances, series de demonstration),
+ * qui souffraient du meme decalage. */
+window.todayISO = function (d) {
+  d = d || new Date();
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+};

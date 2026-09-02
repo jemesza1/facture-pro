@@ -54,7 +54,7 @@ function createBonLivraison(invoiceId){
     refNumber:src.number,
     clientId:src.clientId,
     template:src.template,
-    date:new Date().toISOString().slice(0,10),
+    date:todayISO(),
     dueDate:'',
     /* Settled on purpose. A bon de livraison is not owed and not owing: this
        keeps it out of Créances and away from the sweep that stamps documents

@@ -13,22 +13,41 @@
     if(!Array.isArray(state.recurring)) state.recurring=[];
   }
 
-  function addPeriod(iso, freq){
-    var d=new Date((iso||new Date().toISOString().slice(0,10))+'T12:00:00');
+  /* Le jour du mois est une decision du commercant — le loyer tombe le 31 —
+     et il se perdait deux fois.
+     
+     Une fois par debordement : fevrier n'ayant pas de 31, setMonth reportait
+     au 3 mars et le rattrapage ramenait au 28. Le mois suivant repartait de
+     ce 28 : l'echeance du 31 devenait celle du 28 pour toujours, alors que
+     mars en a bien un. Le jour d'origine est donc porte par la regle
+     (anchorDay) et sert de reference a chaque pas, borne au dernier jour du
+     mois vise.
+     
+     Une fois sans rattrapage du tout, sur l'annuel : le 29 fevrier 2024 plus
+     un an rendait le 1er mars 2025. Une echeance annuelle changeait de mois. */
+  function addPeriod(iso, freq, anchorDay){
+    var d=new Date((iso||todayISO())+'T12:00:00');
     if(isNaN(d.getTime())) d=new Date();
-    var day=d.getDate();
-    if(freq==='week') d.setDate(d.getDate()+7);
-    else if(freq==='year') d.setFullYear(d.getFullYear()+1);
-    else {
-      d.setMonth(d.getMonth()+1);
-      if(d.getDate()!==day) d.setDate(0);
-    }
-    return d.toISOString().slice(0,10);
+    if(freq==='week'){ d.setDate(d.getDate()+7); return todayISO(d); }
+    var day=Number(anchorDay)||d.getDate();
+    var y=d.getFullYear(), m=d.getMonth();
+    if(freq==='year') y+=1; else m+=1;
+    if(m>11){ m-=12; y+=1; }
+    /* Le zeroieme jour du mois suivant est le dernier du mois vise. */
+    var last=new Date(y, m+1, 0).getDate();
+    return todayISO(new Date(y, m, Math.min(day, last), 12, 0, 0));
   }
 
   window.addRecurringPeriod=addPeriod;
 
-  function today(){ return new Date().toISOString().slice(0,10); }
+  /* Les regles creees avant que le jour d'origine soit conserve n'en ont pas :
+     on retombe alors sur la prochaine echeance, c'est-a-dire le comportement
+     qu'elles ont toujours eu. */
+  function anchorOf(r){
+    return Number(r && r.anchorDay) || Number(String((r&&r.nextDate)||'').slice(8,10)) || 0;
+  }
+
+  function today(){ return todayISO(); }
 
   function issueOne(rule, onDate){
     var year=new Date((onDate||today())+'T12:00:00').getFullYear();
@@ -59,7 +78,7 @@
   function addDays(iso, n){
     var d=new Date(iso+'T12:00:00');
     d.setDate(d.getDate()+(Number(n)||0));
-    return d.toISOString().slice(0,10);
+    return todayISO(d);
   }
 
   window.runRecurring=function(){
@@ -74,7 +93,7 @@
       while(r.nextDate<=now && guard<3){
         issueOne(r, r.nextDate);
         r.lastIssued=r.nextDate;
-        r.nextDate=addPeriod(r.nextDate, r.frequency||'month');
+        r.nextDate=addPeriod(r.nextDate, r.frequency||'month', anchorOf(r));
         issued++;
         guard++;
       }
@@ -198,6 +217,7 @@
       clientId:clientId,
       frequency:(document.getElementById('rec-freq')||{}).value||'month',
       nextDate:nextDate,
+      anchorDay:Number(nextDate.slice(8,10))||1,
       paymentMode:(document.getElementById('rec-pay')||{}).value||'virement',
       notes:((document.getElementById('rec-notes')||{}).value||'').trim(),
       items:items,
@@ -264,7 +284,7 @@
          factures que le bouton n'en emettra. */
       while(d<=now && guard<3){
         out.push({rule:r, date:d, ht:lineTotal(r)});
-        d=addPeriod(d, r.frequency||'month');
+        d=addPeriod(d, r.frequency||'month', anchorOf(r));
         guard++;
       }
     }
