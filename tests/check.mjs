@@ -4079,6 +4079,130 @@ console.log('\nChercher un nom tel qu\'on le tape');
         found['zzz'] === 0, JSON.stringify(found));
 }
 
+/* Une serie par annee.
+ *
+ * Les quatre series — FAC, AV, BL, DEV — avancaient un compteur qui ignorait
+ * le changement d'annee. Un commercant arrive a FAC-2026-050 ouvrait 2027 sur
+ * FAC-2027-051, et la premiere facture de l'exercice portait un numero
+ * laissant croire a cinquante disparues. L'usage est de repartir a 001, et
+ * c'est ce que cherche un controleur qui remonte une serie.
+ *
+ * Le compteur reste, parce que lui seul empeche de redonner le numero d'une
+ * facture supprimee — deja entre les mains d'un client. On verifie les deux
+ * en meme temps, horloge figee de part et d'autre du 31 decembre. */
+console.log('\nUne série par année');
+{
+  const serial = async (whenUTC, seed) => {
+    const c = await browser.newContext({timezoneId: 'Africa/Algiers'});
+    await c.clock.setFixedTime(new Date(whenUTC));
+    const pg = await c.newPage();
+    await pg.goto(`${BASE}/index.html?app=1`);
+    await pg.waitForFunction(() => typeof nextSerialNumber === 'function', {timeout: 30000});
+    const out = await pg.evaluate(s => {
+      Object.assign(state, s);
+      return {
+        fac: nextSerialNumber('FAC', 'nextInvoiceNumber'),
+        av:  nextSerialNumber('AV',  'nextAvoirNumber'),
+        bl:  nextSerialNumber('BL',  'nextBlNumber'),
+        dev: nextSerialNumber('DEV', 'nextDevisNumber'),
+        again: nextSerialNumber('FAC', 'nextInvoiceNumber')
+      };
+    }, seed);
+    await c.close();
+    return out;
+  };
+
+  const inv = (n, extra) => Object.assign({id: n, number: n, clientId: 'c1',
+    date: '2026-06-01', status: 'envoyee', paymentMode: 'virement',
+    items: [{description: 'x', qty: 1, unitPrice: 100, tva: 19}]}, extra || {});
+
+  const sameYear = await serial(Date.UTC(2026, 5, 15, 10, 0, 0), {
+    clients: [{id: 'c1', name: 'A'}], devis: [],
+    invoices: [inv('FAC-2026-050'), inv('AV-2026-003', {type: 'avoir'}),
+               inv('BL-2026-007', {type: 'bl'})],
+    nextInvoiceNumber: 51, nextAvoirNumber: 4, nextBlNumber: 8, nextDevisNumber: 2,
+    serialYear: 2026
+  });
+  check('within the year the series carries on where it was',
+        sameYear.fac === 'FAC-2026-051' && sameYear.av === 'AV-2026-004' &&
+        sameYear.bl === 'BL-2026-008' && sameYear.dev === 'DEV-2026-002',
+        JSON.stringify(sameYear));
+  check('and two numbers are never the same',
+        sameYear.again === 'FAC-2026-052', sameYear.again);
+
+  const newYear = await serial(Date.UTC(2027, 0, 5, 10, 0, 0), {
+    clients: [{id: 'c1', name: 'A'}], devis: [],
+    invoices: [inv('FAC-2026-050'), inv('AV-2026-003', {type: 'avoir'}),
+               inv('BL-2026-007', {type: 'bl'})],
+    nextInvoiceNumber: 51, nextAvoirNumber: 4, nextBlNumber: 8, nextDevisNumber: 2,
+    serialYear: 2026
+  });
+  check('the new year opens the four series at 001',
+        newYear.fac === 'FAC-2027-001' && newYear.av === 'AV-2027-001' &&
+        newYear.bl === 'BL-2027-001' && newYear.dev === 'DEV-2027-001',
+        JSON.stringify(newYear));
+  check('and last year’s documents are left alone', newYear.again === 'FAC-2027-002',
+        newYear.again);
+
+  /* Le compteur d'un numero supprime ne doit pas etre rendu. */
+  const deleted = await serial(Date.UTC(2026, 5, 15, 10, 0, 0), {
+    clients: [{id: 'c1', name: 'A'}], devis: [], invoices: [],
+    nextInvoiceNumber: 51, nextAvoirNumber: 1, nextBlNumber: 1, nextDevisNumber: 1,
+    serialYear: 2026
+  });
+  check('a number given out and then deleted is not handed out twice',
+        deleted.fac === 'FAC-2026-051', deleted.fac);
+
+  /* La mise a jour elle-meme ne doit rien remettre a zero : serialYear absent
+     veut dire « premiere fois qu'on regarde », pas « annee differente ». */
+  const migrating = await serial(Date.UTC(2026, 5, 15, 10, 0, 0), {
+    clients: [{id: 'c1', name: 'A'}], devis: [], invoices: [],
+    nextInvoiceNumber: 51, nextAvoirNumber: 4, nextBlNumber: 8, nextDevisNumber: 2,
+    serialYear: undefined
+  });
+  check('installing the change does not restart anybody’s series',
+        migrating.fac === 'FAC-2026-051' && migrating.av === 'AV-2026-004',
+        JSON.stringify(migrating));
+
+  /* Rattrapage : ouvert en janvier, le bouton des recurrentes emet une
+     echeance de decembre, datee de decembre. Elle doit porter un numero de
+     decembre, et ne doit pas faire sauter la serie de janvier a la suite de
+     l'ancienne. */
+  const late = await (async () => {
+    const c = await browser.newContext({timezoneId: 'Africa/Algiers'});
+    await c.clock.setFixedTime(new Date(Date.UTC(2027, 0, 5, 10, 0, 0)));
+    const pg = await c.newPage();
+    await pg.goto(`${BASE}/index.html?app=1`);
+    await pg.waitForFunction(() => typeof nextSerialNumber === 'function', {timeout: 30000});
+    const out = await pg.evaluate(() => {
+      state.clients = [{id:'c1', name:'A'}]; state.devis = [];
+      state.invoices = [{id:'a', number:'FAC-2026-050', clientId:'c1', date:'2026-12-01',
+        status:'envoyee', paymentMode:'virement',
+        items:[{description:'x', qty:1, unitPrice:100, tva:19}]}];
+      state.nextInvoiceNumber = 51; state.serialYear = 2026;
+      const back = nextSerialNumber('FAC', 'nextInvoiceNumber', 2026);
+      const now = nextSerialNumber('FAC', 'nextInvoiceNumber');
+      return {back, now, counter: state.nextInvoiceNumber};
+    });
+    await c.close();
+    return out;
+  })();
+  check('a December occurrence issued in January keeps a December number',
+        late.back === 'FAC-2026-051', late.back);
+  check('and it does not push this year’s series past one',
+        late.now === 'FAC-2027-001', late.now);
+
+  /* Un numero deja porte est saute, meme si le compteur pointe dessus. */
+  const clash = await serial(Date.UTC(2026, 5, 15, 10, 0, 0), {
+    clients: [{id: 'c1', name: 'A'}], devis: [],
+    invoices: [inv('FAC-2026-051'), inv('FAC-2026-052')],
+    nextInvoiceNumber: 51, nextAvoirNumber: 1, nextBlNumber: 1, nextDevisNumber: 1,
+    serialYear: 2026
+  });
+  check('and a number already borne is skipped, not overwritten',
+        clash.fac === 'FAC-2026-053', clash.fac);
+}
+
 console.log('\nMinuit et demi a Alger');
 {
   const ctx = await browser.newContext({timezoneId: 'Africa/Algiers'});

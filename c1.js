@@ -114,7 +114,7 @@ function saveInvoice(editId){
   if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);
     if(idx<0)return toast(t('toast.invoiceNotFound'),'err');
     state.invoices[idx]={...state.invoices[idx],...data};toast(t('toast.updated'));}
-  else{const year=new Date().getFullYear();const number='FAC-'+year+'-'+String(state.nextInvoiceNumber).padStart(3,'0');state.invoices.push({id:uid(),number,...data});state.nextInvoiceNumber++;toast(t('toast.created'));}
+  else{const number=nextSerialNumber('FAC','nextInvoiceNumber');state.invoices.push({id:uid(),number,...data});toast(t('toast.created'));}
   saveData();closeModal();navigate('invoices');
 }
 function editInvoice(id){openNewInvoice(id);}

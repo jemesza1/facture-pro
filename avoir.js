@@ -42,8 +42,7 @@ function createAvoir(invoiceId){
   if(already.length && !confirm(t('avoir.confirmAgain').replace('{n}',already[0].number))) return;
   if(!confirm(t('avoir.confirm').replace('{n}',src.number))) return;
 
-  var year=new Date().getFullYear();
-  var number='AV-'+year+'-'+String(state.nextAvoirNumber).padStart(3,'0');
+  var number=nextSerialNumber('AV','nextAvoirNumber');
 
   state.invoices.push({
     id:uid(),
@@ -74,7 +73,6 @@ function createAvoir(invoiceId){
     notes:t('avoir.notes').replace('{n}',src.number)
   });
 
-  state.nextAvoirNumber++;
   /* An avoir is goods coming back. commerce.js owns the shelf and cannot wrap
      this function — it is loaded first — so the new document is declared here
      and reconciled there, by the one rule that governs every other movement. */

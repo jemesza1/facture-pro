@@ -58,7 +58,8 @@
         recurring:state.recurring,
         nextDevisNumber:state.nextDevisNumber,
         nextAvoirNumber:state.nextAvoirNumber,
-        nextBlNumber:state.nextBlNumber
+        nextBlNumber:state.nextBlNumber,
+        serialYear:state.serialYear
       }));
       window.__saveWarned=false;
     }catch(e){
@@ -318,10 +319,7 @@
       if(i>=0) state.devis[i]=Object.assign({},state.devis[i],data);
     } else {
       data.status='brouillon';
-      var year=new Date().getFullYear();
-      var number='DEV-'+year+'-'+String(state.nextDevisNumber).padStart(3,'0');
-      state.devis.push(Object.assign({id:uid(),number:number},data));
-      state.nextDevisNumber++;
+      state.devis.push(Object.assign({id:uid(),number:nextSerialNumber('DEV','nextDevisNumber')},data));
     }
     saveData(); closeModal(); toast(t('toast.saved')); renderPage();
   };
@@ -339,8 +337,7 @@
     /* Clicking convert twice used to issue two invoices for one quote and burn
        two numbers, with nothing on screen to say the first one existed. */
     if(d.invoiceNumber && !confirm(t('devis.convertAgain').replace('{n}',d.invoiceNumber))) return;
-    var year=new Date().getFullYear();
-    var number='FAC-'+year+'-'+String(state.nextInvoiceNumber).padStart(3,'0');
+    var number=nextSerialNumber('FAC','nextInvoiceNumber');
     state.invoices.push({
       id:uid(),
       number:number,
@@ -356,7 +353,6 @@
          happens to be that one. */
       template:(state.invoices[0]&&state.invoices[0].template)||'classique'
     });
-    state.nextInvoiceNumber++;
     d.status='accepte';
     d.invoiceNumber=number;
     saveData();

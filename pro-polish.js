@@ -22,6 +22,10 @@
          qu'un l'a ete, et deux bons de livraison finissent par porter le
          meme numero. */
       nextBlNumber:state.nextBlNumber||1,
+      /* L'annee a laquelle les quatre compteurs se rapportent. Sans elle, un
+         fichier de 2026 restaure en 2027 relancerait la serie a cinquante et
+         un au lieu de un. */
+      serialYear:state.serialYear,
       products:state.products||[],
       devis:state.devis||[],
       payments:state.payments||[],
@@ -123,9 +127,22 @@
                                    items:Array.isArray(r.items)?r.items:[]});}):[];
       if(d.nextDevisNumber) state.nextDevisNumber=d.nextDevisNumber;
 
-      /* an imported set must never hand out a number that already exists */
+      /* L'annee des compteurs voyage avec eux. Un fichier plus ancien n'en a
+         pas : nextSerialNumber adopte alors l'annee en cours sans rien
+         remettre a zero, ce qui est le comportement d'avant. */
+      state.serialYear=Number(d.serialYear)||undefined;
+
+      /* Un jeu importe ne doit jamais redonner un numero deja porte. La garde
+         vit desormais dans nextSerialNumber, qui compare le compteur aux
+         documents de l'annee en cours et saute tout numero deja pris. Ici on
+         se contente de reprendre le compteur du fichier — en le relevant au
+         besoin, mais seulement d'apres les factures, et non d'apres le
+         dernier nombre trouve dans n'importe quel numero : un AV-2026-090
+         poussait le compteur des factures a quatre-vingt-onze et ouvrait un
+         trou de quatre-vingt-dix numeros dans la serie. */
       var maxNo=0;
       (state.invoices||[]).forEach(function(i){
+        if((typeof isAvoir==='function'&&isAvoir(i))||(typeof isBl==='function'&&isBl(i))) return;
         var m=/(\d+)\s*$/.exec(i.number||''); if(m) maxNo=Math.max(maxNo,parseInt(m[1],10)||0);});
       state.nextInvoiceNumber=Math.max(Number(d.nextInvoiceNumber)||1,maxNo+1);
 

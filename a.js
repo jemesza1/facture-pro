@@ -31,7 +31,7 @@ let state={company:{...defaultCompany},clients:[],invoices:[],nextInvoiceNumber:
    seeded, so the data can still be recovered by hand. */
 var loadFailed=false;
 function loadData(){var raw=null;try{raw=localStorage.getItem(STORAGE_KEY);if(raw){const d=JSON.parse(raw);if(!d||typeof d!=='object'||Array.isArray(d))throw new Error('shape');state={...state,...d};}}catch(e){loadFailed=true;try{localStorage.setItem(STORAGE_KEY+'_illisible',raw||'');}catch(e2){}}state.clients=(state.clients||[]).map(function(c){return Object.assign({nin:'',nis:'',rc:'',ai:'',email:'',address:'',nif:'',phone:''},c);});state.invoices=(state.invoices||[]).map(function(i){return Object.assign({paymentMode:'virement'},i);});state.company=Object.assign({},defaultCompany,state.company||{});/* Semees a la premiere visite seulement, sur l'absence d'enregistrement et non sur deux listes vides : un registre qu'on vide est une decision. Le re-semer remettait quatre factures inventees dans le journal du mois et faisait reculer nextInvoiceNumber sur des numeros deja emis. */if(!loadFailed&&!raw)seedDemoData();if(loadFailed)setTimeout(function(){try{toast(t('toast.dataUnreadable'),'err');}catch(e){}},900);}
-function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({company:state.company,clients:state.clients,invoices:state.invoices,nextInvoiceNumber:state.nextInvoiceNumber,nextAvoirNumber:state.nextAvoirNumber,currentPage:state.currentPage}));}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify({company:state.company,clients:state.clients,invoices:state.invoices,nextInvoiceNumber:state.nextInvoiceNumber,nextAvoirNumber:state.nextAvoirNumber,serialYear:state.serialYear,currentPage:state.currentPage}));}
 function seedDemoData(){state.clients=[{demo:true,id:'c1',name:'SARL Atlas Services',email:'contact@atlas.dz',address:'45 Bd Mohamed V\n16000 Alger',nif:'099999999999999',nis:'099888777666555',rc:'16/00-1234567B21',phone:'021 00 00 01'},{demo:true,id:'c2',name:'EURL Sahara Tech',email:'info@sahara.dz',address:'8 Rue de la Liberté\n31000 Oran',nif:'088888888888888',nis:'088777666555444',rc:'31/00-7654321B19',phone:'041 00 00 02'},{demo:true,id:'c3',name:'SPA Numidia Trading',email:'admin@numidia.dz',address:'22 Av de l\'Indépendance\n25000 Constantine',nif:'077777777777777',nis:'077666555444333',rc:'25/00-2468013B20',phone:'031 00 00 03'}];const today=new Date();const d=o=>{const dt=new Date(today);dt.setDate(dt.getDate()+o);return todayISO(dt);};state.invoices=[{demo:true,id:'inv1',number:'FAC-2026-001',clientId:'c1',template:'moderne',date:d(-25),dueDate:d(-10),status:'enretard',items:[{description:'Audit stratégique Q1',qty:1,unitPrice:250000,tva:19},{description:'Accompagnement (5 jours)',qty:5,unitPrice:45000,tva:19}],notes:'Paiement par virement sous 15 jours.'},{demo:true,id:'inv2',number:'FAC-2026-002',clientId:'c2',template:'premium',date:d(-12),dueDate:d(3),status:'envoyee',items:[{description:'Développement module facturation',qty:1,unitPrice:480000,tva:19}],notes:''},{demo:true,id:'inv3',number:'FAC-2026-003',clientId:'c3',template:'classique',date:d(-5),dueDate:d(25),status:'payee',items:[{description:'Création identité visuelle',qty:1,unitPrice:180000,tva:19}],notes:'Merci.'},{demo:true,id:'inv4',number:'FAC-2026-004',clientId:'c1',template:'nature',date:d(-2),dueDate:d(28),status:'brouillon',items:[{description:'Conseil en organisation',qty:3,unitPrice:55000,tva:19}],notes:''}];state.nextInvoiceNumber=5;saveData();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function ltrCodes(s){return String(s==null?'':s).replace(/(\d{2}-\d{3})/g,'<span class="ltr-code">$1</span>');}
@@ -108,6 +108,55 @@ function isAvoir(inv){return !!(inv&&inv.type==='avoir');}
    already been counted, so a bon de livraison must contribute nothing to
    revenue, to receivables or to the journal — see calcInvoiceTotals. */
 function isBl(inv){return !!(inv&&inv.type==='bl');}
+
+/* ---- Les numeros : une serie par annee, et jamais deux fois le meme ----
+ *
+ * Les quatre series — FAC, AV, BL, DEV — avancaient un compteur qui ne savait
+ * pas que l'annee avait change. Un commercant arrive a FAC-2026-050 ouvrait
+ * donc 2027 sur FAC-2027-051, et la premiere facture de l'exercice portait un
+ * numero laissant croire a cinquante disparues. L'usage algerien est de
+ * repartir a 001 chaque annee, et c'est ce que cherche un controleur qui
+ * remonte une serie.
+ *
+ * Le compteur reste, parce que lui seul empeche de redonner le numero d'une
+ * facture supprimee — un numero deja entre les mains d'un client. Il est
+ * simplement remis a un quand l'annee tourne, et le resultat est confronte aux
+ * documents existants : on ne rend jamais un numero qui est deja porte.
+ *
+ * serialYear absent veut dire « premiere fois qu'on regarde », pas « annee
+ * differente » : on adopte l'annee en cours sans rien remettre a zero. Sans
+ * cette nuance, la mise a jour elle-meme aurait rendu leur numero aux
+ * factures supprimees de tout le monde, le jour de son installation.
+ */
+/* forYear sert au rattrapage des factures recurrentes : ouvert en janvier, le
+   bouton peut emettre une echeance de decembre, qui porte la date de decembre
+   et doit donc porter un numero de l'annee de decembre. Ce numero se deduit
+   alors des documents de cette annee-la seulement, et le compteur de l'annee
+   en cours n'est pas touche — sans quoi une facture de rattrapage ferait
+   sauter la serie nouvelle a la suite de l'ancienne. */
+function nextSerialNumber(prefix, counterKey, forYear){
+  var now=new Date().getFullYear();
+  if(state.serialYear===undefined||state.serialYear===null){
+    state.serialYear=now;
+  }else if(state.serialYear!==now){
+    state.nextInvoiceNumber=1; state.nextDevisNumber=1;
+    state.nextAvoirNumber=1; state.nextBlNumber=1;
+    state.serialYear=now;
+  }
+  var year=Number(forYear)||now, current=(year===now);
+  var docs=(state.invoices||[]).concat(state.devis||[]);
+  var re=new RegExp('^'+prefix+'-'+year+'-(\\d+)$');
+  var used=0;
+  docs.forEach(function(d){
+    var m=re.exec((d&&d.number)||'');
+    if(m) used=Math.max(used, parseInt(m[1],10)||0);
+  });
+  var n=Math.max(current?(Number(state[counterKey])||1):1, used+1), number;
+  var taken=function(x){ return docs.some(function(d){return d&&d.number===x;}); };
+  do{ number=prefix+'-'+year+'-'+String(n).padStart(3,'0'); n++; }while(taken(number));
+  if(current) state[counterKey]=n;
+  return number;
+}
 function docTitle(inv){
   if(isAvoir(inv))return "FACTURE D'AVOIR";
   if(isBl(inv))return 'BON DE LIVRAISON';

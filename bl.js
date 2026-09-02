@@ -43,8 +43,7 @@ function createBonLivraison(invoiceId){
   var already=blsFor(invoiceId);
   if(already.length && !confirm(t('bl.confirmAgain').replace('{n}',already[0].number))) return;
 
-  var year=new Date().getFullYear();
-  var number='BL-'+year+'-'+String(state.nextBlNumber).padStart(3,'0');
+  var number=nextSerialNumber('BL','nextBlNumber');
 
   state.invoices.push({
     id:uid(),
@@ -64,7 +63,6 @@ function createBonLivraison(invoiceId){
     notes:''
   });
 
-  state.nextBlNumber++;
   saveData();
   toast(t('bl.created').replace('{n}',number));
   navigate('invoices');

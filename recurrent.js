@@ -50,11 +50,11 @@
   function today(){ return todayISO(); }
 
   function issueOne(rule, onDate){
+    /* Le numero suit l'annee de la facture, pas celle du jour : ouvert en
+       janvier, le rattrapage emet une echeance de decembre, datee de
+       decembre. */
     var year=new Date((onDate||today())+'T12:00:00').getFullYear();
-    var n=state.nextInvoiceNumber||1, number;
-    do { number='FAC-'+year+'-'+String(n).padStart(3,'0'); n++; }
-    while((state.invoices||[]).some(function(i){return i.number===number;}));
-    state.nextInvoiceNumber=n;
+    var number=nextSerialNumber('FAC','nextInvoiceNumber',year);
     var inv={
       id:uid(),
       number:number,
