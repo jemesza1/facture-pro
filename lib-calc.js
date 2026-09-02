@@ -7,7 +7,7 @@
  */
 
 /* ---- Amount in words (French) ---- */
-function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];const tens=['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];function under1000(num){if(num<20)return units[num];if(num<100){const t=Math.floor(num/10),u=num%10;if(t===7||t===9)return tens[t]+(u===1&&t===7?' et ':'-')+under1000(10+u);return tens[t]+(u===1&&t!==8?' et ':(u?'-':''))+(t===8&&u===0?'s':units[u]);}const h=Math.floor(num/100),r=num%100;return(h>1?units[h]+' ':'')+'cent'+(h>1&&r===0?'s':'')+(r?' '+under1000(r):'');}if(n<1000)return under1000(n);if(n<1000000){const th=Math.floor(n/1000),r=n%1000;return(th>1?under1000(th)+' ':'')+'mille'+(r?' '+under1000(r):'');}if(n<1e9){const m=Math.floor(n/1e6),r=n%1e6;return under1000(m)+' million'+(m>1?'s':'')+(r?' '+numberToWords(r):'');}if(n<1e12){const b=Math.floor(n/1e9),r=n%1e9;
+function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];const tens=['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];function under1000(num){if(num<20)return units[num];if(num<100){const t=Math.floor(num/10),u=num%10;if(t===7||t===9)return tens[t]+(u===1&&t===7?' et ':'-')+under1000(10+u);return tens[t]+(u===1&&t!==8?' et ':(u?'-':''))+(t===8&&u===0?'s':units[u]);}const h=Math.floor(num/100),r=num%100;return(h>1?units[h]+' ':'')+'cent'+(h>1&&r===0?'s':'')+(r?' '+under1000(r):'');}if(n<1000)return under1000(n);if(n<1000000){const th=Math.floor(n/1000),r=n%1000;/* Vingt et cent ne prennent leur s que s'ils terminent le nombre, et mille ne compte pas pour une fin : « quatre-vingt mille », « deux cent mille ». Devant million et milliard, qui sont des noms, l'accord revient — « quatre-vingts millions ». La page enseignait la regle et la violait dans son propre tableau. Seuls ces deux mots prennent un s, d'ou la coupe ciblee : un .replace(/s$/) generique ferait « troi mille ». */return(th>1?under1000(th).replace(/(vingt|cent)s$/,'$1')+' ':'')+'mille'+(r?' '+under1000(r):'');}if(n<1e9){const m=Math.floor(n/1e6),r=n%1e6;return under1000(m)+' million'+(m>1?'s':'')+(r?' '+numberToWords(r):'');}if(n<1e12){const b=Math.floor(n/1e9),r=n%1e9;
     /* Au-dela du milliard, la fonction rendait les chiffres tels quels : la
        mention obligatoire imprimait « 1428000000 dinars » au lieu de la
        somme en toutes lettres, sur la facture comme sur la page dont c'est
@@ -28,8 +28,13 @@ function amountInWords(amount){
   const cents=Math.round(Math.abs(Number(amount)||0)*100);
   if(cents===0)return'Zéro dinar';
   const d=Math.floor(cents/100), c=cents%100;
+  /* Million et milliard sont des noms : ils appellent « de » — un million de
+     dinars, deux milliards de dinars — la ou mille n'appelle rien. Le « de »
+     ne vient que si le nombre s'y arrete : « un million cinq cent mille
+     dinars » n'en veut pas. */
+  const w=numberToWords(d);
   let s=d===0 ? 'zéro dinar'
-      : numberToWords(d)+(d>1?' dinars':' dinar');
+      : w+(/(million|milliard)s?$/.test(w) ? ' de dinars' : (d>1?' dinars':' dinar'));
   if(c) s+=' et '+numberToWords(c)+(c>1?' centimes':' centime');
   s=s.charAt(0).toUpperCase()+s.slice(1);
   return (Number(amount)||0)<0 ? 'Moins '+s.charAt(0).toLowerCase()+s.slice(1) : s;

@@ -430,6 +430,25 @@ console.log('\nPublic tool pages');
   check('and in Arabic too',
         (await tools.textContent('#resultAr')).trim() === 'خمسمائة وستة دنانير جزائرية وثلاثون سنتيماً',
         await tools.textContent('#resultAr'));
+  /* La page enseigne l'accord de vingt et de cent, et son propre tableau le
+     violait : « quatre-vingts mille », « deux cents mille », « un million
+     dinars ». Mille n'est pas une fin de nombre et ne declenche pas l'accord ;
+     million et milliard sont des noms, l'accord revient devant eux et ils
+     appellent « de ». */
+  const accords = await tools.evaluate(() => [80000, 200000, 500000, 1000000, 2000000,
+                                              1500000, 80000000, 200000000, 280, 80,
+                                              1000000000, 1428000000].map(amountInWords));
+  const wantAccords = [
+    'Quatre-vingt mille dinars', 'Deux cent mille dinars', 'Cinq cent mille dinars',
+    'Un million de dinars', 'Deux millions de dinars', 'Un million cinq cent mille dinars',
+    'Quatre-vingts millions de dinars', 'Deux cents millions de dinars',
+    'Deux cent quatre-vingts dinars', 'Quatre-vingts dinars',
+    'Un milliard de dinars', 'Un milliard quatre cent vingt-huit millions de dinars'
+  ];
+  for (let i = 0; i < wantAccords.length; i++) {
+    check('French agreement: ' + wantAccords[i], accords[i] === wantAccords[i], accords[i]);
+  }
+
   const singular = await tools.evaluate(() => [amountInWords(1), amountInWords(1.01), amountInWords(0)]);
   check('one dinar is singular, and so is one centime',
         singular[0] === 'Un dinar' && singular[1] === 'Un dinar et un centime', singular.join(' / '));

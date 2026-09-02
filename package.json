@@ -9,6 +9,7 @@
     "pages": "node tools-build-pages.mjs",
     "og": "node tools-build-og.mjs",
     "shots": "node tools-build-shots.mjs",
+  "words-table": "node tools-build-words-table.mjs",
     "build": "npm run vendor && npm run css && (cp -f *.html *.css *.js *.txt *.xml public/ 2>/dev/null || true) && cp -f static/manifest.webmanifest static/*.png static/*.svg public/ && mkdir -p public/.well-known && cp -f static/.well-known/assetlinks.json public/.well-known/ && cp -f static/*.xlsx public/ && mkdir -p public/fonts && cp -f static/fonts/*.woff2 public/fonts/ && npm run countries && npm run pages && node tools-build-chrome.mjs && node tools-build-bundle.mjs"
   },
   "devDependencies": {
