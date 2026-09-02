@@ -4009,6 +4009,38 @@ console.log('\nLe relevé et les créances tombent sur le même nombre');
  *
  * On fige l'horloge a 00 h 30, heure d'Alger, et on regarde ce que le
  * formulaire propose. */
+/* Le tableau de bord et les creances repondaient a la meme question par deux
+   chiffres. « En attente » comptait les brouillons — dix factures preparees
+   pour le mois prochain gonflaient l'argent annonce comme a venir — alors que
+   l'ecran des creances les ecarte et que le releve dit dans son propre texte
+   qu'un brouillon n'est jamais entre dans les comptes. */
+console.log('\nLe tableau de bord ne compte pas les brouillons');
+{
+  const kpi = await page.evaluate(() => {
+    state.clients = [{id:'c1', name:'A'}];
+    state.payments = [];
+    const li = pr => [{description:'x', qty:1, unitPrice:pr, tva:0}];
+    const m = todayISO().slice(0, 8) + '15';
+    state.invoices = [
+      {id:'s1', number:'F1', clientId:'c1', date:m, status:'envoyee', paymentMode:'virement', items:li(1000)},
+      {id:'s2', number:'F2', clientId:'c1', date:m, status:'brouillon', paymentMode:'virement', items:li(9999)},
+      {id:'s3', number:'F3', clientId:'c1', date:m, status:'payee', paymentMode:'virement', items:li(500)}
+    ];
+    saveData(); navigate('dashboard');
+    const read = k => {
+      const el = document.querySelector('[data-v="' + k + '"]');
+      return el ? el.textContent.replace(/[^0-9,.-]/g, '') : null;
+    };
+    return {pending: read('totalUnpaid'), month: read('thisMonth'),
+            paid: read('totalPaid'), debt: getClientDebt('c1')};
+  });
+  check('a draft is not money on its way in', kpi.pending === '1000', String(kpi.pending));
+  check('nor turnover for the month', kpi.month === '1500', String(kpi.month));
+  check('and the settled invoice is still counted as collected',
+        kpi.paid === '500', String(kpi.paid));
+  check('the receivables screen agreed all along', near(kpi.debt, 1000), String(kpi.debt));
+}
+
 /* Chercher un nom tel qu'on le tape.
  *
  * La recherche comparait les chaines telles quelles. « societe » ne trouvait

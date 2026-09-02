@@ -1,4 +1,14 @@
-function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annulee');const paid=invs.filter(i=>i.status==='payee');const unpaid=invs.filter(i=>['envoyee','enretard','brouillon'].includes(i.status));const overdue=invs.filter(i=>i.status==='enretard');const totalPaid=paid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalUnpaid=unpaid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalOverdue=overdue.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const thisMonth=invs.filter(i=>i.date&&i.date.startsWith(todayISO().slice(0,7))).reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const isDemo=(typeof hasDemoData==='function')&&hasDemoData();const empty=!state.invoices.length;const recent=[...state.invoices].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);return `
+/* Un brouillon n'a ete envoye a personne, donc personne ne le doit — c'est la
+   regle que l'ecran des creances applique et que le releve de compte redit
+   dans son propre texte. Le tableau de bord, lui, comptait les brouillons
+   dans « En attente » et dans « Ce mois » : dix factures preparees pour le
+   mois prochain gonflaient l'argent annonce comme a venir, et les deux
+   ecrans donnaient deux chiffres pour la meme question. La regle doit etre
+   la meme partout.
+
+   Les quatre totaux sont par ailleurs arrondis : ils additionnent des sommes
+   a deux decimales et affichaient un centime qui n'etait dans aucune. */
+function renderDashboard(){const r2=(typeof round2==='function')?round2:(x=>x);const invs=state.invoices.filter(i=>i.status!=='annulee'&&i.status!=='brouillon');const paid=invs.filter(i=>i.status==='payee');const unpaid=invs.filter(i=>['envoyee','enretard'].includes(i.status));const overdue=invs.filter(i=>i.status==='enretard');const totalPaid=r2(paid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0));const totalUnpaid=r2(unpaid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0));const totalOverdue=r2(overdue.reduce((s,i)=>s+calcInvoiceTotals(i).net,0));const thisMonth=r2(invs.filter(i=>i.date&&i.date.startsWith(todayISO().slice(0,7))).reduce((s,i)=>s+calcInvoiceTotals(i).net,0));const isDemo=(typeof hasDemoData==='function')&&hasDemoData();const empty=!state.invoices.length;const recent=[...state.invoices].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);return `
 <div class="space-y-6">
   ${empty?`<div class="card p-8 text-center">
     <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center mb-4">
