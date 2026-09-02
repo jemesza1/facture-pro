@@ -31,8 +31,26 @@
         id:inv.id
       });
     });
+    /* Un reglement suit la piece qu'il regle. Une facture annulee, un
+       brouillon et un bon de livraison ne figurent pas au releve — ils ne sont
+       jamais entres dans les comptes — mais leurs reglements, eux, y entraient
+       en credit sans la moindre contrepartie au debit. Le document remis au
+       client annonçait alors un solde inferieur a ce qu'il devait : mille
+       dinars factures, quatre cents verses, plus six cents restants effaces
+       par un acompte sur une facture annulee, et le releve concluait a zero.
+       Un reglement qui ne nomme aucune facture connue reste, lui : c'est un
+       acompte au compte du client, et deleteInvoice a deja emporte ceux des
+       factures supprimees. */
+    function auReleve(inv){
+      if(!inv) return true;
+      if(inv.status==='brouillon'||inv.status==='annulee') return false;
+      if(typeof isBl==='function' && isBl(inv)) return false;
+      return true;
+    }
     (state.payments||[]).forEach(function(p){
-      inv=(state.invoices||[]).find(function(x){return x.id===p.invoiceId;})||{};
+      inv=(state.invoices||[]).find(function(x){return x.id===p.invoiceId;});
+      if(!auReleve(inv)) return;
+      inv=inv||{};
       owner=p.clientId||inv.clientId;
       if(owner!==clientId) return;
       lines.push({
@@ -45,15 +63,41 @@
         id:p.id
       });
     });
+    /* La pastille « payee » de la liste est la façon dont la plupart des
+       commerçants soldent une facture : le registre des paiements est
+       facultatif et souvent vide. Le releve, lui, ne connaissait que les
+       reglements saisis, si bien qu'il reclamait au client une facture que le
+       vendeur avait lui-meme marquee reglee — et l'ecran des creances, qui
+       ecarte les factures payees, annonçait zero au meme moment. Deux ecrans
+       qui se contredisent sur ce que doit une personne. La ligne porte son
+       nom : reglee, non detaillee. Elle ne pretend pas etre un paiement
+       enregistre. */
+    (state.invoices||[]).forEach(function(inv){
+      if(inv.clientId!==clientId || inv.status!=='payee') return;
+      if(typeof isBl==='function' && isBl(inv)) return;
+      var net=calcInvoiceTotals(inv).net;
+      if(net<=0) return;
+      var seen=(state.payments||[]).reduce(function(sum,p){
+        return p.invoiceId===inv.id ? sum+(Number(p.amount)||0) : sum;
+      },0);
+      var rest=net-seen;
+      if(rest<=0.005) return;
+      lines.push({date:inv.date||'', ref:inv.number||'', kind:'settled',
+                  label:t('releve.settled'), debit:0, credit:rest, id:inv.id+':settled'});
+    });
+
     if(from) lines=lines.filter(function(l){return (l.date||'')>=from;});
     if(to) lines=lines.filter(function(l){return (l.date||'')<=to;});
     lines.sort(function(a,b){
       var d=(a.date||'').localeCompare(b.date||'');
       return d!==0 ? d : (a.ref||'').localeCompare(b.ref||'');
     });
-    var bal=0;
+    /* Le solde court sur des sommes a deux decimales : sans arrondi a chaque
+       pas, trente lignes suffisent a faire apparaitre un centime qui n'est
+       dans aucune d'elles. */
+    var bal=0, r2=(typeof round2==='function')?round2:function(x){return x;};
     for(i=0;i<lines.length;i++){
-      bal+=lines[i].debit-lines[i].credit;
+      bal=r2(bal+lines[i].debit-lines[i].credit);
       lines[i].balance=bal;
     }
     return {lines:lines, balance:bal};

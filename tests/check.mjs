@@ -3884,6 +3884,78 @@ check('the menu offers the relevé',
   check('the nav labels exist in Arabic too', keys.navR);
 }
 
+/* Deux ecrans qui se contredisent sur ce que doit une personne.
+ *
+ * Le releve ne connaissait que les reglements saisis au registre, mais il
+ * comptait les reglements de pieces qu'il n'affiche pas — annulees,
+ * brouillons, bons de livraison. Le document remis au client annonçait donc
+ * un solde inferieur a sa dette, efface par un acompte sur une facture
+ * annulee. Et a l'inverse, une facture soldee d'un clic sur la pastille de la
+ * liste — la façon dont la plupart travaillent, le registre etant facultatif
+ * — restait au debit : le releve reclamait a un client une facture que le
+ * vendeur avait lui-meme marquee reglee, pendant que l'ecran des creances
+ * annonçait zero pour le meme homme.
+ *
+ * Le releve et les creances doivent tomber sur le meme nombre. C'est ce que
+ * cette section verifie, ligne a ligne et sur le total. */
+console.log('\nLe relevé et les créances tombent sur le même nombre');
+{
+  const r = await page.evaluate(() => {
+    state.clients = [{id:'k1', name:'Client A'}];
+    state.products = [];
+    const li = pr => [{description:'x', qty:1, unitPrice:pr, tva:0}];
+    state.invoices = [
+      {id:'i1', number:'FAC-1', clientId:'k1', date:'2026-01-05', status:'envoyee',
+       paymentMode:'virement', items:li(1000)},
+      {id:'i2', number:'FAC-2', clientId:'k1', date:'2026-01-06', status:'annulee',
+       paymentMode:'virement', items:li(500)},
+      {id:'b1', number:'BL-1', type:'bl', clientId:'k1', date:'2026-01-07',
+       status:'envoyee', paymentMode:'virement', items:li(700)},
+      {id:'d1', number:'FAC-3', clientId:'k1', date:'2026-01-08', status:'brouillon',
+       paymentMode:'virement', items:li(300)},
+      {id:'i4', number:'FAC-4', clientId:'k1', date:'2026-01-09', status:'payee',
+       paymentMode:'virement', items:li(5000)},
+      {id:'i5', number:'FAC-5', clientId:'k1', date:'2026-01-09', status:'payee',
+       paymentMode:'virement', items:li(2000)}
+    ];
+    state.payments = [
+      {id:'p1', invoiceId:'i1', clientId:'k1', date:'2026-01-10', amount:400},
+      {id:'p2', invoiceId:'i2', clientId:'k1', date:'2026-01-11', amount:500},
+      {id:'p3', invoiceId:'d1', clientId:'k1', date:'2026-01-12', amount:100},
+      {id:'p4', invoiceId:'i5', clientId:'k1', date:'2026-01-13', amount:2000}
+    ];
+    const L = clientLedger('k1');
+    return {debt: getClientDebt('k1'), balance: L.balance,
+            refs: L.lines.map(l => l.ref + ':' + l.kind),
+            settled: L.lines.filter(l => l.kind === 'settled').map(l => [l.ref, l.credit])};
+  });
+  check('a payment on a cancelled invoice is not a credit either',
+        !r.refs.includes('FAC-2:payment'), JSON.stringify(r.refs));
+  check('nor one on a draft', !r.refs.includes('FAC-3:payment'), JSON.stringify(r.refs));
+  check('an invoice marked paid without a payment row is settled on the statement',
+        r.settled.length === 1 && r.settled[0][0] === 'FAC-4' && near(r.settled[0][1], 5000),
+        JSON.stringify(r.settled));
+  check('and one paid through the register is not settled twice',
+        !r.refs.includes('FAC-5:settled'), JSON.stringify(r.refs));
+  check('so the statement closes on the same figure as the receivables screen',
+        near(r.balance, r.debt) && near(r.balance, 600),
+        r.balance + ' vs ' + r.debt);
+
+  /* Le solde courait sur des flottants bruts. */
+  const drift = await page.evaluate(() => {
+    state.clients = [{id:'k2', name:'Client B'}];
+    state.invoices = Array.from({length: 30}, (_, i) => ({
+      id: 'x' + i, number: 'F-' + i, clientId: 'k2', date: '2026-02-01',
+      status: 'envoyee', paymentMode: 'virement',
+      items: [{description: 'x', qty: 1, unitPrice: 0.1, tva: 0}]
+    }));
+    state.payments = [];
+    return clientLedger('k2').balance;
+  });
+  check('and a running balance of thirty ten-centime lines is exactly three dinars',
+        drift === 3, String(drift));
+}
+
 console.log('\nFactures récurrentes');
 
 check('the menu offers récurrences',
