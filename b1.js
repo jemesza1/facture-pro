@@ -9,7 +9,13 @@ function deleteClient(id){const hasInv=state.invoices.some(i=>i.clientId===id);i
    une facon de regarder la page, pas une preference du commercant. */
 var _tplAll=false;
 function showAllTemplates(){_tplAll=true;renderPage();}
-function tplCard(tp){return `<div class="card p-4 cursor-pointer hover:shadow-md" onclick="previewTemplate('${tp.id}')"><div class="h-3 rounded-full mb-3" style="background:${tp.color2?`linear-gradient(90deg,${tp.color},${tp.color2})`:tp.color}"></div><h3 class="font-semibold">${esc(tp.name)}</h3><p class="text-xs text-slate-500 mt-1">${esc(tp.desc)}</p><button class="btn-secondary mt-3 text-xs w-full"><i data-lucide="eye" class="w-3.5 h-3.5"></i> ${t('actions.preview')}</button></div>`;}
+/* Un nom qui n'existe qu'en francais entre dans une page dir="rtl" : sans
+   <bdi>, le navigateur en retourne la ponctuation. Le generateur du site fait
+   deja exactement cela pour les pages anglaises. */
+function tplAr(){return document.documentElement.lang==='ar';}
+function tplName(tp){return (tplAr()&&tp.nameAr)?esc(tp.nameAr):'<bdi>'+esc(tp.name)+'</bdi>';}
+function tplDesc(tp){return (tplAr()&&tp.descAr)?esc(tp.descAr):'<bdi>'+esc(tp.desc)+'</bdi>';}
+function tplCard(tp){return `<div class="card p-4 cursor-pointer hover:shadow-md" onclick="previewTemplate('${tp.id}')"><div class="h-3 rounded-full mb-3" style="background:${tp.color2?`linear-gradient(90deg,${tp.color},${tp.color2})`:tp.color}"></div><h3 class="font-semibold">${tplName(tp)}</h3><p class="text-xs text-slate-500 mt-1">${tplDesc(tp)}</p><button class="btn-secondary mt-3 text-xs w-full"><i data-lucide="eye" class="w-3.5 h-3.5"></i> ${t('actions.preview')}</button></div>`;}
 function renderTemplates(){
   var top=TEMPLATES.filter(function(x){return TEMPLATES_TOP.indexOf(x.id)>=0;})
                    .sort(function(a,b){return TEMPLATES_TOP.indexOf(a.id)-TEMPLATES_TOP.indexOf(b.id);});

@@ -88,9 +88,21 @@ check('old invoices default to virement, so no stamp duty appears', legacy.payme
  * 2. Money. The one thing that must never be approximately right.
  * ---------------------------------------------------------------- */
 console.log('\nTotals');
+/* Cette propriete comparait les totaux a l'arithmetique EXACTE, non arrondie.
+   C'etait le mauvais contrat, et il produisait un papier faux : le document
+   imprime une colonne « MONTANT TVA » par ligne, et ce sont ces valeurs-la
+   que le client additionne. Arrondir chaque figure au dinar dans son coin
+   donnait « 1 151 + 174 = 1 324 ».
+
+   Le contrat est donc : chaque ligne et sa TVA sont arrondies au centime,
+   puis sommees. Le total est la somme de ce qui est imprime, et non un nombre
+   exact pose a cote de lignes arrondies. La tolerance reste au millionieme —
+   ce n'est pas une propriete relachee, c'en est une autre, et plus dure : elle
+   exige que le papier s'additionne, ce que l'ancienne n'exigeait pas. */
 const drift = await page.evaluate(() => {
+  const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
   const rnd = (s => () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648)(42);
-  let worst = 0;
+  let worst = 0, worstSum = 0;
   for (let i = 0; i < 3000; i++) {
     const items = [];
     for (let k = 0, n = 1 + Math.floor(rnd() * 6); k < n; k++)
@@ -99,12 +111,21 @@ const drift = await page.evaluate(() => {
                   tva: [0, 9, 19][Math.floor(rnd() * 3)]});
     const t = calcInvoiceTotals({items});
     let ht = 0, tv = 0;
-    for (const it of items) { const l = it.qty * it.unitPrice; ht += l; tv += l * it.tva / 100; }
-    worst = Math.max(worst, Math.abs(t.ht - ht), Math.abs(t.tva - tv), Math.abs(t.ttc - (ht + tv)));
+    for (const it of items) {
+      const l = r2(it.qty * it.unitPrice);
+      ht += l; tv += r2(l * it.tva / 100);
+    }
+    ht = r2(ht); tv = r2(tv);
+    worst = Math.max(worst, Math.abs(t.ht - ht), Math.abs(t.tva - tv), Math.abs(t.ttc - r2(ht + tv)));
+    /* Et l'invariant que le client verifie au stylo. */
+    worstSum = Math.max(worstSum, Math.abs((t.ht + t.tva) - t.ttc));
   }
-  return worst;
+  return {worst, worstSum};
 });
-check('3000 random invoices agree with independent arithmetic', drift < 1e-6, `worst drift ${drift}`);
+check('3000 random invoices agree with independent arithmetic',
+      drift.worst < 1e-6, `worst drift ${drift.worst}`);
+check('and on every one of them, the printed HT plus VAT is the printed TTC',
+      drift.worstSum < 1e-6, `worst ${drift.worstSum}`);
 
 const guards = await page.evaluate(() => ({
   empty: calcInvoiceTotals({items: []}).ttc,
@@ -5258,6 +5279,101 @@ console.log('\nLa virgule decimale');
           r.dir === 'rtl' && r.n === 0, JSON.stringify(r));
     await c.close();
   }
+}
+
+/* ---------------------------------------------------------------- *
+ * Un papier qui s'additionne, et des modeles qui parlent arabe.
+ *
+ * Avec des prix a centimes, chaque figure etait arrondie au dinar de son
+ * cote : le papier annoncait « 1 151 + 174 = 1 324 ». Un client qui verifie
+ * a raison de ne pas payer un document qui ne s'additionne pas.
+ * ---------------------------------------------------------------- */
+console.log('\nUn papier qui s\'additionne');
+{
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.round2 === 'function', {timeout: 20000});
+  await pg.evaluate(() => { window.confirm = () => true; });
+
+  const money = await pg.evaluate(() => {
+    state.clients = [{id: 'k1', name: 'Client', nif: '000916007654321'}];
+    state.products = [];
+    state.invoices = [
+      {id: 'f1', number: 'FAC-2026-001', clientId: 'k1', template: 'algerie', date: '2026-09-01',
+       status: 'envoyee', paymentMode: 'virement', stockTaken: false,
+       items: [{description: 'Sucre 1 kg', qty: 7, unitPrice: 99.99, tva: 19},
+               {description: 'Cafe 250 g', qty: 3, unitPrice: 150.25, tva: 9}]},
+      {id: 'f2', number: 'FAC-2026-002', clientId: 'k1', template: 'algerie', date: '2026-09-01',
+       status: 'envoyee', paymentMode: 'virement', stockTaken: false,
+       items: [{description: 'Ciment', qty: 10, unitPrice: 9800, tva: 19}]}
+    ];
+    state.nextInvoiceNumber = 3; saveData();
+    const cents = calcInvoiceTotals(state.invoices[0]);
+    const round = calcInvoiceTotals(state.invoices[1]);
+    /* Cent lignes a dix centimes : sans arrondi par ligne, le flottant rend
+       10.000000000000002 et le dinar finit par bouger. */
+    const drift = calcInvoiceTotals({paymentMode: 'virement',
+      items: Array.from({length: 100}, () => ({description: 'x', qty: 1, unitPrice: 0.1, tva: 19}))}).ht;
+    return {cents, round, drift};
+  });
+  check('with centimes, HT plus VAT is exactly TTC',
+        Math.abs((money.cents.ht + money.cents.tva) - money.cents.ttc) < 0.005,
+        JSON.stringify(money.cents));
+  check('and so it is without them',
+        Math.abs((money.round.ht + money.round.tva) - money.round.ttc) < 0.005,
+        JSON.stringify(money.round));
+  check('a hundred ten-centime lines make ten dinars, not 10.000000001',
+        money.drift === 10, String(money.drift));
+
+  const paper = async (id) => {
+    await pg.evaluate((i) => previewInvoice(i), id);
+    await pg.waitForTimeout(900);
+    const txt = await pg.evaluate(() => {
+      const e = document.getElementById('invoice-paper');
+      return e ? e.innerText : '';
+    });
+    await pg.evaluate(() => { try { closeModal(); } catch (e) {} navigate('invoices'); });
+    await pg.waitForTimeout(250);
+    return txt;
+  };
+  const withCents = await paper('f1');
+  const whole = await paper('f2');
+  check('a paper with centimes prints them', /,\d\d/.test(withCents),
+        withCents.replace(/\n/g, ' | ').slice(0, 110));
+  check('and one without keeps the round dinars it always had',
+        !/,\d\d\s*DA/.test(whole), whole.replace(/\n/g, ' | ').slice(0, 110));
+
+  /* Les vingt-neuf modeles portaient un nom et une description francais, et
+     l'ecran arabe les affichait tels quels. */
+  const tplAr = await pg.evaluate(async () => {
+    toggleLocale();
+    navigate('templates');
+    await new Promise(r => setTimeout(r, 250));
+    const cards = [...document.querySelectorAll('#main-content .card')];
+    const mute = cards.filter(x => !/[؀-ۿ]/.test((x.textContent || '').replace(/معاينة/g, '')));
+    navigate('invoices'); openNewInvoice();
+    await new Promise(r => setTimeout(r, 300));
+    const opts = [...document.querySelectorAll('#inv-template option')].map(o => o.textContent);
+    closeModal();
+    const r = {dir: document.documentElement.dir, cards: cards.length, mute: mute.length,
+               opts: opts.length, optsMute: opts.filter(o => !/[؀-ۿ]/.test(o)).length};
+    toggleLocale();
+    return r;
+  });
+  check('every template card speaks Arabic on an Arabic screen',
+        tplAr.dir === 'rtl' && tplAr.cards > 0 && tplAr.mute === 0, JSON.stringify(tplAr));
+  check('and so does every option in the invoice form',
+        tplAr.opts === 29 && tplAr.optsMute === 0, JSON.stringify(tplAr));
+
+  const tplFr = await pg.evaluate(async () => {
+    navigate('templates');
+    await new Promise(r => setTimeout(r, 250));
+    const c = document.querySelector('#main-content .card');
+    return c ? c.textContent.trim().replace(/\s+/g, ' ').slice(0, 40) : '';
+  });
+  check('and a French screen still reads French', /Alg|Class|Mod/.test(tplFr), tplFr);
+
+  await pg.close();
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));

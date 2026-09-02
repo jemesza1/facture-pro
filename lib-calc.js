@@ -158,6 +158,28 @@ function waLink(phone, text){
  *
  * « 1.234,56 » : quand les deux signes sont presents, le point separe les
  * milliers et la virgule les decimales, comme l'ecrit un francophone. */
+/* Arrondir au centime, en corrigeant la derive du flottant : 0.1+0.2 vaut
+   0.30000000000000004, et une facture de cent lignes accumule ces miettes
+   jusqu'a decaler un dinar. On arrondit chaque ligne AVANT de sommer, pour
+   que le total soit la somme de ce qui est imprime et non l'inverse. */
+window.round2 = function (n) {
+  var v = Number(n) || 0;
+  if (!isFinite(v)) return 0;
+  /* On recale sur la decimale avant d'arrondir, et ce n'est pas un detail de
+     style. Le binaire rend 1.005*100 = 100.49999999999999, qui s'arrondit a
+     100 au lieu de 101 ; et surtout l'ORDRE des operations change le
+     resultat — ht*(taux/100) et (ht*taux)/100 ne donnent pas le meme binaire,
+     donc pas toujours le meme centime. Une facture dont le total depend de la
+     facon dont on a ecrit la multiplication n'est pas une facture.
+     On arrondit aussi la valeur absolue : Math.round(-100.5) rend -100 et
+     Math.round(100.5) rend 101, si bien qu'un avoir et sa facture n'auraient
+     pas rendu le meme centime. */
+  var neg = v < 0;
+  var scaled = Number((Math.abs(v) * 100).toPrecision(12));
+  var out = Math.round(scaled) / 100;
+  return neg ? -out : out;
+};
+
 window.parseNum = function (v) {
   if (typeof v === 'number') return v;
   var s = String(v == null ? '' : v).trim();

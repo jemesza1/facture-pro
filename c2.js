@@ -1,5 +1,16 @@
 function renderInvoiceHTML(inv){
   const tpl=getTpl(inv.template);
+  /* Une seule decision pour tout le document : si une ligne ou un total porte
+     des centimes, le papier les imprime partout ; sinon il reste en dinars
+     ronds, comme avant. Un papier ou le sous-total est arrondi et le total
+     aussi, chacun de son cote, ne s'additionne pas. */
+  if(typeof setMoneyDecimals==='function'){
+    const tt=calcInvoiceTotals(inv);
+    const centimes=[tt.ht,tt.tva,tt.ttc,tt.port,tt.timbre,tt.net]
+      .concat((inv.items||[]).map(function(it){return (it.qty||0)*(it.unitPrice||0);}))
+      .some(function(v){return Math.abs(v-Math.round(v))>0.004;});
+    setMoneyDecimals(centimes);
+  }
   /* A delivery note is a different document, not an invoice with the prices
      painted out. It gets its own layout — quantities, units, two signatures —
      and takes only the colour of whichever template was chosen, so it still

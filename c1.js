@@ -12,7 +12,7 @@ function openNewInvoice(editId){
           </select></div>
         <div><label class="form-label" for="inv-template">${t('inv.template')}</label>
           <select id="inv-template" class="form-select">
-          ${(()=>{var opt=function(x){return `<option value="${x.id}" ${inv&&inv.template===x.id?'selected':''}>${x.name}</option>`;};
+          ${(()=>{var opt=function(x){var a=document.documentElement.lang==='ar';return `<option value="${x.id}" ${inv&&inv.template===x.id?'selected':''}>${esc((a&&x.nameAr)?x.nameAr:x.name)}</option>`;};
              var top=TEMPLATES.filter(function(x){return TEMPLATES_TOP.indexOf(x.id)>=0;})
                               .sort(function(a,b){return TEMPLATES_TOP.indexOf(a.id)-TEMPLATES_TOP.indexOf(b.id);});
              var rest=TEMPLATES.filter(function(x){return TEMPLATES_TOP.indexOf(x.id)<0;});
