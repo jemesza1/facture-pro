@@ -714,6 +714,29 @@ console.log('\nExcel export');
         (sheet1.match(/<autoFilter ref="[^"]*"/) || ['none'])[0]);
 
 
+  /* Le recapitulatif TVA est la seule table qu'un commercant recopie dans son
+     G50, et il additionnait les lignes brutes quand tout le reste de la
+     feuille passe par calcInvoiceTotals, qui arrondit chaque ligne avant de
+     sommer. Cent lignes a dix centimes suffisaient : la case « Base HT »
+     portait 9,99999999999998 et la TVA 1,8999999999999964, pendant que le
+     total imprime deux lignes plus bas, sur la meme feuille, disait 10 et 2.
+     C'est le nombre recopie a l'administration. */
+  await page.evaluate(() => {
+    state.invoices = [{id:'j1', number:'FAC-2026-050', clientId:'c1', date:'2026-04-03',
+      status:'envoyee', paymentMode:'virement',
+      items: Array.from({length: 100}, () => ({description:'x', qty:1, unitPrice:0.1, tva:19}))}];
+    saveData();
+  });
+  const recap = await grab(() => exportJournalXlsx('2026-04'));
+  const rText = recap.buf.toString('latin1');
+  const values = [...rText.matchAll(/<v>([-\d.]+)<\/v>/g)].map(m => m[1]);
+  check('no figure in the declaration carries a floating-point tail',
+        !values.some(v => /\.\d{6,}/.test(v)),
+        values.filter(v => /\.\d{6,}/.test(v)).join(' ') || 'none');
+  check('and the VAT recap agrees with the total printed under it',
+        values.filter(v => v === '10').length >= 3 && values.filter(v => v === '2').length >= 3,
+        values.join(' '));
+
   const emptyMonth = await page.evaluate(() => {
     let said = ''; const real = window.toast; window.toast = m => { said = m; };
     exportJournalXlsx('2020-01');

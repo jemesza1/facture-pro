@@ -43,11 +43,20 @@
       var sign = (typeof isAvoir === 'function' && isAvoir(inv)) ? -1 : 1;
       (inv.items || []).forEach(function(it){
         var rate = Number(it.tva) || 0;
-        var base = (Number(it.qty) || 0) * (Number(it.unitPrice) || 0) * sign;
+        /* Arrondi par ligne avant la somme, comme calcInvoiceTotals : c'est
+           la seule façon d'obtenir le meme nombre que le total imprime plus
+           bas sur la meme feuille. Sans lui, une centaine de lignes a dix
+           centimes rendait 10,000000000000002 et la case du G50 finissait par
+           bouger d'un centime contre la facture. */
+        var line = round2((Number(it.qty) || 0) * (Number(it.unitPrice) || 0));
         if (!map[rate]) map[rate] = {base: 0, tva: 0};
-        map[rate].base += base;
-        map[rate].tva  += base * rate / 100;
+        map[rate].base += line * sign;
+        map[rate].tva  += round2(vatAmount(line, rate)) * sign;
       });
+    });
+    Object.keys(map).forEach(function(k){
+      map[k].base = round2(map[k].base);
+      map[k].tva  = round2(map[k].tva);
     });
     return map;
   }
@@ -141,7 +150,7 @@
    * A month of invoices — the sheet a declaration is filled from
    * ---------------------------------------------------------------- */
   window.exportJournalXlsx = function(ym){
-    ym = ym || new Date().toISOString().slice(0, 7);
+    ym = ym || todayISO().slice(0,7);
     var all = (state.invoices || []).filter(function(i){
       return i.status !== 'annulee' && i.status !== 'brouillon' && (i.date || '').slice(0, 7) === ym;
     }).sort(function(a, b){ return (a.date || '').localeCompare(b.date || ''); });
@@ -237,7 +246,7 @@
                    brouillon:'Brouillon', annulee:'Annulée'};
 
   window.exportListXlsx = function(kind){
-    var day = new Date().toISOString().slice(0, 10);
+    var day = todayISO();
     var rows = [], merges = [], cols, name, file, span;
 
     function head(title, cells){
