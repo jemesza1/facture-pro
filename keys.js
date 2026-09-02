@@ -82,27 +82,30 @@
   /* L'aide passe par openModal : elle herite ainsi du piege de focus, du
      role="dialog" et de la fermeture par Escape, au lieu d'en refaire trois
      versions approximatives. */
+  /* Le nom de la touche change avec la langue, la touche elle-meme non :
+     d'ou une quatrieme colonne. « Echap » sur un ecran arabe etait une
+     coquille — un ternaire qui rendait la meme chose des deux cotes. */
   var ROWS = [
-    ['n', 'Nouvelle facture', 'فاتورة جديدة'],
-    ['/', 'Rechercher une facture', 'البحث في الفواتير'],
-    ['Ctrl + S', 'Enregistrer le formulaire ouvert', 'حفظ الاستمارة المفتوحة'],
-    ['Ctrl + P', "Télécharger le PDF de l'aperçu", 'تحميل PDF من المعاينة'],
-    ['Échap', 'Fermer la fenêtre', 'إغلاق النافذة'],
-    ['?', 'Afficher cette aide', 'عرض هذه المساعدة']
+    ['n', 'n', 'Nouvelle facture', 'فاتورة جديدة'],
+    ['/', '/', 'Rechercher une facture', 'البحث في الفواتير'],
+    ['Ctrl + S', 'Ctrl + S', 'Enregistrer le formulaire ouvert', 'حفظ الاستمارة المفتوحة'],
+    ['Ctrl + P', 'Ctrl + P', "Télécharger le PDF de l'aperçu", 'تحميل PDF من المعاينة'],
+    ['Échap', 'Esc', 'Fermer la fenêtre', 'إغلاق النافذة'],
+    ['?', '?', 'Afficher cette aide', 'عرض هذه المساعدة']
   ];
 
   function showHelp() {
     if (typeof openModal !== 'function') return false;
     var a = ar();
     var rows = ROWS.map(function (r) {
-      var key = r[0] === 'Échap' && a ? 'Échap' : r[0];
+      var key = a ? r[1] : r[0];
       return '<tr>' +
         '<td style="padding:7px 0;white-space:nowrap">' +
           '<kbd style="display:inline-block;padding:3px 8px;border-radius:6px;' +
           'border:1px solid var(--border);background:var(--page);font-size:12px;' +
           'font-weight:600;font-family:inherit;direction:ltr">' + esc(key) + '</kbd></td>' +
         '<td style="padding:7px 0;padding-inline-start:16px;font-size:14px">' +
-          esc(a ? r[2] : r[1]) + '</td></tr>';
+          esc(a ? r[3] : r[2]) + '</td></tr>';
     }).join('');
     /* Le <div class="modal"> vient de l'appelant : openModal n'enveloppe que
        dans le fond, puis cherche .modal pour y poser role="dialog", le piege

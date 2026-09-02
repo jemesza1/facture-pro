@@ -286,10 +286,15 @@
 
     } else {
       name = 'Factures'; file = 'factures-' + day + '.xlsx';
-      cols = [16, 12, 30, 20, 13, 14, 13, 14, 15, 14, 18];
+      /* Le port manquait, et la feuille ne tombait donc pas juste : ses
+         lignes annoncaient TTC + timbre d'un cote, un net plus grand de
+         l'autre, sans rien pour expliquer l'ecart. Le journal du mois, lui,
+         porte la colonne depuis toujours. */
+      cols = [16, 12, 30, 20, 13, 14, 13, 14, 13, 15, 14, 18];
       head('Factures', ['N°', 'Date', 'Client', 'NIF client', 'Statut', 'Base HT', 'TVA',
-                        'Total TTC', 'Droit de timbre', 'Net à payer', 'Règlement']);
-      var sum = {ht: 0, tva: 0, ttc: 0, timbre: 0, net: 0}, counted = 0;
+                        'Total TTC', 'Frais de port', 'Droit de timbre', 'Net à payer',
+                        'Règlement']);
+      var sum = {ht: 0, tva: 0, ttc: 0, port: 0, timbre: 0, net: 0}, counted = 0;
       (state.invoices || []).slice().sort(function(a, b){
         return String(b.date || '').localeCompare(String(a.date || ''));
       }).forEach(function(inv){
@@ -299,6 +304,7 @@
            exists, which is what this sheet is. */
         if (inv.status !== 'brouillon' && inv.status !== 'annulee') {
           sum.ht += tt.ht; sum.tva += tt.tva; sum.ttc += tt.ttc;
+          sum.port += (tt.port || 0);
           sum.timbre += tt.timbre; sum.net += tt.net; counted++;
         }
         rows.push([
@@ -308,6 +314,7 @@
           {v: cl.nif || '', s: 'cell'},
           {v: STATUS_FR[inv.status] || inv.status || '', s: 'cell'},
           {v: tt.ht, s: 'cellNum'}, {v: tt.tva, s: 'cellNum'}, {v: tt.ttc, s: 'cellNum'},
+          {v: tt.port || 0, s: 'cellNum'},
           {v: tt.timbre, s: 'cellNum'}, {v: tt.net, s: 'cellNum'},
           {v: payLabelFr(inv), s: 'cell'}
         ]);
@@ -315,10 +322,11 @@
       rows.push([{v: 'TOTAL', s: 'grand'}, {v: '', s: 'grand'}, {v: '', s: 'grand'},
                  {v: '', s: 'grand'}, {v: counted + ' facture(s)', s: 'grand'},
                  {v: sum.ht, s: 'grand'}, {v: sum.tva, s: 'grand'}, {v: sum.ttc, s: 'grand'},
+                 {v: sum.port, s: 'grand'},
                  {v: sum.timbre, s: 'grand'}, {v: sum.net, s: 'grand'}, {v: '', s: 'grand'}]);
       rows.push([]);
       rows.push([{v: 'Le total exclut les brouillons et les factures annulées. Pour la déclaration mensuelle, utilisez le Journal du mois.', s: 'note'}]);
-      merges.push('A' + rows.length + ':K' + rows.length);
+      merges.push('A' + rows.length + ':L' + rows.length);
     }
 
     if (rows.length <= 4) {

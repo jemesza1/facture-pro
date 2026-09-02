@@ -420,12 +420,24 @@
     return (state.payments||[]).filter(function(p){return p.invoiceId===invoiceId;})
       .reduce(function(s,p){return s+(Number(p.amount)||0);},0);
   }
-  window.syncInvoiceStatus=function(invoiceId){
+  /* fromRegister n'est vrai que lorsqu'un paiement vient d'etre ajoute ou
+     retire. La distinction est necessaire : le registre des paiements est
+     facultatif, et la plupart des commercants marquent une facture payee
+     depuis la pastille de la liste, sans jamais y saisir quoi que ce soit.
+     Sans ce garde-fou, rouvrir la facture et l'enregistrer — pour corriger
+     une adresse, une date — la faisait retomber en « Envoyee », ou en
+     « En retard » si l'echeance etait passee. L'ecran continuait d'afficher
+     « Payee » jusqu'au repeint suivant, si bien que le commercant repartait
+     en croyant sa facture reglee. */
+  window.syncInvoiceStatus=function(invoiceId, fromRegister){
     var inv=(state.invoices||[]).find(function(i){return i.id===invoiceId;});
     if(!inv||inv.status==='annulee')return;
     var tot=calcInvoiceTotals(inv).net, paid=paidFor(invoiceId);
     if(paid>=tot-0.5){inv.status='payee';return;}
     if(inv.status==='payee'){
+      /* Marquee a la main, sans rien au registre : c'est une decision, pas
+         une deduction, et on ne la defait pas. */
+      if(!fromRegister && paid<=0) return;
       var today=new Date().toISOString().slice(0,10);
       inv.status=(inv.dueDate&&inv.dueDate<today)?'enretard':'envoyee';
     }else if(paid>0&&inv.status==='brouillon'){inv.status='envoyee';}
@@ -467,7 +479,7 @@
       method:document.getElementById('pay-method').value,
       note:(document.getElementById('pay-note').value||'').trim()
     });
-    syncInvoiceStatus(invoiceId);
+    syncInvoiceStatus(invoiceId, true);
     saveData(); closeModal(); toast(t('toast.saved')); renderPage();
   };
 
@@ -475,7 +487,7 @@
     if(!confirm(locale==='ar'?'\u062d\u0630\u0641 \u0627\u0644\u062f\u0641\u0639\u0629\u061f':'Supprimer ce paiement ?')) return;
     var gone=(state.payments||[]).find(function(x){return x.id===id;});
     state.payments=state.payments.filter(function(x){return x.id!==id;});
-    if(gone) syncInvoiceStatus(gone.invoiceId);
+    if(gone) syncInvoiceStatus(gone.invoiceId, true);
     saveData(); toast(t('toast.saved')); renderPage();
   };
 

@@ -12,7 +12,7 @@
    cache only answers when the network does not.
 
    Bump CACHE whenever the shell changes — keep it in step with V in app.js. */
-var CACHE = 'facturepro-20260901b';
+var CACHE = 'facturepro-20260902a';
 
 /* Cached without their ?v= query, and read back with ignoreSearch, so bumping
    an asset version does not orphan every entry. */
@@ -59,7 +59,16 @@ self.addEventListener('install', function (e) {
       // One 404 must not fail the whole install, so each entry stands alone.
       .then(function (c) {
         return Promise.all(SHELL.map(function (u) {
-          return c.add(new Request(u, { cache: 'reload' })).catch(function () {});
+          return c.add(new Request(u, { cache: 'reload' })).catch(function () {
+            /* Le lien a laisse tomber celle-la. activate va effacer l'ancien
+               cache dans un instant, et la copie d'hier vaut mieux que pas de
+               copie : on la reprend pendant qu'elle est encore atteignable.
+               Une mise a jour sur un reseau faible coutait sinon la version
+               hors ligne — jspdf manquait, et le PDF ne sortait plus. */
+            return caches.match(u, { ignoreSearch: true }).then(function (hit) {
+              return hit ? c.put(new Request(u), hit.clone()) : null;
+            }).catch(function () {});
+          });
         }));
       })
       .then(function () { return self.skipWaiting(); })
@@ -92,22 +101,58 @@ self.addEventListener('fetch', function (e) {
 
   var key = bare(req.url);
 
-  e.respondWith(
-    fetch(req)
-      .then(function (res) {
-        if (res && res.ok && res.type === 'basic') {
-          var copy = res.clone();
-          caches.open(CACHE).then(function (c) { c.put(key, copy); }).catch(function () {});
+  /* Reseau d'abord, mais « d'abord » n'est pas « quoi qu'il arrive ». Deux
+     pannes echappaient a ce gestionnaire, et dans les deux l'appareil portait
+     l'application entiere pendant qu'on refusait de la lui rendre :
+
+     — l'origine repond, mais avec une erreur. fetch() reussit, .catch() ne
+       part pas, et la page 503 de l'hebergeur arrivait telle quelle. Un
+       depassement de quota chez Vercel suffisait a fermer l'application a
+       tout le monde, y compris hors ligne.
+
+     — la connexion ne repond plus sans se couper : reseau faible, portail
+       captif. fetch() ne resout ni ne rejette, e.respondWith attend une
+       promesse qui ne s'installe jamais, et l'ecran reste blanc jusqu'au
+       delai propre du navigateur, plusieurs minutes.
+
+     Les 4xx passent tels quels : /404.html doit encore repondre sur un chemin
+     qui n'existe vraiment pas. */
+  var fromCache = function () {
+    return caches.match(key, { ignoreSearch: true }).then(function (hit) {
+      if (hit) return hit;
+      // A deep link opened offline still deserves the application.
+      if (req.mode === 'navigate') return caches.match('/index.html');
+      return Response.error();
+    });
+  };
+
+  var net = fetch(req).then(function (res) {
+    if (res && res.ok && res.type === 'basic') {
+      var copy = res.clone();
+      caches.open(CACHE).then(function (c) { c.put(key, copy); }).catch(function () {});
+      return res;
+    }
+    if (res && res.status >= 500) {
+      return caches.match(key, { ignoreSearch: true }).then(function (hit) {
+        if (hit) return hit;
+        if (req.mode === 'navigate') {
+          return caches.match('/index.html').then(function (app) { return app || res; });
         }
         return res;
-      })
-      .catch(function () {
-        return caches.match(key, { ignoreSearch: true }).then(function (hit) {
-          if (hit) return hit;
-          // A deep link opened offline still deserves the application.
-          if (req.mode === 'navigate') return caches.match('/index.html');
-          return Response.error();
-        });
-      })
+      });
+    }
+    return res;
+  });
+
+  e.respondWith(
+    caches.match(key, { ignoreSearch: true }).then(function (hit) {
+      if (!hit) return net.catch(fromCache);
+      /* Une copie est deja sur l'appareil : le reseau a quatre secondes pour
+         faire mieux, pas la patience du navigateur. */
+      return Promise.race([
+        net.catch(function () { return hit; }),
+        new Promise(function (r) { setTimeout(function () { r(hit); }, 4000); })
+      ]);
+    }).catch(function () { return net.catch(fromCache); })
   );
 });

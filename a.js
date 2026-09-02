@@ -199,7 +199,37 @@ function fireConfetti(){
 }
 function renderPage(){const c=document.getElementById('main-content');if(!c)return;updateOverdue();if(state.currentPage==='dashboard')c.innerHTML=renderDashboard();else if(state.currentPage==='invoices')c.innerHTML=renderInvoices();else if(state.currentPage==='clients')c.innerHTML=renderClients();else if(state.currentPage==='templates')c.innerHTML=renderTemplates();else if(state.currentPage==='settings')c.innerHTML=renderSettings();else if(state.currentPage==='help')c.innerHTML=renderHelp();else if(state.currentPage==='outils')c.innerHTML=renderOutils();else if(state.currentPage==='terms')c.innerHTML=renderTerms();else c.innerHTML='<p class="text-slate-500">'+esc(t('ui.notFound'))+'</p>';try{lucide.createIcons();}catch(e){}try{if(typeof paintBackupNotice==='function')paintBackupNotice();}catch(e){}animateCounters();}
 function renderDashboard(){const invs=state.invoices.filter(i=>i.status!=='annulee');const paid=invs.filter(i=>i.status==='payee');const unpaid=invs.filter(i=>['envoyee','enretard'].includes(i.status));const overdue=invs.filter(i=>i.status==='enretard');const totalPaid=paid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalUnpaid=unpaid.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const totalOverdue=overdue.reduce((s,i)=>s+calcInvoiceTotals(i).net,0);const thisMonth=invs.filter(i=>i.date&&i.date.startsWith(new Date().toISOString().slice(0,7))).reduce((s,i)=>s+calcInvoiceTotals(i).net,0);return `<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6"><div class="stat-card"><div class="flex items-center justify-between"><span class="text-sm text-slate-500">${t('stats.paid')}</span><div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center"><i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i></div></div><p class="text-xl font-bold mt-2">${moneyUI(totalPaid)}</p></div><div class="stat-card"><div class="flex items-center justify-between"><span class="text-sm text-slate-500">${t('stats.pending')}</span><div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center"><i data-lucide="clock" class="w-5 h-5 text-blue-600"></i></div></div><p class="text-xl font-bold mt-2">${moneyUI(totalUnpaid)}</p></div><div class="stat-card"><div class="flex items-center justify-between"><span class="text-sm text-slate-500">${t('stats.overdue')}</span><div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center"><i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i></div></div><p class="text-xl font-bold mt-2 text-red-600">${moneyUI(totalOverdue)}</p></div><div class="stat-card"><div class="flex items-center justify-between"><span class="text-sm text-slate-500">${t('stats.month')}</span><div class="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center"><i data-lucide="calendar" class="w-5 h-5 text-sky-600"></i></div></div><p class="text-xl font-bold mt-2">${moneyUI(thisMonth)}</p></div></div><div class="card p-4"><div class="flex justify-between mb-4"><h3 class="font-semibold">${t('inv.recent')}</h3><button onclick="navigate('invoices')" class="text-sm text-sky-600 font-medium">${t('actions.seeAll')}</button></div><div class="overflow-x-auto">${renderInvoicesTable(state.invoices.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,5),true)}</div></div>`;}
-function setInvSearch(v){state.search=v;renderPage();var el=document.getElementById('inv-search');if(el){el.focus();try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}
+/* La recherche repeint toute la page a chaque touche, et le champ fait partie
+   de ce qui est repeint : il faut donc lui rendre le focus apres. Le curseur,
+   lui, etait replace en fin de chaine — corriger une faute au milieu d'un mot
+   etait impossible, chaque lettre sautait a la fin. On retient la position et
+   on la rend telle quelle.
+
+   Le repeint est aussi differe de quelques centieme de seconde. Sur deux cents
+   factures il ne se voit pas ; sur cinq cents, chaque frappe redessinait la
+   liste entiere et le champ prenait un demi-seconde de retard sur les doigts.
+   Le delai est court : quelqu'un qui tape s'arrete plus longtemps que cela
+   entre deux mots. */
+var _searchTimer=null;
+function setInvSearch(v){
+  state.search=v;
+  var el=document.getElementById('inv-search');
+  var pos=el?el.selectionStart:null;
+  var paint=function(){
+    _searchTimer=null;
+    renderPage();
+    var f=document.getElementById('inv-search');
+    if(!f)return;
+    f.focus();
+    try{ var p=(pos==null)?f.value.length:Math.min(pos,f.value.length);
+         f.setSelectionRange(p,p); }catch(e){}
+  };
+  if(_searchTimer) clearTimeout(_searchTimer);
+  /* Peu de factures : on repeint tout de suite, le differe ne servirait qu'a
+     rendre l'application molle. */
+  if((state.invoices||[]).length<200){ paint(); return; }
+  _searchTimer=setTimeout(paint,90);
+}
 function setStatusFilter(k){state.statusFilter=k;renderPage();}
 function filteredInvoices(){var list=[...state.invoices].sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   if(state.statusFilter&&state.statusFilter!=='all'){list=list.filter(function(inv){return inv.status===state.statusFilter;});}

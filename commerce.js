@@ -213,22 +213,58 @@
     });
   }
 
+  /* Ce que le document retient reellement : de quoi rendre exactement ce
+     qui a ete pris, meme si les lignes ont change depuis. */
+  function heldLines(inv){
+    return (inv.items||[]).map(function(it){
+      return {productId:it.productId||'', description:it.description||'',
+              qty:Number(it.qty)||0};
+    });
+  }
+  function linesKey(lines){
+    return JSON.stringify((lines||[]).map(function(it){
+      return [it.productId||'', String(it.description||'').trim().toLowerCase(),
+              Number(it.qty)||0];
+    }));
+  }
+
   /* Idempotent by construction: an invoice records whether its lines are
-     currently applied, so reconciling twice changes nothing. */
+     currently applied, so reconciling twice changes nothing.
+
+     « Si » ne suffisait pas, il fallait « lesquelles ». Le drapeau etait un
+     booleen, alors modifier une facture deja emise ne bougeait rien : passer
+     une ligne de 2 a 9 laissait l'etagere a -2 pour toujours, et remplacer la
+     designation par un article qui n'existe pas ne rendait jamais les deux
+     unites que la facture ne vend plus. On garde donc les lignes appliquees a
+     cote du drapeau : on rend celles-la, puis on prend les nouvelles. */
   function syncStock(inv, want){
     if(!inv) return false;
     if(want === undefined) want = stockHeldBy(inv);
+    var dir = isCredit(inv) ? 1 : -1;
 
     /* A document written before this existed carries no flag, and its stock
        was already taken at the time. Adopting it as settled — without moving
        anything — is the whole migration: reconciling a ledger of two hundred
        invoices on first load would otherwise deduct every one of them a
-       second time. */
+       second time. Les factures d'avant ce correctif n'ont pas non plus la
+       liste : elles adoptent leurs lignes actuelles, ce qui revient au
+       comportement precedent et ne bouge rien. */
     if(inv.stockTaken === undefined) inv.stockTaken = stockHeldBy(inv);
+    if(inv.stockTaken && !inv.stockLines) inv.stockLines = heldLines(inv);
+    if(!inv.stockTaken) inv.stockLines = null;
 
-    if(want === !!inv.stockTaken) return false;
-    moveStock(inv.items, (isCredit(inv) ? 1 : -1) * (want ? 1 : -1));
-    inv.stockTaken = want;
+    var now = heldLines(inv);
+
+    if(!want){
+      if(!inv.stockTaken) return false;
+      moveStock(inv.stockLines || now, -dir);
+      inv.stockTaken = false; inv.stockLines = null;
+      return true;
+    }
+    if(inv.stockTaken && linesKey(inv.stockLines) === linesKey(now)) return false;
+    if(inv.stockTaken) moveStock(inv.stockLines, -dir);
+    moveStock(now, dir);
+    inv.stockTaken = true; inv.stockLines = now;
     return true;
   }
 

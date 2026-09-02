@@ -65,7 +65,7 @@ function renderBonLivraison(inv,tpl){
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      ${inv.notes?`<div style="margin-top:14px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
+      ${inv.notes?`<div style="white-space:pre-line;margin-top:14px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
       <div style="margin-top:26px;padding:14px;background:#f8fafc;border:1px solid #eef2f7;border-radius:6px;font-size:10.5px;color:#64748b">
         Le présent bon ne vaut pas facture. Les montants figurent sur la facture ${inv.refNumber?esc(inv.refNumber):'correspondante'}.
       </div>
@@ -243,7 +243,7 @@ function renderInvoiceDZ(inv,tpl){
       <div style="margin-top:18px;padding:11px 14px;background:#f0fdf4;border-left:3px solid ${g2};border-radius:4px;font-size:11px;font-style:italic">
         ${wordsLead(inv)} : <strong>${words}</strong>
       </div>
-      ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
+      ${inv.notes?`<div style="white-space:pre-line;margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:26px;padding-top:16px;border-top:1px solid #eef2f7">
         <div style="font-size:10px;color:#94a3b8;line-height:1.7">
           ${company.rib?`<div>RIB : ${company.rib} — ${company.banque||''}</div>`:''}
@@ -321,7 +321,7 @@ function renderInvoiceStudio(inv,tpl){
     </div>
 <div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
     <div style="margin-top:16px;font-size:11px;font-style:italic">${wordsLead(inv)} : <strong>${words}</strong></div>
-    ${inv.notes?`<div style="margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
+    ${inv.notes?`<div style="white-space:pre-line;margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
     ${company.rib?`<div style="margin-top:8px;font-size:10px;color:#94a3b8">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
   </div>`;
 }

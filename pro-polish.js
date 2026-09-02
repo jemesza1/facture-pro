@@ -131,6 +131,18 @@
       if(typeof ensureAvoirState==='function') ensureAvoirState();
       state.nextAvoirNumber=Math.max(Number(state.nextAvoirNumber)||1,fromFile);
 
+      /* Et une serie de plus, oubliee : les bons de livraison. Le compteur de
+         la machine qui restaure survivait a l'import, alors qu'il ne connait
+         pas les bons du fichier. Restaurer sur un appareil neuf, ou sur un
+         appareil qui en avait moins, redonnait BL-2026-001 a un second bon —
+         deux documents de livraison portant le meme numero. Meme regle que
+         les avoirs : le compteur du fichier, jamais sous ce que les documents
+         restaures utilisent deja. */
+      var blFromFile=Number(d.nextBlNumber)||0;
+      delete state.nextBlNumber;
+      if(typeof ensureBlState==='function') ensureBlState();
+      state.nextBlNumber=Math.max(Number(state.nextBlNumber)||1,blFromFile);
+
       saveData();
       return true;
     }catch(err){ return false; }

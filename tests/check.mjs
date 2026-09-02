@@ -242,18 +242,30 @@ check('a refused invoice does not touch the stock', stock.afterFail === 10, Stri
 check('and a draft leaves the shelf alone', stock.afterSave === 10, String(stock.afterSave));
 check('issuing it deducts once', stock.afterIssue === 6, String(stock.afterIssue));
 
+/* syncInvoiceStatus prend desormais un second argument : le registre des
+   paiements a-t-il bouge, oui ou non. La distinction n'est pas theorique —
+   le registre est facultatif, et la plupart des commercants marquent une
+   facture payee depuis la pastille de la liste sans jamais y saisir quoi que
+   ce soit. Sans elle, rouvrir la facture pour corriger une adresse la
+   faisait retomber en « Envoyee ». Les deux cas sont verifies ici. */
 const pay = await page.evaluate(() => {
   const inv = state.invoices.find(i => i.id === 'i1');
   const net = calcInvoiceTotals(inv).net;
   state.payments = [{id:'p1', invoiceId:'i1', clientId:'c1', amount: net, date:'2026-08-15', method:'especes'}];
-  syncInvoiceStatus('i1');
+  syncInvoiceStatus('i1', true);
   const settled = inv.status;
   state.payments = [];
+  syncInvoiceStatus('i1', true);
+  const reopened = inv.status;
+  /* Et le cas d'a cote : marquee a la main, aucun paiement au registre, un
+     simple ré-enregistrement ne doit rien defaire. */
+  inv.status = 'payee';
   syncInvoiceStatus('i1');
-  return {settled, reopened: inv.status};
+  return {settled, reopened, byHand: inv.status};
 });
 check('a full payment settles the invoice', pay.settled === 'payee', pay.settled);
 check('removing it reopens the invoice', pay.reopened !== 'payee', pay.reopened);
+check('but a re-save leaves a hand-marked one alone', pay.byHand === 'payee', pay.byHand);
 
 const orphan = await page.evaluate(() => {
   state.payments = [{id:'p2', invoiceId:'i1', clientId:'c1', amount: 5000, date:'2026-08-15', method:'especes'}];
@@ -4937,6 +4949,200 @@ console.log('\nCe qui ne se voit qu\'en enchainant');
         /rienAPerdre/.test(exSrc));
 
   await pg.close();
+}
+
+/* ---------------------------------------------------------------- *
+ * Neuf de plus, meme methode : conduire, pas lire.
+ * ---------------------------------------------------------------- */
+console.log('\nNeuf defauts de plus');
+{
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.reconcileStock === 'function', {timeout: 20000});
+  await pg.evaluate(() => { window.confirm = () => true; });
+
+  /* Payee marquee a la main est une decision, pas une deduction. Rouvrir la
+     facture pour corriger une adresse la faisait retomber en Envoyee, et
+     l'ecran continuait d'afficher Payee jusqu'au repeint suivant. */
+  const paid = await pg.evaluate(async () => {
+    state.clients = [{id: 'k1', name: 'C', nif: '000000000000000'}];
+    state.payments = [];
+    state.invoices = [{id: 'f1', number: 'FAC-2026-001', clientId: 'k1', template: 'algerie',
+                       date: '2026-01-01', dueDate: '2026-02-01', status: 'payee',
+                       paymentMode: 'virement',
+                       items: [{description: 'S', qty: 1, unitPrice: 10000, tva: 19}]}];
+    saveData();
+    editInvoice('f1');
+    await new Promise(r => setTimeout(r, 250));
+    saveInvoice('f1');
+    await new Promise(r => setTimeout(r, 350));
+    return {mem: state.invoices[0].status,
+            stored: JSON.parse(localStorage.getItem('facturepro_dz_v24')).invoices[0].status};
+  });
+  check('an invoice marked paid by hand stays paid when re-saved',
+        paid.mem === 'payee' && paid.stored === 'payee', JSON.stringify(paid));
+
+  /* Le drapeau de stock etait un booleen : « si », jamais « lesquelles ». */
+  const stock = await pg.evaluate(() => {
+    state.products = [{id: 'p1', name: 'Ciment', price: 1000, tva: 19, stock: 100, minStock: 5}];
+    state.invoices = [{id: 'f1', number: 'FAC-2026-001', clientId: 'k1', template: 'algerie',
+                       date: '2026-09-01', status: 'envoyee', paymentMode: 'virement',
+                       stockTaken: false,
+                       items: [{description: 'Ciment', qty: 2, unitPrice: 1000, tva: 19}]}];
+    reconcileStock(); const a = state.products[0].stock;
+    state.invoices[0].items[0].qty = 9;
+    reconcileStock(); const b = state.products[0].stock;
+    state.invoices[0].items[0].description = 'Autre chose';
+    reconcileStock(); const c = state.products[0].stock;
+    return {a, b, c};
+  });
+  check('issuing two units takes two off the shelf', stock.a === 98, JSON.stringify(stock));
+  check('and raising the line to nine takes nine in all', stock.b === 91, JSON.stringify(stock));
+  check('and pointing the line elsewhere gives them back', stock.c === 100, JSON.stringify(stock));
+
+  /* Le port etait absent de la feuille Factures, qui ne tombait donc pas
+     juste : TTC + timbre d'un cote, un net plus grand de l'autre. */
+  const sheet = await pg.evaluate(async () => {
+    state.invoices = [{id: 'f1', number: 'FAC-2026-001', clientId: 'k1', template: 'algerie',
+                       date: '2026-09-01', status: 'envoyee', paymentMode: 'especes',
+                       fraisPort: 5000, stockTaken: false,
+                       items: [{description: 'M', qty: 2, unitPrice: 30000, tva: 19}]}];
+    state.products = []; saveData();
+    let cap = null; const o = XLSX.build;
+    XLSX.build = function (a) { cap = a; return o.apply(this, arguments); };
+    try { exportListXlsx('invoices'); } catch (e) {}
+    await new Promise(r => setTimeout(r, 700));
+    XLSX.build = o;
+    if (!cap) return null;
+    const sh = Array.isArray(cap) ? cap[0] : cap;
+    const rows = (sh && (sh.rows || sh.data)) || [];
+    const head = rows.some(r => r && r.some && r.some(c => c && /Frais de port/.test(String(c.v || ''))));
+    const tot = rows.find(r => r && r.some && r.some(c => c && String(c.v) === 'TOTAL'));
+    return {head, nums: tot ? tot.map(c => c.v).filter(v => typeof v === 'number') : null};
+  });
+  check('the invoice workbook carries a carriage column', sheet && sheet.head === true,
+        JSON.stringify(sheet));
+  check('and its total reconciles: TTC + carriage + duty = net',
+        !!sheet && !!sheet.nums &&
+        Math.abs((sheet.nums[2] + sheet.nums[3] + sheet.nums[4]) - sheet.nums[5]) < 0.5,
+        JSON.stringify(sheet && sheet.nums));
+
+  /* Les notes gardent leurs retours a la ligne sur le papier. */
+  const notes = await pg.evaluate(async () => {
+    state.invoices[0].notes = 'Ligne un\nLigne deux';
+    previewInvoice('f1');
+    await new Promise(r => setTimeout(r, 900));
+    const paper = document.getElementById('invoice-paper');
+    if (!paper) return 'pas de papier';
+    const d = [...paper.querySelectorAll('div')].find(x =>
+      /Ligne un/.test(x.textContent) && /Ligne deux/.test(x.textContent) && x.children.length === 0);
+    const ws = d ? getComputedStyle(d).whiteSpace : 'introuvable';
+    if (typeof closeModal === 'function') closeModal();
+    navigate('invoices');
+    return ws;
+  });
+  check('a note keeps the line breaks it was typed with', /pre-line|pre-wrap/.test(notes), notes);
+
+  /* Corriger au milieu d'un mot : le curseur etait replace en fin de chaine
+     a chaque frappe. */
+  await pg.evaluate(() => {
+    state.invoices = []; for (let i = 1; i <= 6; i++) state.invoices.push({
+      id: 'g' + i, number: 'FAC-2026-00' + i, clientId: 'k1', template: 'algerie',
+      date: '2026-09-01', status: 'envoyee', paymentMode: 'virement', stockTaken: false,
+      items: [{description: 'S', qty: 1, unitPrice: 1000, tva: 19}]});
+    saveData(); navigate('invoices');
+  });
+  await pg.waitForTimeout(300);
+  await pg.click('#inv-search');
+  await pg.keyboard.type('FAC', {delay: 50});
+  await pg.waitForTimeout(150);
+  await pg.keyboard.press('ArrowLeft');
+  await pg.keyboard.press('ArrowLeft');
+  await pg.keyboard.type('X', {delay: 50});
+  await pg.waitForTimeout(250);
+  const caret = await pg.evaluate(() => {
+    const g = document.getElementById('inv-search');
+    return {val: g.value, pos: g.selectionStart};
+  });
+  check('a correction lands where the caret was, not at the end',
+        caret.val === 'FXAC' && caret.pos === 2, JSON.stringify(caret));
+
+  /* Le nom de la touche change avec la langue, la touche non. */
+  const kbd = await pg.evaluate(() => {
+    toggleLocale();
+    showShortcuts();
+    const m = document.querySelector('#modal-root .modal');
+    const txt = m ? m.innerText : '';
+    closeModal(); toggleLocale();
+    return txt;
+  });
+  check('the shortcut sheet says Esc on an Arabic screen',
+        kbd.indexOf('Esc') >= 0 && kbd.indexOf('Échap') < 0, kbd.slice(0, 60));
+
+  await pg.close();
+}
+
+/* Le service worker, mis a l'epreuve de ce qui arrive vraiment : une origine
+   en panne, et une connexion qui traine sans se couper. Les deux laissaient
+   un appareil qui porte toute l'application sans application. */
+{
+  let broken = false, stalled = false;
+  const flaky = createServer(async (req, res) => {
+    if (stalled) return;                       /* jamais de reponse, jamais de coupure */
+    if (broken) { res.writeHead(503, {'Content-Type': 'text/html'}); res.end('<h1>503</h1>'); return; }
+    const f = join(ROOT, 'public',
+                   normalize(decodeURI(req.url.split('?')[0] === '/' ? '/index.html'
+                                                                    : req.url.split('?')[0]))
+                     .replace(/^(\.\.[/\\])+/, ''));
+    try {
+      const body = await readFile(f);
+      res.writeHead(200, {'Content-Type': TYPES[extname(f)] || 'application/octet-stream'});
+      res.end(body);
+    } catch { res.writeHead(404); res.end('not found'); }
+  });
+  await new Promise(r => flaky.listen(0, '127.0.0.1', r));
+  const FLAKY = `http://127.0.0.1:${flaky.address().port}`;
+
+  const ctx = await browser.newContext();
+  const sw = await ctx.newPage();
+  await sw.goto(`${FLAKY}/index.html`);
+  await sw.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller,
+                           {timeout: 25000});
+  await sw.waitForTimeout(2500);
+
+  broken = true;
+  await sw.goto(`${FLAKY}/index.html`, {waitUntil: 'domcontentloaded'}).catch(() => {});
+  await sw.waitForTimeout(1200);
+  const down = await sw.evaluate(() => !!document.getElementById('main-content'));
+  check('a broken origin does not close the application', down === true);
+  broken = false;
+
+  stalled = true;
+  const slow = await sw.evaluate(async () => {
+    const t0 = Date.now();
+    try {
+      const r = await fetch('/i18n.js?probe=1');
+      const txt = await r.text();
+      return {ms: Date.now() - t0, ok: r.ok, len: txt.length};
+    } catch (e) { return {ms: Date.now() - t0, err: String(e).slice(0, 50)}; }
+  });
+  check('a stalled connection hands back the local copy in seconds',
+        slow.ok === true && slow.len > 1000 && slow.ms < 9000, JSON.stringify(slow));
+  stalled = false;
+
+  await ctx.close();
+  flaky.close();
+
+  /* Et une entree perdue pendant une mise a jour ne doit pas couter la copie
+     hors ligne : install reprend celle d'hier avant qu'activate n'efface. */
+  const swSrc = await readFile(join(ROOT, 'sw.js'), 'utf8');
+  check('a dropped entry falls back to yesterday copy rather than none',
+        /caches\.match\(u, \{ ignoreSearch: true \}\)/.test(swSrc));
+
+  /* Le compteur des bons de livraison suit la restauration, comme les avoirs. */
+  const ppSrc = await readFile(join(ROOT, 'pro-polish.js'), 'utf8');
+  check('a restore never hands out a delivery note number twice',
+        /nextBlNumber=Math\.max/.test(ppSrc));
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
