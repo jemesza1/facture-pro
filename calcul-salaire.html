@@ -25,7 +25,11 @@
   body.ar{font-family:Cairo,system-ui,sans-serif}
   .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
   .num{direction:ltr;unicode-bidi:isolate}
-  input[type=number]{direction:ltr;text-align:start}
+  /* Le selecteur suivait le type du champ, qui n'est plus « number » : dans
+     Chromium, une virgule tapee dans un input[type=number] est effacee au lieu
+     d'etre refusee, et « 1500,50 » y devenait 150050 — la page repondait alors
+     sur cent fois la somme, sans rien signaler. */
+  input[inputmode=decimal]{direction:ltr;text-align:start}
   table{width:100%;border-collapse:collapse}
   th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
   /* Segmented controls. Qualified with the tag: tailwind.css loads after this
@@ -49,7 +53,7 @@
     .minus .v{color:#f87171}
   }
 </style>
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260902d" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902e" />
 <link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="min-h-screen">
@@ -69,11 +73,11 @@
 
   <div class="card p-5 sm:p-6">
     <label id="lbl" class="block text-sm font-medium mb-2" for="brut">Salaire brut mensuel (DA)</label>
-    <input id="brut" type="number" inputmode="decimal" min="0" step="0.01" placeholder="60000"
+    <input id="brut" type="text" inputmode="decimal" autocomplete="off" placeholder="60000"
            class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
 
     <label id="plbl" class="block text-sm font-medium mt-5 mb-2" for="primes">Primes et rappels du mois (DA)</label>
-    <input id="primes" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"
+    <input id="primes" type="text" inputmode="decimal" autocomplete="off" placeholder="0"
            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
     <p id="phint" class="text-xs text-slate-500 mt-1.5">Retenues séparément à 10 %. Laissez vide si aucune.</p>
 
@@ -163,8 +167,8 @@
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js?v=20260902d"></script>
-<script src="install.js?v=20260902d"></script>
+<script src="lib-calc.js?v=20260902e"></script>
+<script src="install.js?v=20260902e"></script>
 <script>
 (function(){
   /* Cotisation ouvrière: 1,5 sécurité sociale + 6,75 retraite + 0,5 chômage
@@ -235,8 +239,8 @@
   }
 
   function render(){
-    var b=parseFloat($('brut').value);
-    var p=parseFloat($('primes').value);
+    var b=parseNum($('brut').value);
+    var p=parseNum($('primes').value);
     if(!isFinite(p)||p<0)p=0;
     /* The primes rows only earn their space once there are primes. */
     var showP=p>0;

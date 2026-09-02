@@ -40,7 +40,11 @@
   .fld{unicode-bidi:plaintext}
   /* Money, codes and dates never reorder, whatever the interface language. */
   .num,.ltr-code{direction:ltr;unicode-bidi:isolate}
-  input[type=number],input[type=date]{direction:ltr;text-align:start}
+  /* Plus de input[type=number] pour les montants : Chromium y efface le
+     separateur decimal tape au lieu de le refuser, et « 1500,50 » devenait
+     150050 sans que rien ne le signale. La page vise des pays ou la virgule
+     est le separateur usuel. */
+  input[inputmode=decimal],input[type=date]{direction:ltr;text-align:start}
   button.seg{border:1px solid #cbd5e1;background:transparent;color:inherit;
     padding:.3rem .7rem;border-radius:999px;font-size:.8125rem;font-weight:600;cursor:pointer}
   button.seg[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -66,7 +70,7 @@
     header,footer,#landing{display:none !important}
   }
 </style>
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260902d" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902e" />
 <!-- The two libraries the export needs, served from this domain like every
      other page here. A blocked cdnjs is what used to leave the PDF button
      throwing "html2canvas is not defined". -->
@@ -175,7 +179,7 @@
           <div>
             <label id="t-ltax" class="block text-xs font-medium text-slate-500 mb-1" for="taxRate">Tax</label>
             <div class="flex gap-2">
-              <input id="taxRate" type="number" min="0" max="100" step="0.1" class="fld" />
+              <input id="taxRate" type="text" inputmode="decimal" autocomplete="off" class="fld" />
               <input id="taxName" class="fld w-28" aria-label="Tax name" />
             </div>
           </div>
@@ -186,7 +190,7 @@
             <label id="t-lextra" class="block text-xs font-medium text-slate-500 mb-1" for="extraLabel">Other charge (optional)</label>
             <div class="flex gap-2">
               <input id="extraLabel" class="fld" />
-              <input id="extraAmount" type="number" step="0.001" class="fld w-36" aria-label="Other charge amount" />
+              <input id="extraAmount" type="text" inputmode="decimal" autocomplete="off" class="fld w-36" aria-label="Other charge amount" />
             </div>
             <p id="hint" class="hidden mt-2 text-xs leading-relaxed rounded-xl px-3 py-2"
                style="background:#fffbeb;color:#92400e;border:1px solid #fcd34d"></p>
@@ -330,6 +334,22 @@
  * not cost ten minutes of typing. */
 (function(){
 'use strict';
+
+/* La lecture d'un nombre tape a la main. La page ne charge pas lib-calc.js et
+   ne doit pas le charger, donc parseNum est redit ici — a l'identique, et le
+   harnais compare les deux sur une table d'entrees pour qu'ils ne puissent
+   pas diverger. Le dernier separateur rencontre est le decimal : « 1,500.50 »
+   a Londres et « 1.500,50 » a Berlin nomment la meme somme. */
+function num(v){
+  if (typeof v === 'number') return v;
+  var s = String(v == null ? '' : v).trim();
+  if (!s) return NaN;
+  s = s.replace(/[\s\u00a0\u202f]/g, '');
+  var dot = s.lastIndexOf('.'), comma = s.lastIndexOf(',');
+  if (dot >= 0 && comma >= 0) { if (comma > dot) s = s.replace(/\./g,'').replace(',','.'); else s = s.replace(/,/g,''); }
+  else if (comma >= 0) { s = s.replace(',', '.'); }
+  return parseFloat(s);
+}
 
 /* ---------------------------------------------------------------- *
  * The countries.
@@ -685,9 +705,9 @@ function paintItems(){
     return '<div class="grid grid-cols-12 gap-2 items-center">' +
       '<input class="fld col-span-6" data-i="' + i + '" data-f="desc" placeholder="' + esc(s.desc) +
         '" value="' + esc(it.desc) + '" aria-label="' + esc(s.desc) + '" />' +
-      '<input class="fld col-span-2" data-i="' + i + '" data-f="qty" type="number" min="0" step="0.01" value="' +
+      '<input class="fld col-span-2" data-i="' + i + '" data-f="qty" type="text" inputmode="decimal" autocomplete="off" value="' +
         esc(it.qty) + '" aria-label="' + esc(s.qty) + '" />' +
-      '<input class="fld col-span-3" data-i="' + i + '" data-f="price" type="number" min="0" step="0.01" value="' +
+      '<input class="fld col-span-3" data-i="' + i + '" data-f="price" type="text" inputmode="decimal" autocomplete="off" value="' +
         esc(it.price) + '" aria-label="' + esc(s.price) + '" />' +
       '<button type="button" class="col-span-1 text-slate-400 hover:text-red-600 text-lg" data-del="' + i +
         '" aria-label="' + esc(s.remove) + '" title="' + esc(s.remove) + '">×</button>' +
@@ -696,7 +716,7 @@ function paintItems(){
   [].forEach.call($('items').querySelectorAll('input'), function(inp){
     inp.addEventListener('input', function(){
       var i = Number(inp.dataset.i), f = inp.dataset.f;
-      state.items[i][f] = (f === 'desc') ? inp.value : (parseFloat(inp.value) || 0);
+      state.items[i][f] = (f === 'desc') ? inp.value : (num(inp.value) || 0);
       render(); save();
     });
   });
@@ -936,7 +956,7 @@ function init(){
   });
   $('country').addEventListener('change', function(){ applyCountry($('country').value); save(); });
   $('extraLabel').addEventListener('input', function(){ state.extraLabel = $('extraLabel').value; render(); save(); });
-  $('extraAmount').addEventListener('input', function(){ state.extraAmount = parseFloat($('extraAmount').value) || 0; render(); save(); });
+  $('extraAmount').addEventListener('input', function(){ state.extraAmount = num($('extraAmount').value) || 0; render(); save(); });
   $('doclang').addEventListener('change', function(){
     state.docLang = $('doclang').value;
     var c = COUNTRIES[state.country];
@@ -944,7 +964,7 @@ function init(){
     render(); save();
   });
   $('currency').addEventListener('input', function(){ state.currency = $('currency').value; render(); save(); });
-  $('taxRate').addEventListener('input', function(){ state.taxRate = parseFloat($('taxRate').value) || 0; render(); save(); });
+  $('taxRate').addEventListener('input', function(){ state.taxRate = num($('taxRate').value) || 0; render(); save(); });
   $('taxName').addEventListener('input', function(){ state.taxName = $('taxName').value; render(); save(); });
   $('add-line').addEventListener('click', function(){
     state.items.push({desc:'', qty:1, price:0}); paintItems(); render(); save();

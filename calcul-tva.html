@@ -25,7 +25,11 @@
   body.ar{font-family:Cairo,system-ui,sans-serif}
   .card{background:#fff;border:1px solid #e2e8f0;border-radius:16px}
   .num{direction:ltr;unicode-bidi:isolate}
-  input[type=number]{direction:ltr;text-align:start}
+  /* Le selecteur suivait le type du champ, qui n'est plus « number » : dans
+     Chromium, une virgule tapee dans un input[type=number] est effacee au lieu
+     d'etre refusee, et « 1500,50 » y devenait 150050 — la page repondait alors
+     sur cent fois la somme, sans rien signaler. */
+  input[inputmode=decimal]{direction:ltr;text-align:start}
   table{width:100%;border-collapse:collapse}
   th,td{padding:.55rem .25rem;text-align:start;border-bottom:1px solid #e2e8f0;font-size:.875rem}
   /* Segmented controls. Qualified with the tag: tailwind.css loads after this
@@ -41,7 +45,7 @@
     button.seg{border-color:#334155}
   }
 </style>
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260902d" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902e" />
 <link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="min-h-screen">
@@ -67,7 +71,7 @@
     </div>
 
     <label id="lbl" class="block text-sm font-medium mb-2" for="amount">Montant HT (DA)</label>
-    <input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="100000"
+    <input id="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="100000"
            class="w-full text-2xl font-semibold px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent" />
 
     <p id="ratelbl" class="text-sm font-medium mt-5 mb-2">Taux de TVA</p>
@@ -199,8 +203,8 @@
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js?v=20260902d"></script>
-<script src="install.js?v=20260902d"></script>
+<script src="lib-calc.js?v=20260902e"></script>
+<script src="install.js?v=20260902e"></script>
 <script>
 (function(){
   var T={
@@ -254,7 +258,7 @@
   function paintLabel(){ $('lbl').textContent = T[loc][dir==='ht'?'lblHt':'lblTtc']; }
 
   function render(){
-    var v=parseFloat($('amount').value);
+    var v=parseNum($('amount').value);
     if(!isFinite(v)||v<0){ $('out-ht').textContent='—'; $('out-tva').textContent='—'; $('out-ttc').textContent='—'; return; }
     /* Both directions go through lib-calc, the same file the application
        loads first — so this page and an invoice line cannot disagree. */

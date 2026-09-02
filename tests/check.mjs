@@ -571,6 +571,60 @@ console.log('\nPublic tool pages');
   const flipped = await tools.evaluate(() => document.documentElement.dir);
   check('and the switch still turns it back', flipped === 'ltr', flipped);
 
+  /* La virgule, sur toutes les autres pages.
+   *
+   * Le defaut signale sur le montant en lettres n'etait pas propre a cette
+   * page : les six outils portaient un input[type=number], ou Chromium efface
+   * la virgule tapee au lieu de la refuser. Un commercant qui calculait le
+   * timbre de 699 720,50 DA lisait 71 371 491 DA de net, sans un mot
+   * d'avertissement. On tape reellement les touches — fill() poserait la
+   * valeur d'un coup et ne reproduirait pas l'effacement. */
+  const commas = [
+    ['calcul-tva.html',        [['amount', '1500,50']],                 'out-ttc', '1 785,60 DA'],
+    ['droit-de-timbre.html',   [['amount', '699 720,50']],              'duty',    '13 994,42 DA'],
+    ['calcul-salaire.html',    [['brut', '60000,50']],                  'v-cnas',  '− 5 400,05 DA'],
+    ['calcul-pourcentage.html',[['a', '1500,50'], ['b', '20']],         'v2',      '− 300,10 DA'],
+    ['calcul-marge.html',      [['pa', '1500,50'], ['val', '30']],      'v-pvht',  '2 143,57 DA']
+  ];
+  for (const [file, fields, out, want] of commas) {
+    await tools.goto(`${BASE}/${file}`);
+    await tools.waitForFunction(() => typeof parseNum === 'function', {timeout: 20000});
+    for (const [id, value] of fields) {
+      await tools.click('#' + id);
+      await tools.type('#' + id, value, {delay: 5});
+    }
+    const norm = x => x.replace(/[\u202f\u00a0]/g, ' ').trim();
+    const got = norm((await tools.textContent('#' + out)) || '');
+    check(`${file} reads a comma as a decimal separator`, got === want, got);
+    const kept = await tools.inputValue('#' + fields[0][0]);
+    check(`and the field keeps what was typed into it`, kept === fields[0][1], kept);
+  }
+
+  /* La page internationale ne charge pas lib-calc.js — c'est de l'arithmetique
+     algerienne, elle n'a rien a faire sur une facture britannique — et redit
+     donc parseNum chez elle. Deux copies d'une meme regle finissent par
+     diverger, sauf si quelque chose les compare : on extrait la copie du
+     fichier et on la fait tourner a cote de l'originale. */
+  {
+    const src = await readFile(join(ROOT, 'international.html'), 'utf8');
+    const copy = (src.match(/function num\(v\)\{[\s\S]*?\n\}/) || [])[0] || '';
+    check('the international page still carries its own number reader', copy.length > 100,
+          copy.slice(0, 40));
+    await tools.goto(`${BASE}/calcul-tva.html`);
+    await tools.waitForFunction(() => typeof parseNum === 'function', {timeout: 20000});
+    const CASES = ['1500,50', '1,500.50', '1.500,50', '1 500,50', '1500', '', 'abc',
+                   '-4,5', '0,004', '1\u00a0500,50', '12,5', '.5', '1,2,3'];
+    const both = await tools.evaluate(([code, cs]) => {
+      const num = new Function(code + '\nreturn num;')();
+      const one = n => { const v = num(n); return isFinite(v) ? v : 'NaN'; };
+      const two = n => { const v = parseNum(n); return isFinite(v) ? v : 'NaN'; };
+      return cs.map(c => [c, one(c), two(c)]);
+    }, [copy, CASES]);
+    const off = both.filter(r => r[1] !== r[2]);
+    check('and it reads every number exactly as parseNum does', off.length === 0,
+          JSON.stringify(off));
+  }
+
   check('no script error on the tool pages', toolErrors.length === 0, toolErrors.join(' | '));
   await tools.close();
 }
