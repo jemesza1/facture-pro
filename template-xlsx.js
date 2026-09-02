@@ -21,7 +21,10 @@
   var LINES = 12;
 
   function build(kind) {
-    var isInvoice  = kind === 'facture';
+    /* L'acompte est une vraie facture : elle porte le droit de timbre si elle
+       est reglee en especes, et les mentions du decret comme les autres. Le
+       drapeau ne peut donc pas rester attache au seul mot « facture ». */
+    var isInvoice  = kind === 'facture' || kind === 'acompte';
     var isProforma = kind === 'proforma';
     var isAvoir    = kind === 'avoir';
     var isDevis    = kind === 'devis';
@@ -36,6 +39,7 @@
       proforma:  'FACTURE PROFORMA',
       commande:  'BON DE COMMANDE',
       avoir:     "FACTURE D'AVOIR",
+      acompte:   "FACTURE D'ACOMPTE",
       devis:     'DEVIS',
       livraison: 'BON DE LIVRAISON'
     };
@@ -44,6 +48,7 @@
       proforma:  "Document d'intention — ne vaut pas facture et n'ouvre pas droit à déduction de TVA",
       commande:  'Commande adressée au fournisseur — à confirmer par une facture',
       avoir:     "Annule ou corrige une facture déjà émise — rappelez son numéro et sa date",
+      acompte:   "Acompte sur commande — la TVA se découpe par taux, et le solde déduira ce montant",
       devis:     "Proposition de prix — ne vaut pas facture tant qu'elle n'est pas acceptée",
       livraison: 'Accompagne la marchandise — sans prix, à signer par le client à la réception'
     };
@@ -206,6 +211,7 @@
       proforma:  'facture-proforma-modele.xlsx',
       commande:  'bon-de-commande-modele.xlsx',
       avoir:     'facture-avoir-modele.xlsx',
+      acompte:   'facture-acompte-modele.xlsx',
       devis:     'devis-modele.xlsx',
       livraison: 'bon-de-livraison-modele.xlsx'
     };

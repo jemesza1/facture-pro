@@ -4235,6 +4235,156 @@ console.log('\nCinq papiers, une signature, et le régime sans TVA');
   }
 }
 
+/* « 30 % à la commande, le reste à la livraison ».
+ *
+ * Cela se dit dans tous les ateliers du pays et cela fait deux factures, pas
+ * une. Deux pieges, et les deux coutent de l'argent :
+ *
+ *   La TVA. Un acompte de 30 % sur une commande qui mele du 19 % et du 9 %
+ *   n'est pas « 30 % a 19 % ». Une seule ligne au taux le plus haut fait payer
+ *   au client une taxe qu'il ne doit pas.
+ *
+ *   Le double comptage. Facturer l'acompte puis facturer la totalite, c'est
+ *   declarer deux fois le meme chiffre d'affaires et la meme taxe.
+ *
+ * La preuve tient en une egalite : acompte + solde = la commande, au centime,
+ * sur le HT, la TVA et le TTC. C'est ce que verifie ce qui suit. */
+console.log('\n30 % à la commande, le reste à la livraison');
+{
+  const r = await page.evaluate(() => {
+    window.confirm = () => true;
+    state.clients = [{id:'c1', name:'EURL Sahara'}];
+    state.products = []; state.payments = []; state.devis = [];
+    state.invoices = [{id:'cmd', number:'FAC-2026-100', clientId:'c1', date:'2026-09-01',
+      status:'brouillon', paymentMode:'virement', fraisPort:2500, template:'algerie',
+      items:[{description:'Ciment', qty:120, unitPrice:850, tva:19},
+             {description:'Sable', qty:8, unitPrice:2600, tva:9},
+             {description:'Étude exonérée', qty:1, unitPrice:5000, tva:0}]}];
+    state.nextInvoiceNumber = 101; state.serialYear = new Date().getFullYear();
+    saveData();
+    const cmd = calcInvoiceTotals(state.invoices[0]);
+    createAcompte('cmd', 30);
+    const ac = state.invoices.find(i => isAcompte(i));
+    createSolde('cmd');
+    const so = state.invoices.find(i => isSolde(i));
+    const a = calcInvoiceTotals(ac), s = calcInvoiceTotals(so);
+    return {
+      cmd, ac:{n:ac.number, title:docTitle(ac), status:ac.status, port:ac.fraisPort,
+               rates:ac.items.map(x => x.tva), prices:ac.items.map(x => x.unitPrice),
+               ref:ac.refNumber, pct:ac.acomptePct, t:a},
+      so:{n:so.number, title:docTitle(so), lines:so.items.length, port:so.fraisPort, t:s},
+      sum:{ht:round2(a.ht + s.ht), tva:round2(a.tva + s.tva), ttc:round2(a.ttc + s.ttc)}
+    };
+  });
+
+  check('the deposit invoice is titled as one',
+        r.ac.title === "FACTURE D'ACOMPTE" && r.so.title === 'FACTURE DE SOLDE',
+        r.ac.title + ' / ' + r.so.title);
+  check('and takes its number from the invoice series, because it is one',
+        /^FAC-\d{4}-\d{3}$/.test(r.ac.n) && r.ac.n !== r.so.n, r.ac.n + ' ' + r.so.n);
+  check('and names the order it answers', r.ac.ref === 'FAC-2026-100' && r.ac.pct === 30,
+        r.ac.ref + ' ' + r.ac.pct);
+  /* Emise pour etre payee, pas encore encaissee. */
+  check('and waits as a draft rather than entering the books unpaid',
+        r.ac.status === 'brouillon', r.ac.status);
+
+  /* Le decoupage par taux, qui est tout l'interet. */
+  check('the VAT is split rate by rate, not lumped at the highest',
+        r.ac.rates.join(',') === '0,9,19', r.ac.rates.join(','));
+  check('and each line is that rate’s share of the deposit',
+        r.ac.prices.join(',') === '1500,6240,30600', r.ac.prices.join(','));
+
+  /* Le port se facture a la livraison, pas a la commande — et une seule fois. */
+  check('carriage is billed on delivery, not on the deposit',
+        r.ac.port === 0 && r.so.port === 2500, r.ac.port + ' / ' + r.so.port);
+
+  /* La commande entiere, puis la deduction : trois lignes plus trois. */
+  check('the balance invoice carries the order and its deduction',
+        r.so.lines === 6, String(r.so.lines));
+
+  /* L'egalite qui prouve qu'on n'a rien declare deux fois. */
+  check('deposit plus balance is the order, to the centime, on the base',
+        r.sum.ht === r.cmd.ht, r.sum.ht + ' vs ' + r.cmd.ht);
+  check('and on the VAT', r.sum.tva === r.cmd.tva, r.sum.tva + ' vs ' + r.cmd.tva);
+  check('and on the total', r.sum.ttc === r.cmd.ttc, r.sum.ttc + ' vs ' + r.cmd.ttc);
+
+  /* Les refus. Chacun evite une facture de trop. */
+  const refus = await page.evaluate(() => {
+    const said = [];
+    const real = window.toast; window.toast = m => { said.push(m); };
+    const before = state.invoices.length;
+    /* Une commande deja envoyee : l'acompte la facturerait une seconde fois. */
+    state.invoices[0].status = 'envoyee';
+    createAcompte('cmd', 30);
+    const afterSent = state.invoices.length;
+    state.invoices[0].status = 'brouillon';
+    /* Un pourcentage hors bornes. */
+    createAcompte('cmd', 0);
+    createAcompte('cmd', 100);
+    createAcompte('cmd', -5);
+    const afterPct = state.invoices.length;
+    /* Sur un acompte lui-meme, ou sur un avoir. */
+    const ac = state.invoices.find(i => isAcompte(i));
+    createAcompte(ac.id, 30);
+    /* Un solde sans acompte. */
+    state.invoices.push({id:'cmd2', number:'FAC-2026-200', clientId:'c1', date:'2026-09-01',
+      status:'brouillon', paymentMode:'virement',
+      items:[{description:'x', qty:1, unitPrice:100, tva:19}]});
+    const n2 = state.invoices.length;
+    createSolde('cmd2');
+    const afterSolde = state.invoices.length;
+    window.toast = real;
+    return {before, afterSent, afterPct, n2, afterSolde, said};
+  });
+  check('a deposit cannot be drawn from an order already sent',
+        refus.afterSent === refus.before, refus.afterSent + ' vs ' + refus.before);
+  check('nor for a percentage outside one and ninety-nine',
+        refus.afterPct === refus.before, String(refus.afterPct));
+  check('nor from a deposit invoice itself', refus.afterPct === refus.before);
+  check('and a balance invoice needs a deposit to deduct',
+        refus.afterSolde === refus.n2, refus.afterSolde + ' vs ' + refus.n2);
+  check('every refusal says why, in words', refus.said.length >= 5 &&
+        refus.said.every(m => typeof m === 'string' && m.length > 8), refus.said.join(' | '));
+
+  /* Le journal du mois ne doit pas voir passer la commande deux fois. */
+  const books = await page.evaluate(() => {
+    const mine = state.invoices.filter(i => isAcompte(i) || isSolde(i));
+    mine.forEach(i => { i.status = 'envoyee'; });
+    const total = mine.reduce((s, i) => {
+      const t = calcInvoiceTotals(i); return {ht:s.ht + t.ht, tva:s.tva + t.tva};
+    }, {ht:0, tva:0});
+    const order = calcInvoiceTotals(state.invoices.find(i => i.id === 'cmd'));
+    return {ht:round2(total.ht), tva:round2(total.tva), oht:order.ht, otva:order.tva};
+  });
+  check('and the books hold the order once, not twice',
+        books.ht === books.oht && books.tva === books.otva,
+        JSON.stringify(books));
+
+  /* Les deux boutons ne s'offrent que quand ils meneraient quelque part. */
+  const buttons = await page.evaluate(async () => {
+    navigate('invoices');
+    previewInvoice('cmd');
+    await new Promise(r => setTimeout(r, 400));
+    const read = () => ({
+      ac: !document.getElementById('btn-acompte').classList.contains('hidden'),
+      so: !document.getElementById('btn-solde').classList.contains('hidden')
+    });
+    const onDraft = read();
+    const ac = state.invoices.find(i => isAcompte(i));
+    previewInvoice(ac.id);
+    await new Promise(r => setTimeout(r, 300));
+    const onDeposit = read();
+    try { closeModal(); } catch (e) {}
+    return {onDraft, onDeposit};
+  });
+  check('the order offers both buttons once a deposit exists',
+        buttons.onDraft.ac && buttons.onDraft.so, JSON.stringify(buttons.onDraft));
+  check('and a deposit invoice offers neither',
+        !buttons.onDeposit.ac && !buttons.onDeposit.so, JSON.stringify(buttons.onDeposit));
+
+  await page.evaluate(() => { state.invoices = []; state.payments = []; saveData(); });
+}
+
 console.log('\nUne série par année');
 {
   const serial = async (whenUTC, seed) => {
@@ -4990,7 +5140,16 @@ console.log('\nLes outils, depuis l\'application');
   /* Sans ce compte, un GROUPS renomme rendrait la tranche vide, la liste
      publiee vide, et la verification de derive passerait pour toujours en
      ne comparant rien. */
-  check('the generator still publishes the pages this reads', published.length === 27,
+  /* Le generateur ne lit pas le markdown : il pose le texte tel quel. Une
+     emphase ecrite **comme ceci** s'imprime avec ses etoiles sur une page que
+     Google indexe. C'est arrive. */
+  for (const f of published) {
+    const raw = await readFile(join(ROOT, 'public', f), 'utf8');
+    check(`${f} carries no literal markdown`, !/\*\*|(^|\s)__[^_]/.test(raw),
+          (raw.match(/.{0,30}\*\*.{0,30}/) || [''])[0]);
+  }
+
+  check('the generator still publishes the pages this reads', published.length === 28,
         String(published.length));
 
   const outilsBlock = b2bSrc.slice(b2bSrc.indexOf('const OUTILS='),
@@ -5018,7 +5177,7 @@ console.log('\nLes outils, depuis l\'application');
     return out;
   };
   const said = triples(groupsBlock), says = triples(outilsBlock);
-  check('the generator still spells out its labels', Object.keys(said).length === 27,
+  check('the generator still spells out its labels', Object.keys(said).length === 28,
         String(Object.keys(said).length));
   const drifted = Object.keys(says).filter(f => !said[f] ||
         said[f][0] !== says[f][0] || said[f][1] !== says[f][1]);
@@ -5189,7 +5348,7 @@ console.log('\nLes outils, depuis l\'application');
             .filter(a => !/^\/[a-z0-9-]+\.html$/.test(a.getAttribute('href'))).length
     };
   });
-  check('the tools page names every one of the twenty-six', fr.links === 26, String(fr.links));
+  check('the tools page names every one of the twenty-seven', fr.links === 27, String(fr.links));
   check('sorted into the four groups the site uses', fr.groups === 4, String(fr.groups));
   check('the header says where the merchant is', fr.title === 'Outils', fr.title);
   check('and the menu entry lights up', fr.active === 'outils', String(fr.active));
@@ -5213,7 +5372,7 @@ console.log('\nLes outils, depuis l\'application');
   check('its title is written in Arabic', /[؀-ۿ]/.test(ar.title), ar.title);
   check('so is the menu entry', /[؀-ۿ]/.test(ar.nav), ar.nav);
   check('and its opening line', /[؀-ۿ]/.test(ar.lead), ar.lead.slice(0, 30));
-  check('twenty-two of the twenty-six carry an Arabic name', ar.arabic === 22, String(ar.arabic));
+  check('twenty-three of the twenty-seven carry an Arabic name', ar.arabic === 23, String(ar.arabic));
   check('the four that exist only in English are isolated from the direction',
         ar.bdi === 4, String(ar.bdi));
 

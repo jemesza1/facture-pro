@@ -111,6 +111,13 @@ function isAvoir(inv){return !!(inv&&inv.type==='avoir');}
    already been counted, so a bon de livraison must contribute nothing to
    revenue, to receivables or to the journal — see calcInvoiceTotals. */
 function isBl(inv){return !!(inv&&inv.type==='bl');}
+/* Deux factures pour une seule commande. L'acompte est encaisse avant la
+   livraison, le solde apres, et le second deduit le premier. Toutes deux sont
+   de vraies factures — du chiffre d'affaires, de la TVA declaree — d'ou
+   l'absence de traitement special dans calcInvoiceTotals : seul le titre
+   imprime change. */
+function isAcompte(inv){return !!(inv&&inv.type==='acompte');}
+function isSolde(inv){return !!(inv&&inv.type==='solde');}
 
 /* ---- Les numeros : une serie par annee, et jamais deux fois le meme ----
  *
@@ -163,6 +170,8 @@ function nextSerialNumber(prefix, counterKey, forYear){
 function docTitle(inv){
   if(isAvoir(inv))return "FACTURE D'AVOIR";
   if(isBl(inv))return 'BON DE LIVRAISON';
+  if(isAcompte(inv))return "FACTURE D'ACOMPTE";
+  if(isSolde(inv))return 'FACTURE DE SOLDE';
   return 'FACTURE';
 }
 /* The sentence that precedes the amount in letters names the document, so it
@@ -179,6 +188,8 @@ function refLine(inv){
   if(!inv || !inv.refNumber) return '';
   if(isAvoir(inv)) return '<div style="font-size:11px;color:#64748b">Avoir sur facture '+esc(inv.refNumber)+'</div>';
   if(isBl(inv)) return '<div style="font-size:11px;color:#64748b">Facture '+esc(inv.refNumber)+'</div>';
+  if(isAcompte(inv)) return '<div style="font-size:11px;color:#64748b">Acompte de '+esc(String(inv.acomptePct||0))+'&nbsp;% sur la commande '+esc(inv.refNumber)+'</div>';
+  if(isSolde(inv)) return '<div style="font-size:11px;color:#64748b">Solde de la commande '+esc(inv.refNumber)+'</div>';
   return '';
 }
 /* ---- Le regime sans TVA ----------------------------------------------

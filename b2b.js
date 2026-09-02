@@ -141,6 +141,7 @@ const OUTILS=[
     ['mentions-obligatoires-facture-algerie.html','Mentions obligatoires','البيانات الإجبارية'],
     ['facture-non-assujetti-tva.html','Non assujetti TVA','غير خاضع للرسم'],
     ['auto-entrepreneur-algerie.html','Auto-entrepreneur','صاحب مشروع ذاتي'],
+    ['facture-acompte.html',"Facture d'acompte",'فاتورة التسبيق'],
     ['remplir-g50.html','Remplir le G50','ملء G50'],
     ['plan-comptable-scf.html','Plan comptable SCF','دليل الحسابات SCF']]],
   ['tools.gIntl','globe',[
