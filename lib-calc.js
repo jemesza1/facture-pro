@@ -7,7 +7,13 @@
  */
 
 /* ---- Amount in words (French) ---- */
-function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];const tens=['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];function under1000(num){if(num<20)return units[num];if(num<100){const t=Math.floor(num/10),u=num%10;if(t===7||t===9)return tens[t]+(u===1&&t===7?' et ':'-')+under1000(10+u);return tens[t]+(u===1&&t!==8?' et ':(u?'-':''))+(t===8&&u===0?'s':units[u]);}const h=Math.floor(num/100),r=num%100;return(h>1?units[h]+' ':'')+'cent'+(h>1&&r===0?'s':'')+(r?' '+under1000(r):'');}if(n<1000)return under1000(n);if(n<1000000){const th=Math.floor(n/1000),r=n%1000;return(th>1?under1000(th)+' ':'')+'mille'+(r?' '+under1000(r):'');}if(n<1e9){const m=Math.floor(n/1e6),r=n%1e6;return under1000(m)+' million'+(m>1?'s':'')+(r?' '+numberToWords(r):'');}return String(n);}
+function numberToWords(n){if(n===0)return'zéro';const units=['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];const tens=['','','vingt','trente','quarante','cinquante','soixante','soixante','quatre-vingt','quatre-vingt'];function under1000(num){if(num<20)return units[num];if(num<100){const t=Math.floor(num/10),u=num%10;if(t===7||t===9)return tens[t]+(u===1&&t===7?' et ':'-')+under1000(10+u);return tens[t]+(u===1&&t!==8?' et ':(u?'-':''))+(t===8&&u===0?'s':units[u]);}const h=Math.floor(num/100),r=num%100;return(h>1?units[h]+' ':'')+'cent'+(h>1&&r===0?'s':'')+(r?' '+under1000(r):'');}if(n<1000)return under1000(n);if(n<1000000){const th=Math.floor(n/1000),r=n%1000;return(th>1?under1000(th)+' ':'')+'mille'+(r?' '+under1000(r):'');}if(n<1e9){const m=Math.floor(n/1e6),r=n%1e6;return under1000(m)+' million'+(m>1?'s':'')+(r?' '+numberToWords(r):'');}if(n<1e12){const b=Math.floor(n/1e9),r=n%1e9;
+    /* Au-dela du milliard, la fonction rendait les chiffres tels quels : la
+       mention obligatoire imprimait « 1428000000 dinars » au lieu de la
+       somme en toutes lettres, sur la facture comme sur la page dont c'est
+       le seul objet. Un marche public depasse le milliard de dinars. */
+    return numberToWords(b)+' milliard'+(b>1?'s':'')+(r?' '+numberToWords(r):'');}
+  return String(n);}
 /* Negative amounts arrive from a credit note. numberToWords walks the digits
    and returns undefined below zero, which used to throw here and take the
    whole preview down with it. The wording is spelt out rather than made
@@ -137,12 +143,42 @@ function waLink(phone, text){
   return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(text) : '';
 }
 
+/* Lire un nombre tel qu'un commercant algerien l'ecrit.
+ *
+ * Il tape « 1,5 » pour un metre et demi, et « 1 000 » avec une espace. Les
+ * champs etaient en type="number" : Chromium n'y rejette pas la virgule, il
+ * la SUPPRIME. « 1,5 » devenait « 15 » dans le champ lui-meme, avant que le
+ * moindre code ne le lise — un metre et demi de tissu factures quinze, sur
+ * le document remis au client et a l'administration. Aucune validation
+ * cote JavaScript ne pouvait le voir : la virgule n'arrivait jamais.
+ *
+ * Les champs sont donc passes en type="text" inputmode="decimal" — le pave
+ * numerique reste sur le telephone, ce qui etait tout l'interet de
+ * type="number" — et la virgule est lue ici.
+ *
+ * « 1.234,56 » : quand les deux signes sont presents, le point separe les
+ * milliers et la virgule les decimales, comme l'ecrit un francophone. */
+window.parseNum = function (v) {
+  if (typeof v === 'number') return v;
+  var s = String(v == null ? '' : v).trim();
+  if (!s) return NaN;
+  s = s.replace(/[\s\u00a0\u202f]/g, '');
+  var dot = s.lastIndexOf('.'), comma = s.lastIndexOf(',');
+  if (dot >= 0 && comma >= 0) {
+    if (comma > dot) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(/,/g, '');
+  } else if (comma >= 0) {
+    s = s.replace(',', '.');
+  }
+  return parseFloat(s);
+};
+
 /* Lire un nombre saisi, avec un defaut — sans confondre « zero » et « vide ».
    Trois editeurs ecrivaient parseFloat(v)||19 pour le taux de TVA : un
    commercant qui tapait 0 sur une ligne exoneree se retrouvait avec 19 %,
    sur le devis, sur la facture recurrente, puis sur la facture emise et son
    papier. Le ou-logique ne distingue pas 0 de NaN ; isFinite, si. */
 window.numOr = function (v, fallback) {
-  var n = parseFloat(v);
+  var n = parseNum(v);
   return isFinite(n) ? n : fallback;
 };

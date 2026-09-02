@@ -41,7 +41,7 @@ function openNewInvoice(editId){
         <div id="items-container" class="space-y-2">${items.map(item=>itemRowHtml(item)).join('')}</div>
       </div>
       <div><label class="form-label" for="inv-port">${t('inv.port')}</label>
-        <input type="number" min="0" step="0.01" id="inv-port" class="form-input ltr-code"
+        <input type="text" inputmode="decimal" min="0" step="0.01" id="inv-port" class="form-input ltr-code"
                placeholder="0" value="${inv&&inv.fraisPort||''}"/>
         <p class="text-xs text-slate-500 mt-1">${t('inv.portHint')}</p></div>
       <div><label class="form-label" for="inv-notes">${t('inv.notes')}</label>
@@ -62,12 +62,12 @@ function itemRowHtml(item){
       <input class="form-input item-desc" aria-label="${t('inv.desc')}" value="${esc(item.description)}"/></div>
     <div class="col-span-3 sm:col-span-2"><span class="form-label text-xs">${t('inv.qty')}</span>
       <div class="flex gap-1">
-        <input type="number" min="0" class="form-input item-qty min-w-0" aria-label="${t('inv.qty')}" value="${item.qty!=null?item.qty:1}"/>
+        <input type="text" inputmode="decimal" min="0" class="form-input item-qty min-w-0" aria-label="${t('inv.qty')}" value="${item.qty!=null?item.qty:1}"/>
         <input class="form-input item-unit min-w-0 w-16" aria-label="${t('inv.unit2')}" list="fp-units" placeholder="${t('inv.unit2')}"
                title="${t('inv.unit2')}" value="${esc(item.unite||'')}"/>
       </div></div>
     <div class="col-span-4 sm:col-span-2"><span class="form-label text-xs">${t('inv.unit')}</span>
-      <input type="number" min="0" class="form-input item-price" aria-label="${t('inv.unit')}" value="${item.unitPrice!=null?item.unitPrice:0}"/></div>
+      <input type="text" inputmode="decimal" min="0" class="form-input item-price" aria-label="${t('inv.unit')}" value="${item.unitPrice!=null?item.unitPrice:0}"/></div>
     <div class="col-span-3 sm:col-span-2"><span class="form-label text-xs">${t('inv.vat')}</span>
       <select class="form-select item-tva" aria-label="${t('inv.vat')}">
         <option value="19" ${(item.tva!=null?item.tva:19)===19?'selected':''}>19%</option>
@@ -100,17 +100,17 @@ function saveInvoice(editId){
   document.querySelectorAll('.item-row').forEach(row=>{
     const desc=row.querySelector('.item-desc').value.trim();
     if(!desc){
-      const q=parseFloat(row.querySelector('.item-qty').value);
-      const p=parseFloat(row.querySelector('.item-price').value);
+      const q=parseNum(row.querySelector('.item-qty').value);
+      const p=parseNum(row.querySelector('.item-price').value);
       if((isFinite(q)&&q!==0)||(isFinite(p)&&p!==0)) muettes++;
       return;
     }
     nommees++;
-    items.push({description:desc,qty:parseFloat(row.querySelector('.item-qty').value)||0,unite:(row.querySelector('.item-unit').value||'').trim(),unitPrice:parseFloat(row.querySelector('.item-price').value)||0,tva:parseFloat(row.querySelector('.item-tva').value)||0});
+    items.push({description:desc,qty:parseNum(row.querySelector('.item-qty').value)||0,unite:(row.querySelector('.item-unit').value||'').trim(),unitPrice:parseNum(row.querySelector('.item-price').value)||0,tva:parseNum(row.querySelector('.item-tva').value)||0});
   });
   if(muettes)return toast(t('toast.lineNoDesc'),'err');
   if(!items.length)return toast(t('toast.addLine'),'err');
-  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',fraisPort:parseFloat((document.getElementById('inv-port')||{}).value)||0,items,notes:document.getElementById('inv-notes').value.trim()};
+  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',fraisPort:parseNum((document.getElementById('inv-port')||{}).value)||0,items,notes:document.getElementById('inv-notes').value.trim()};
   if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);
     if(idx<0)return toast(t('toast.invoiceNotFound'),'err');
     state.invoices[idx]={...state.invoices[idx],...data};toast(t('toast.updated'));}

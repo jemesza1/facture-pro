@@ -159,8 +159,8 @@
     it=it||{description:'',qty:1,unitPrice:0,tva:19};
     return '<div class="grid grid-cols-12 gap-2 items-end rec-row">'+
       '<div class="col-span-5"><input class="form-input ri-desc" aria-label="'+esc(t('inv.desc'))+'" placeholder="'+esc(t('inv.desc'))+'" value="'+esc(it.description||'')+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code ri-qty" aria-label="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code ri-price" aria-label="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
+      '<div class="col-span-2"><input type="text" inputmode="decimal" min="0" class="form-input ltr-code ri-qty" aria-label="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
+      '<div class="col-span-2"><input type="text" inputmode="decimal" min="0" class="form-input ltr-code ri-price" aria-label="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
       '<div class="col-span-2"><select class="form-select ri-tva" aria-label="'+esc(t('inv.vat'))+'">'+
         '<option value="19" '+(Number(it.tva)===19?'selected':'')+'>19%</option>'+
         '<option value="9" '+(Number(it.tva)===9?'selected':'')+'>9%</option>'+
@@ -188,7 +188,7 @@
       items.push({
         description:desc,
         qty:numOr(row.querySelector('.ri-qty').value,1),
-        unitPrice:parseFloat(row.querySelector('.ri-price').value)||0,
+        unitPrice:parseNum(row.querySelector('.ri-price').value)||0,
         tva:numOr(row.querySelector('.ri-tva').value,19)
       });
     });

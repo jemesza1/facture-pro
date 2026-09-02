@@ -170,8 +170,8 @@
       '<div class="modal-body space-y-3">'+
         '<div><label class="form-label">'+(ar?'\u0627\u0644\u0648\u0635\u0641 *':'D\u00e9signation *')+'</label><input id="prod-name" class="form-input" value="'+esc(p&&p.name||'')+'"/></div>'+
         '<div class="grid grid-cols-2 gap-3">'+
-          '<div><label class="form-label">'+(ar?'\u0627\u0644\u0633\u0639\u0631 HT':'Prix HT')+'</label><input id="prod-price" type="number" min="0" step="0.01" class="form-input ltr-code" value="'+(p?p.price:0)+'"/></div>'+
-          '<div><label class="form-label">TVA %</label><input id="prod-tva" type="number" min="0" max="100" class="form-input ltr-code" value="'+(p&&p.tva!=null?p.tva:19)+'"/></div>'+
+          '<div><label class="form-label">'+(ar?'\u0627\u0644\u0633\u0639\u0631 HT':'Prix HT')+'</label><input id="prod-price" type="text" inputmode="decimal" min="0" step="0.01" class="form-input ltr-code" value="'+(p?p.price:0)+'"/></div>'+
+          '<div><label class="form-label">TVA %</label><input id="prod-tva" type="text" inputmode="decimal" min="0" max="100" class="form-input ltr-code" value="'+(p&&p.tva!=null?p.tva:19)+'"/></div>'+
         '</div></div>'+
       '<div class="modal-footer flex justify-end gap-2">'+
         '<button onclick="closeModal()" class="btn-secondary">'+(ar?'\u0625\u0644\u063a\u0627\u0621':'Annuler')+'</button>'+
@@ -182,8 +182,8 @@
   window.saveProduct=function(id){
     var name=(document.getElementById('prod-name').value||'').trim();
     if(!name) return toast(locale==='ar'?'\u0627\u0644\u0648\u0635\u0641 \u0645\u0637\u0644\u0648\u0628':'D\u00e9signation requise','err');
-    var price=parseFloat(document.getElementById('prod-price').value)||0;
-    var tva=parseFloat(document.getElementById('prod-tva').value); if(isNaN(tva)) tva=19;
+    var price=parseNum(document.getElementById('prod-price').value)||0;
+    var tva=parseNum(document.getElementById('prod-tva').value); if(isNaN(tva)) tva=19;
     ensure();
     if(id){
       var i=state.products.findIndex(function(x){return x.id===id;});
@@ -270,9 +270,9 @@
     it=it||{description:'',qty:1,unitPrice:0,tva:19};
     return '<div class="grid grid-cols-12 gap-2 items-end devis-row">'+
       '<div class="col-span-5"><input class="form-input di-desc" aria-label="'+esc(t('inv.desc'))+'" placeholder="'+esc(t('inv.desc'))+'" value="'+esc(it.description||'')+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-qty" aria-label="'+esc(t('inv.qty'))+'" title="'+esc(t('inv.qty'))+'" placeholder="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" step="any" class="form-input ltr-code di-price" aria-label="'+esc(t('inv.unit'))+'" title="'+esc(t('inv.unit'))+'" placeholder="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
-      '<div class="col-span-2"><input type="number" min="0" class="form-input ltr-code di-tva" aria-label="'+esc(t('inv.vat'))+'" title="'+esc(t('inv.vat'))+'" placeholder="'+esc(t('inv.vat'))+'" value="'+(it.tva!=null?it.tva:19)+'"/></div>'+
+      '<div class="col-span-2"><input type="text" inputmode="decimal" min="0" step="any" class="form-input ltr-code di-qty" aria-label="'+esc(t('inv.qty'))+'" title="'+esc(t('inv.qty'))+'" placeholder="'+esc(t('inv.qty'))+'" value="'+(it.qty||1)+'"/></div>'+
+      '<div class="col-span-2"><input type="text" inputmode="decimal" min="0" step="any" class="form-input ltr-code di-price" aria-label="'+esc(t('inv.unit'))+'" title="'+esc(t('inv.unit'))+'" placeholder="'+esc(t('inv.unit'))+'" value="'+(it.unitPrice||0)+'"/></div>'+
+      '<div class="col-span-2"><input type="text" inputmode="decimal" min="0" class="form-input ltr-code di-tva" aria-label="'+esc(t('inv.vat'))+'" title="'+esc(t('inv.vat'))+'" placeholder="'+esc(t('inv.vat'))+'" value="'+(it.tva!=null?it.tva:19)+'"/></div>'+
       '<div class="col-span-1"><button type="button" onclick="this.closest(\'.devis-row\').remove()" class="btn-ghost p-2 text-red-500" aria-label="'+esc(t('actions.delete'))+'"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div>';
   }
 
@@ -295,7 +295,7 @@
       items.push({
         description:desc,
         qty:numOr(row.querySelector('.di-qty').value,1),
-        unitPrice:parseFloat(row.querySelector('.di-price').value)||0,
+        unitPrice:parseNum(row.querySelector('.di-price').value)||0,
         tva:numOr(row.querySelector('.di-tva').value,19)
       });
     });
@@ -400,7 +400,7 @@
         '<div><label class="form-label" for="pay-inv">'+(ar?'\u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629 *':'Facture *')+'</label><select id="pay-inv" class="form-select"><option value="">\u2014</option>'+
           invs.map(function(i){ var cl=getClient(i.clientId)||{}; return '<option value="'+i.id+'">'+esc(i.number)+' \u2014 '+esc(cl.name||'')+'</option>'; }).join('')+
         '</select></div>'+
-        '<div><label class="form-label" for="pay-amount">'+(ar?'\u0627\u0644\u0645\u0628\u0644\u063a *':'Montant *')+'</label><input id="pay-amount" type="number" min="0" step="0.01" class="form-input ltr-code"/></div>'+
+        '<div><label class="form-label" for="pay-amount">'+(ar?'\u0627\u0644\u0645\u0628\u0644\u063a *':'Montant *')+'</label><input id="pay-amount" type="text" inputmode="decimal" min="0" step="0.01" class="form-input ltr-code"/></div>'+
         '<div><label class="form-label" for="pay-date">'+(ar?'\u0627\u0644\u062a\u0627\u0631\u064a\u062e':'Date')+'</label><input id="pay-date" type="date" class="form-input" value="'+new Date().toISOString().slice(0,10)+'"/></div>'+
         '<div><label class="form-label" for="pay-method">'+(ar?'\u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u062f\u0641\u0639':'Mode')+'</label><select id="pay-method" class="form-select">'+
           ['virement','especes','cheque','ccp','autre'].map(function(m){return '<option value="'+m+'">'+esc(t('payment.method.'+m))+'</option>';}).join('')+
@@ -465,7 +465,7 @@
 
   window.savePayment=function(){
     var invoiceId=document.getElementById('pay-inv').value;
-    var amount=parseFloat(document.getElementById('pay-amount').value)||0;
+    var amount=parseNum(document.getElementById('pay-amount').value)||0;
     if(!invoiceId) return toast(locale==='ar'?'\u0627\u062e\u062a\u0631 \u0641\u0627\u062a\u0648\u0631\u0629':'Choisissez une facture','err');
     if(amount<=0) return toast(locale==='ar'?'\u0623\u062f\u062e\u0644 \u0645\u0628\u0644\u063a\u0627\u064b':'Montant invalide','err');
     ensure();

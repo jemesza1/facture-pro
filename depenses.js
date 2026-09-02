@@ -240,7 +240,7 @@
         '</div>'+
         '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">'+
           '<div><label class="form-label" for="exp-amount">'+esc(t('exp.amountReq'))+'</label>'+
-            '<input id="exp-amount" type="number" min="0" step="0.01" class="form-input ltr-code" value="'+(x?x.amount:'')+'"/></div>'+
+            '<input id="exp-amount" type="text" inputmode="decimal" min="0" step="0.01" class="form-input ltr-code" value="'+(x?x.amount:'')+'"/></div>'+
           '<div><label class="form-label" for="exp-tva">'+esc(t('exp.vat'))+'</label>'+
             '<select id="exp-tva" class="form-select">'+[19,9,0].map(function(v){
               return '<option value="'+v+'"'+((x&&x.tva!=null?x.tva:19)===v?' selected':'')+'>'+v+'%</option>';
@@ -265,9 +265,9 @@
     ensure();
     var label=((document.getElementById('exp-label')||{}).value||'').trim();
     if(!label) return toast(t('exp.errLabel'),'err');
-    var amount=parseFloat((document.getElementById('exp-amount')||{}).value);
+    var amount=parseNum((document.getElementById('exp-amount')||{}).value);
     if(!isFinite(amount)||amount<0) return toast(t('exp.errAmount'),'err');
-    var tva=parseFloat((document.getElementById('exp-tva')||{}).value);
+    var tva=parseNum((document.getElementById('exp-tva')||{}).value);
     if(!isFinite(tva)) tva=19;
     var data={
       label:label,

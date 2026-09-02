@@ -5145,6 +5145,121 @@ console.log('\nNeuf defauts de plus');
         /nextBlNumber=Math\.max/.test(ppSrc));
 }
 
+/* ---------------------------------------------------------------- *
+ * La virgule decimale, et deux autres.
+ *
+ * Un commercant algerien tape « 1,5 » pour un metre et demi. Les champs
+ * etaient en type="number", et Chromium n'y rejette pas la virgule : il la
+ * SUPPRIME. « 1,5 » devenait « 15 » dans le champ, avant qu'aucun code ne le
+ * lise — dix fois le montant, sur le document remis au client et a
+ * l'administration, sans rien pour le signaler. Aucune validation cote
+ * JavaScript ne pouvait le voir.
+ * ---------------------------------------------------------------- */
+console.log('\nLa virgule decimale');
+{
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/index.html`);
+  await pg.waitForFunction(() => typeof window.parseNum === 'function', {timeout: 20000});
+  await pg.evaluate(() => { window.confirm = () => true; });
+
+  const read = await pg.evaluate(() => ({
+    demi: parseNum('1,5'), mille: parseNum('1 000'), quart: parseNum('0,25'),
+    fr: parseNum('1.234,56'), point: parseNum('2.5'), insec: parseNum('1 500,75'),
+    vide: parseNum(''), mot: parseNum('abc')
+  }));
+  check('a comma reads as a decimal point', read.demi === 1.5, String(read.demi));
+  check('a space reads as a thousands separator', read.mille === 1000, String(read.mille));
+  check('and so does a non-breaking one', read.insec === 1500.75, String(read.insec));
+  check('a quarter is a quarter', read.quart === 0.25, String(read.quart));
+  check('the French form with both signs is read the French way',
+        read.fr === 1234.56, String(read.fr));
+  check('a point still works, for whoever types one', read.point === 2.5, String(read.point));
+  check('nothing and a word are not numbers',
+        !isFinite(read.vide) && !isFinite(read.mot), JSON.stringify(read));
+
+  /* Et par les touches, comme au comptoir. */
+  await pg.evaluate(() => {
+    state.clients = [{id: 'k1', name: 'C', nif: '000000000000000'}];
+    state.invoices = []; state.products = []; state.nextInvoiceNumber = 1;
+    saveData(); navigate('invoices'); openNewInvoice();
+  });
+  await pg.waitForTimeout(350);
+  await pg.evaluate(() => {
+    document.getElementById('inv-client').value = 'k1';
+    document.querySelector('.item-desc').value = 'Tissu au metre';
+    document.querySelector('.item-qty').value = '';
+    document.querySelector('.item-price').value = '';
+  });
+  await pg.click('.item-qty');
+  await pg.keyboard.type('1,5', {delay: 40});
+  await pg.click('.item-price');
+  await pg.keyboard.type('2000', {delay: 40});
+  const kept = await pg.evaluate(() => document.querySelector('.item-qty').value);
+  check('the field keeps the comma the merchant typed', kept === '1,5', kept);
+  await pg.evaluate(() => saveInvoice());
+  await pg.waitForTimeout(350);
+  const saved = await pg.evaluate(() => {
+    const i = state.invoices[0];
+    return i ? {qty: i.items[0].qty, ht: calcInvoiceTotals(i).ht} : null;
+  });
+  check('the invoice records one and a half, not fifteen',
+        saved && saved.qty === 1.5, JSON.stringify(saved));
+  check('so the total is three thousand, not thirty', saved && saved.ht === 3000,
+        JSON.stringify(saved));
+
+  /* Aucun champ de montant ne doit revenir a type="number" : c'est le champ
+     lui-meme qui mangeait la virgule, pas le code qui le lit. */
+  for (const f of ['c1.js', 'extra.js', 'recurrent.js', 'commerce.js', 'depenses.js']) {
+    const src = await readFile(join(ROOT, f), 'utf8');
+    check(`${f} asks for a decimal keypad, not a number field`,
+          !/type="number"/.test(src));
+  }
+
+  /* Un marche public depasse le milliard, et la mention obligatoire imprimait
+     alors les chiffres au lieu des lettres. */
+  const big = await pg.evaluate(() => ({
+    milliard: numberToWords(1000000000),
+    marche: numberToWords(1428000000),
+    deux: numberToWords(2500000000),
+    avant: numberToWords(999999999)
+  }));
+  check('a thousand million is spelled, not printed as digits',
+        /milliard/.test(big.milliard) && !/\d/.test(big.marche), JSON.stringify(big));
+  check('and it agrees on the plural', /deux milliards/.test(big.deux), big.deux);
+  check('what already worked still works', !/\d/.test(big.avant), big.avant.slice(0, 40));
+
+  await pg.close();
+}
+
+/* Le francais qui reste sur les pages arabes doit au moins se lire dans le
+   bon sens : en dir="rtl" le point final et le point d'interrogation
+   partaient a gauche — « ?Et le droit de timbre ». */
+{
+  for (const page of ['droit-de-timbre.html', 'montant-en-lettres.html', 'calcul-tva.html',
+                      'calcul-marge.html', 'calcul-pourcentage.html']) {
+    const c = await browser.newContext({locale: 'ar-DZ'});
+    const pg = await c.newPage();
+    await pg.addInitScript(() => { try { localStorage.setItem('fp_locale', 'ar'); } catch (e) {} });
+    await pg.goto(`${BASE}/public/${page}`);
+    await pg.waitForTimeout(600);
+    const r = await pg.evaluate(() => {
+      const bad = [];
+      document.querySelectorAll('section, p, h2, h3').forEach(el => {
+        if (el.getClientRects().length === 0) return;
+        const txt = (el.textContent || '').trim();
+        if (txt.length < 25) return;
+        if (/[؀-ۿ]/.test(txt)) return;          /* de l'arabe : rtl est juste */
+        if (!/[a-zA-Zàâçéèêëîïôùûü]/.test(txt)) return;
+        if (getComputedStyle(el).direction === 'rtl') bad.push(txt.slice(0, 40));
+      });
+      return {dir: document.documentElement.dir, n: bad.length, bad: bad.slice(0, 2)};
+    });
+    check(`${page} reads its French left to right, even in Arabic`,
+          r.dir === 'rtl' && r.n === 0, JSON.stringify(r));
+    await c.close();
+  }
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */

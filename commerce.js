@@ -139,12 +139,12 @@
       '<div class="modal-body space-y-3">'+
         '<div><label class="form-label" for="prod-name">'+(ar()?'\u0627\u0644\u0648\u0635\u0641 *':'D\u00e9signation *')+'</label><input id="prod-name" class="form-input" value="'+esc(p&&p.name||'')+'"/></div>'+
         '<div class="grid grid-cols-2 gap-3">'+
-          '<div><label class="form-label" for="prod-price">'+(ar()?'\u0627\u0644\u0633\u0639\u0631 HT':'Prix HT')+'</label><input id="prod-price" type="number" min="0" step="0.01" class="form-input ltr-code" value="'+(p?p.price:0)+'"/></div>'+
-          '<div><label class="form-label" for="prod-tva">TVA %</label><input id="prod-tva" type="number" min="0" max="100" class="form-input ltr-code" value="'+(p&&p.tva!=null?p.tva:19)+'"/></div>'+
+          '<div><label class="form-label" for="prod-price">'+(ar()?'\u0627\u0644\u0633\u0639\u0631 HT':'Prix HT')+'</label><input id="prod-price" type="text" inputmode="decimal" min="0" step="0.01" class="form-input ltr-code" value="'+(p?p.price:0)+'"/></div>'+
+          '<div><label class="form-label" for="prod-tva">TVA %</label><input id="prod-tva" type="text" inputmode="decimal" min="0" max="100" class="form-input ltr-code" value="'+(p&&p.tva!=null?p.tva:19)+'"/></div>'+
         '</div>'+
         '<div class="grid grid-cols-2 gap-3">'+
-          '<div><label class="form-label" for="prod-stock">'+(ar()?'\u0627\u0644\u0645\u062e\u0632\u0648\u0646':'Stock')+'</label><input id="prod-stock" type="number" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.stock!=null?p.stock:0)+'"/></div>'+
-          '<div><label class="form-label" for="prod-min">'+(ar()?'\u062d\u062f \u0623\u062f\u0646\u0649':'Seuil')+'</label><input id="prod-min" type="number" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.minStock!=null?p.minStock:0)+'"/></div>'+
+          '<div><label class="form-label" for="prod-stock">'+(ar()?'\u0627\u0644\u0645\u062e\u0632\u0648\u0646':'Stock')+'</label><input id="prod-stock" type="text" inputmode="decimal" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.stock!=null?p.stock:0)+'"/></div>'+
+          '<div><label class="form-label" for="prod-min">'+(ar()?'\u062d\u062f \u0623\u062f\u0646\u0649':'Seuil')+'</label><input id="prod-min" type="text" inputmode="decimal" min="0" step="1" class="form-input ltr-code" value="'+(p&&p.minStock!=null?p.minStock:0)+'"/></div>'+
         '</div></div>'+
       '<div class="modal-footer flex justify-end gap-2">'+
         '<button onclick="closeModal()" class="btn-secondary">'+(ar()?'\u0625\u0644\u063a\u0627\u0621':'Annuler')+'</button>'+
@@ -155,10 +155,10 @@
   window.saveProduct=function(id){
     var name=(document.getElementById('prod-name').value||'').trim();
     if(!name) return toast(ar()?'\u0627\u0644\u0648\u0635\u0641 \u0645\u0637\u0644\u0648\u0628':'D\u00e9signation requise','err');
-    var price=parseFloat(document.getElementById('prod-price').value)||0;
-    var tva=parseFloat(document.getElementById('prod-tva').value); if(isNaN(tva)) tva=19;
-    var stock=parseFloat(document.getElementById('prod-stock').value)||0;
-    var minStock=parseFloat(document.getElementById('prod-min').value)||0;
+    var price=parseNum(document.getElementById('prod-price').value)||0;
+    var tva=parseNum(document.getElementById('prod-tva').value); if(isNaN(tva)) tva=19;
+    var stock=parseNum(document.getElementById('prod-stock').value)||0;
+    var minStock=parseNum(document.getElementById('prod-min').value)||0;
     ensure();
     if(id){
       var i=state.products.findIndex(function(x){return x.id===id;});
@@ -311,7 +311,7 @@
         if(!desc) return;
         items.push({
           description:desc,
-          qty:parseFloat(row.querySelector('.item-qty')&&row.querySelector('.item-qty').value)||1,
+          qty:parseNum(row.querySelector('.item-qty')&&row.querySelector('.item-qty').value)||1,
           productId:row.getAttribute('data-product-id')||''
         });
       });
