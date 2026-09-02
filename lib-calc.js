@@ -367,3 +367,32 @@ window.todayISO = function (d) {
   var p = function (n) { return (n < 10 ? '0' : '') + n; };
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
 };
+
+
+/* ---- Chercher un nom tel qu'on le tape ----
+ *
+ * La recherche comparait les chaines telles quelles. « societe » ne trouvait
+ * donc pas « Societe » ecrit avec son accent, et le clavier d'un telephone
+ * algerien met des accents que personne ne retape en cherchant. Cote arabe,
+ * le meme mot s'ecrit avec ou sans hamza et se termine par ة ou ه selon la
+ * main : « احمد » ne trouvait pas « أحمد ».
+ *
+ * On ramene donc les deux cotes a une forme commune avant de comparer : sans
+ * accents latins, sans signes diacritiques arabes, alif et ya et ta marbouta
+ * unifies. Ce qui est affiche ne change pas — seule la comparaison. */
+window.searchKey = function (v) {
+  return String(v == null ? '' : v)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')     /* accents latins */
+    /* NFD decompose aussi l'arabe : أ devient ا suivi d'une hamza combinante.
+       La plage doit donc aller jusqu'a U+065F, sans quoi « احمد » ne trouve
+       pas « أحمد » — le nom cherche est alors plus court d'un caractere
+       invisible que celui qui est stocke. */
+    .replace(/[\u064b-\u065f\u0670]/g, '') /* voyelles, sukun, hamza combinante */
+    .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627') /* آ أ إ ٱ -> ا */
+    .replace(/\u0629/g, '\u0647')          /* ة -> ه */
+    .replace(/[\u0649\u064a]/g, '\u064a')  /* ى -> ي */
+    .replace(/\u0640/g, '')                /* tatweel */
+    .trim();
+};

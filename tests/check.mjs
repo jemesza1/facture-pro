@@ -4009,6 +4009,44 @@ console.log('\nLe relevé et les créances tombent sur le même nombre');
  *
  * On fige l'horloge a 00 h 30, heure d'Alger, et on regarde ce que le
  * formulaire propose. */
+/* Chercher un nom tel qu'on le tape.
+ *
+ * La recherche comparait les chaines telles quelles. « societe » ne trouvait
+ * pas « Societe » ecrit avec ses accents, et le clavier d'un telephone en met
+ * que personne ne retape en cherchant. Cote arabe, le meme nom s'ecrit avec
+ * ou sans hamza et se termine par ة ou ه selon la main : « احمد » ne trouvait
+ * pas « أحمد ». Le commercant conclut que la facture a disparu. */
+console.log('\nChercher un nom tel qu\'on le tape');
+{
+  const found = await page.evaluate(() => {
+    state.clients = [{id:'c1', name:'Société Générale'},
+                     {id:'c2', name:'أحمد بن علي'},
+                     {id:'c3', name:'مؤسسة الوفاء'}];
+    state.invoices = [1, 2, 3].map(n => ({
+      id:'i' + n, number:'FAC-2026-00' + n, clientId:'c' + n,
+      date:'2026-01-0' + n, status:'envoyee', paymentMode:'virement',
+      items:[{description:'a', qty:1, unitPrice:100, tva:19}]}));
+    saveData(); navigate('invoices');
+    const out = {};
+    ['societe', 'SOCIÉTÉ', 'Générale', 'احمد', 'أحمد', 'مؤسسه', 'مؤسسة',
+     'FAC-2026-002', 'zzz'].forEach(q => {
+      setInvSearch(q); out[q] = document.querySelectorAll('tbody tr').length;
+    });
+    setInvSearch('');
+    return out;
+  });
+  check('a name typed without its accents is still found',
+        found['societe'] === 1 && found['SOCIÉTÉ'] === 1 && found['Générale'] === 1,
+        JSON.stringify(found));
+  check('and an Arabic name typed without its hamza',
+        found['احمد'] === 1 && found['أحمد'] === 1, JSON.stringify(found));
+  check('and one whose ta marbuta was typed as a ha',
+        found['مؤسسه'] === 1 && found['مؤسسة'] === 1, JSON.stringify(found));
+  check('the invoice number still matches', found['FAC-2026-002'] === 1, JSON.stringify(found));
+  check('and a search that matches nothing still matches nothing',
+        found['zzz'] === 0, JSON.stringify(found));
+}
+
 console.log('\nMinuit et demi a Alger');
 {
   const ctx = await browser.newContext({timezoneId: 'Africa/Algiers'});

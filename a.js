@@ -251,7 +251,7 @@ function setInvSearch(v){
 function setStatusFilter(k){state.statusFilter=k;renderPage();}
 function filteredInvoices(){var list=[...state.invoices].sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   if(state.statusFilter&&state.statusFilter!=='all'){list=list.filter(function(inv){return inv.status===state.statusFilter;});}
-  if(state.search){var q=state.search.toLowerCase();list=list.filter(function(inv){var cl=getClient(inv.clientId);return (inv.number||'').toLowerCase().includes(q)||(cl.name||'').toLowerCase().includes(q);});}
+  if(state.search){var q=searchKey(state.search);list=list.filter(function(inv){var cl=getClient(inv.clientId);return searchKey(inv.number).includes(q)||searchKey(cl.name).includes(q);});}
   return list;}
 function renderFilterChips(){var counts={all:state.invoices.length};Object.keys(STATUS).forEach(function(k){counts[k]=state.invoices.filter(function(i){return i.status===k;}).length;});
   var chips=[{k:'all',label:t('status.all')}].concat(Object.keys(STATUS).map(function(k){return {k:k,label:STATUS[k].label};}));
