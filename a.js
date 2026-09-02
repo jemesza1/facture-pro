@@ -1,7 +1,7 @@
 const STORAGE_KEY='facturepro_dz_v24';
-const defaultCompany={name:'Mon Entreprise SARL',address:'12 Rue Didouche Mourad\n16000 Alger',nif:'000000000000000',nin:'',nis:'000000000000000',rc:'16/00-0000000B00',ai:'0000',email:'contact@monentreprise.dz',phone:'+213 21 00 00 00',rib:'007 99999 0000000000 00',banque:'BNA',logo:''};
+const defaultCompany={name:'Mon Entreprise SARL',address:'12 Rue Didouche Mourad\n16000 Alger',nif:'000000000000000',nin:'',nis:'000000000000000',rc:'16/00-0000000B00',ai:'0000',email:'contact@monentreprise.dz',phone:'+213 21 00 00 00',rib:'007 99999 0000000000 00',banque:'BNA',logo:'',signature:'',signataire:'',tvaExempt:false,tvaExemptNote:''};
 const STATUS={brouillon:{label:'Brouillon',class:'badge-brouillon'},envoyee:{label:'Envoyée',class:'badge-envoyee'},payee:{label:'Payée',class:'badge-payee'},enretard:{label:'En retard',class:'badge-enretard'},annulee:{label:'Annulée',class:'badge-annulee'}};
-const TEMPLATES=[{id:'classique',name:'Classique',desc:'Sobre et traditionnel',nameAr:'كلاسيكي',descAr:'بسيط وتقليدي',color:'#0f172a',bg:'#f1f5f9',layout:'classic'},{id:'moderne',name:'Moderne',desc:'Bandeau coloré élégant',nameAr:'عصري',descAr:'شريط ملوّن أنيق',color:'#0284c7',bg:'#e0f2fe',layout:'modern'},{id:'minimal',name:'Minimal',desc:'Épuré',nameAr:'مبسّط',descAr:'مجرّد',color:'#334155',bg:'#f8fafc',layout:'classic'},{id:'premium',name:'Premium',desc:'Header sombre',nameAr:'ممتاز',descAr:'ترويسة داكنة',color:'#0f172a',bg:'#1e293b',layout:'premium'},{id:'corporate',name:'Corporate',desc:'Bleu entreprise',nameAr:'مؤسّسي',descAr:'أزرق الشركات',color:'#1e40af',bg:'#dbeafe',layout:'modern'},{id:'elegant',name:'Élégant',desc:'Beige raffiné',nameAr:'أنيق',descAr:'بيج راقٍ',color:'#78716c',bg:'#f5f5f4',layout:'classic'},{id:'crea',name:'Créatif',desc:'Violet moderne',nameAr:'إبداعي',descAr:'بنفسجي عصري',color:'#7c3aed',bg:'#ede9fe',layout:'modern'},{id:'nature',name:'Nature',desc:'Vert pro',nameAr:'طبيعة',descAr:'أخضر احترافي',color:'#059669',bg:'#d1fae5',layout:'modern'},{id:'sunset',name:'Sunset',desc:'Orange énergique',nameAr:'غروب',descAr:'برتقالي حيوي',color:'#ea580c',bg:'#ffedd5',layout:'modern'},{id:'ocean',name:'Océan',desc:'Turquoise',nameAr:'محيط',descAr:'أزرق بحري',color:'#0891b2',bg:'#cffafe',layout:'modern'},{id:'noir',name:'Noir & Blanc',desc:'Monochrome',nameAr:'أبيض وأسود',descAr:'للطابعة بلا ألوان',color:'#171717',bg:'#f5f5f5',layout:'classic'},{id:'rose',name:'Rose Soft',desc:'Rose doux',nameAr:'وردي',descAr:'وردي هادئ',color:'#db2777',bg:'#fce7f3',layout:'modern'},{id:'indigo',name:'Indigo',desc:'Indigo profond',nameAr:'نيلي',descAr:'أزرق نيلي',color:'#4338ca',bg:'#e0e7ff',layout:'modern'},{id:'slate',name:'Slate Pro',desc:'Gris ardoise',nameAr:'رمادي',descAr:'رمادي احترافي',color:'#475569',bg:'#f1f5f9',layout:'classic'},{id:'gold',name:'Gold',desc:'Or premium',nameAr:'ذهبي',descAr:'ذهبي فاخر',color:'#a16207',bg:'#fef9c3',layout:'premium'},{id:'forest',name:'Forêt',desc:'Vert forêt',nameAr:'غابة',descAr:'أخضر داكن',color:'#166534',bg:'#dcfce7',layout:'modern'},{id:'sky',name:'Ciel',desc:'Bleu ciel',nameAr:'سماء',descAr:'أزرق فاتح',color:'#0284c7',bg:'#f0f9ff',layout:'modern'},{id:'coral',name:'Corail',desc:'Corail',nameAr:'مرجاني',descAr:'مرجاني دافئ',color:'#e11d48',bg:'#ffe4e6',layout:'modern'},{id:'mint',name:'Menthe',desc:'Menthe',nameAr:'نعناع',descAr:'أخضر نعناعي',color:'#0d9488',bg:'#ccfbf1',layout:'modern'},{id:'lavender',name:'Lavande',desc:'Lavande',nameAr:'خزامى',descAr:'بنفسجي فاتح',color:'#8b5cf6',bg:'#f5f3ff',layout:'modern'},{id:'charcoal',name:'Charcoal',desc:'Charbon',nameAr:'فحمي',descAr:'رمادي داكن',color:'#1c1917',bg:'#fafaf9',layout:'premium'},{id:'navy',name:'Navy',desc:'Marine',nameAr:'كحلي',descAr:'أزرق كحلي',color:'#1e3a8a',bg:'#eff6ff',layout:'modern'},{id:'emerald',name:'Émeraude',desc:'Émeraude',nameAr:'زمرّد',descAr:'أخضر زمرّدي',color:'#047857',bg:'#ecfdf5',layout:'modern'},{id:'amber',name:'Ambre',desc:'Ambre',nameAr:'كهرماني',descAr:'أصفر كهرماني',color:'#d97706',bg:'#fffbeb',layout:'modern'},{id:'studio',name:'Studio',desc:'Bandeau dégradé ciel',nameAr:'ستوديو',descAr:'شريط متدرّج',color:'#0ea5e9',color2:'#0369a1',bg:'#e0f2fe',layout:'studio'},{id:'onyx',name:'Onyx',desc:'Dégradé graphite',nameAr:'عقيق',descAr:'أسود عميق',color:'#334155',color2:'#0f172a',bg:'#f1f5f9',layout:'studio'},{id:'royal',name:'Royal',desc:'Dégradé indigo',nameAr:'ملكي',descAr:'بنفسجي ملكي',color:'#6366f1',color2:'#4338ca',bg:'#e0e7ff',layout:'studio'},{id:'carmin',name:'Carmin',desc:'Dégradé carmin',nameAr:'قرمزي',descAr:'أحمر قرمزي',color:'#f43f5e',color2:'#be123c',bg:'#ffe4e6',layout:'studio'},{id:'algerie',name:'Algérie',desc:'Bandeau vert officiel',nameAr:'الجزائر',descAr:'شريط أخضر رسمي',color:'#006233',color2:'#059669',bg:'#d1fae5',layout:'dz'}];
+const TEMPLATES=[{id:'classique',name:'Classique',desc:'Sobre et traditionnel',nameAr:'كلاسيكي',descAr:'بسيط وتقليدي',color:'#0f172a',bg:'#f1f5f9',layout:'classic'},{id:'moderne',name:'Moderne',desc:'Bandeau coloré élégant',nameAr:'عصري',descAr:'شريط ملوّن أنيق',color:'#0284c7',bg:'#e0f2fe',layout:'modern'},{id:'minimal',name:'Minimal',desc:'Épuré',nameAr:'مبسّط',descAr:'مجرّد',color:'#334155',bg:'#f8fafc',layout:'classic'},{id:'premium',name:'Premium',desc:'Header sombre',nameAr:'ممتاز',descAr:'ترويسة داكنة',color:'#0f172a',bg:'#1e293b',layout:'premium'},{id:'corporate',name:'Corporate',desc:'Bleu entreprise',nameAr:'مؤسّسي',descAr:'أزرق الشركات',color:'#1e40af',bg:'#dbeafe',layout:'modern'},{id:'elegant',name:'Élégant',desc:'Beige raffiné',nameAr:'أنيق',descAr:'بيج راقٍ',color:'#78716c',bg:'#f5f5f4',layout:'classic'},{id:'crea',name:'Créatif',desc:'Violet moderne',nameAr:'إبداعي',descAr:'بنفسجي عصري',color:'#7c3aed',bg:'#ede9fe',layout:'modern'},{id:'nature',name:'Nature',desc:'Vert pro',nameAr:'طبيعة',descAr:'أخضر احترافي',color:'#059669',bg:'#d1fae5',layout:'modern'},{id:'sunset',name:'Sunset',desc:'Orange énergique',nameAr:'غروب',descAr:'برتقالي حيوي',color:'#ea580c',bg:'#ffedd5',layout:'modern'},{id:'ocean',name:'Océan',desc:'Turquoise',nameAr:'محيط',descAr:'أزرق بحري',color:'#0891b2',bg:'#cffafe',layout:'modern'},{id:'noir',name:'Noir & Blanc',desc:'Monochrome',nameAr:'أبيض وأسود',descAr:'للطابعة بلا ألوان',color:'#171717',bg:'#f5f5f5',layout:'classic'},{id:'rose',name:'Rose Soft',desc:'Rose doux',nameAr:'وردي',descAr:'وردي هادئ',color:'#db2777',bg:'#fce7f3',layout:'modern'},{id:'indigo',name:'Indigo',desc:'Indigo profond',nameAr:'نيلي',descAr:'أزرق نيلي',color:'#4338ca',bg:'#e0e7ff',layout:'modern'},{id:'slate',name:'Slate Pro',desc:'Gris ardoise',nameAr:'رمادي',descAr:'رمادي احترافي',color:'#475569',bg:'#f1f5f9',layout:'classic'},{id:'gold',name:'Gold',desc:'Or premium',nameAr:'ذهبي',descAr:'ذهبي فاخر',color:'#a16207',bg:'#fef9c3',layout:'premium'},{id:'forest',name:'Forêt',desc:'Vert forêt',nameAr:'غابة',descAr:'أخضر داكن',color:'#166534',bg:'#dcfce7',layout:'modern'},{id:'sky',name:'Ciel',desc:'Bleu ciel',nameAr:'سماء',descAr:'أزرق فاتح',color:'#0284c7',bg:'#f0f9ff',layout:'modern'},{id:'coral',name:'Corail',desc:'Corail',nameAr:'مرجاني',descAr:'مرجاني دافئ',color:'#e11d48',bg:'#ffe4e6',layout:'modern'},{id:'mint',name:'Menthe',desc:'Menthe',nameAr:'نعناع',descAr:'أخضر نعناعي',color:'#0d9488',bg:'#ccfbf1',layout:'modern'},{id:'lavender',name:'Lavande',desc:'Lavande',nameAr:'خزامى',descAr:'بنفسجي فاتح',color:'#8b5cf6',bg:'#f5f3ff',layout:'modern'},{id:'charcoal',name:'Charcoal',desc:'Charbon',nameAr:'فحمي',descAr:'رمادي داكن',color:'#1c1917',bg:'#fafaf9',layout:'premium'},{id:'navy',name:'Navy',desc:'Marine',nameAr:'كحلي',descAr:'أزرق كحلي',color:'#1e3a8a',bg:'#eff6ff',layout:'modern'},{id:'emerald',name:'Émeraude',desc:'Émeraude',nameAr:'زمرّد',descAr:'أخضر زمرّدي',color:'#047857',bg:'#ecfdf5',layout:'modern'},{id:'amber',name:'Ambre',desc:'Ambre',nameAr:'كهرماني',descAr:'أصفر كهرماني',color:'#d97706',bg:'#fffbeb',layout:'modern'},{id:'studio',name:'Studio',desc:'Bandeau dégradé ciel',nameAr:'ستوديو',descAr:'شريط متدرّج',color:'#0ea5e9',color2:'#0369a1',bg:'#e0f2fe',layout:'studio'},{id:'onyx',name:'Onyx',desc:'Dégradé graphite',nameAr:'عقيق',descAr:'أسود عميق',color:'#334155',color2:'#0f172a',bg:'#f1f5f9',layout:'studio'},{id:'royal',name:'Royal',desc:'Dégradé indigo',nameAr:'ملكي',descAr:'بنفسجي ملكي',color:'#6366f1',color2:'#4338ca',bg:'#e0e7ff',layout:'studio'},{id:'carmin',name:'Carmin',desc:'Dégradé carmin',nameAr:'قرمزي',descAr:'أحمر قرمزي',color:'#f43f5e',color2:'#be123c',bg:'#ffe4e6',layout:'studio'},{id:'algerie',name:'Algérie',desc:'Bandeau vert officiel',nameAr:'الجزائر',descAr:'شريط أخضر رسمي',color:'#006233',color2:'#059669',bg:'#d1fae5',layout:'dz'},{id:'classiquefr',name:'Classique FR',desc:'Encadré, conditions de règlement',nameAr:'كلاسيكي',descAr:'إطار، وشروط الدفع',color:'#3730a3',color2:'#4f46e5',bg:'#e0e7ff',layout:'frbox'},{id:'bleu',name:'Bleu',desc:'Bandeaux bleus, quantités et prix',nameAr:'أزرق',descAr:'أشرطة زرقاء، بالكميات والأسعار',color:'#1f7ac4',color2:'#2f8fd8',bg:'#dbeafe',layout:'bleuq'},{id:'bleusimple',name:'Bleu simple',desc:'Description et montant seulement',nameAr:'أزرق مبسّط',descAr:'البيان والمبلغ فقط',color:'#1f7ac4',color2:'#2f8fd8',bg:'#e0f2fe',layout:'bleus'},{id:'sobre',name:'Sobre',desc:'Récapitulatif TVA par taux',nameAr:'رصين',descAr:'ملخّص الرسم حسب النسبة',color:'#475569',color2:'#334155',bg:'#e2e8f0',layout:'sobre'},{id:'epure',name:'Épuré',desc:'Titre centré, filets fins',nameAr:'مجرّد',descAr:'عنوان في الوسط، خطوط رفيعة',color:'#0f172a',color2:'#334155',bg:'#f8fafc',layout:'epure'}];
 
 /* Huit modeles mis devant. Vingt-neuf ne sont pas vingt-neuf mises en page :
    ce sont cinq mises en page — classic, modern, premium, studio, dz — dont
@@ -23,7 +23,10 @@ const TEMPLATES=[{id:'classique',name:'Classique',desc:'Sobre et traditionnel',n
    pour cent de la page en francais pour un lecteur qui a choisi l'arabe.
    « Noir & Blanc » devient « ابيض واسود », et sa description dit ce qu'elle
    sert vraiment : l imprimante qui n'a plus d'encre couleur. */
-const TEMPLATES_TOP=['algerie','classique','moderne','premium','studio','corporate','nature','noir'];
+/* Les cinq mises en page reprises sur des factures reelles passent devant :
+   ce sont celles qu'on reconnait, et les seules qui different vraiment les
+   unes des autres. Les trois suivantes gardent les mises en page maison. */
+const TEMPLATES_TOP=['classiquefr','bleu','bleusimple','sobre','epure','algerie','studio','classique','moderne','premium'];
 let state={company:{...defaultCompany},clients:[],invoices:[],nextInvoiceNumber:1,currentPage:'dashboard',dark:false,search:'',statusFilter:'all',sidebarOpen:false};
 /* A parse failure used to be swallowed, and seedDemoData() then wrote demo
    invoices over the user's own key — destroying the last recoverable copy.
@@ -178,6 +181,58 @@ function refLine(inv){
   if(isBl(inv)) return '<div style="font-size:11px;color:#64748b">Facture '+esc(inv.refNumber)+'</div>';
   return '';
 }
+/* ---- Le regime sans TVA ----------------------------------------------
+ *
+ * L'IFU, donc l'auto-entrepreneur, n'a pas qualite pour collecter la taxe. Sa
+ * facture ne porte pas de colonne TVA du tout — en afficher une a zero laisse
+ * croire a un taux zero, qui est autre chose — et elle porte a la place la
+ * mention et son fondement. Le texte algerien n'impose pas une phrase au mot
+ * pres, a la difference du CGI francais ; celle-ci est celle que la page
+ * « facture non assujetti » du site explique, et elle reste modifiable.
+ *
+ * La colonne ne disparait que si le document lui-meme ne porte aucune taxe.
+ * Un commercant qui coche la case en gardant des lignes a 19 % imprimerait
+ * sinon un papier ou la somme des lignes ne fait pas le total : le papier ne
+ * ment jamais, meme quand le reglage ment. */
+function tvaFree(inv){
+  return !(inv&&inv.items||[]).some(function(it){ return Number(it.tva)>0; });
+}
+function isExempt(){ return !!(state.company&&state.company.tvaExempt); }
+function exemptText(){
+  var c=state.company||{};
+  return (c.tvaExemptNote&&String(c.tvaExemptNote).trim())
+    || 'TVA non applicable — art. 8 du Code des taxes sur le chiffre d’affaires';
+}
+function hideTva(inv){ return isExempt() && tvaFree(inv); }
+function exemptNote(inv){
+  if(!hideTva(inv)) return '';
+  return '<div style="margin-top:10px;font-size:10.5px;font-weight:600;color:#334155">'+esc(exemptText())+'</div>';
+}
+
+/* ---- La signature -----------------------------------------------------
+ *
+ * Un cachet et une signature manuscrite obligent a imprimer, signer, scanner.
+ * Celle-ci est deposee une fois dans les reglages — dessinee au doigt ou
+ * televersee — et se retrouve sur chaque papier, PDF compris.
+ *
+ * Elle passe par safeLogo : c'est une image, elle atterrit dans un src="…",
+ * et une chaine fabriquee y refermerait l'attribut. Une sauvegarde importee
+ * peut en contenir une. */
+function signatureImg(){
+  return safeLogo(state.company&&state.company.signature);
+}
+function signatureBlock(opts){
+  opts=opts||{};
+  var img=signatureImg(), who=esc((state.company&&state.company.signataire)||'');
+  var label=opts.label||'Cachet et signature';
+  var w=opts.width||160;
+  return '<div style="text-align:center;min-width:'+w+'px">'+
+    (img?'<img src="'+img+'" alt="" style="max-height:56px;max-width:'+w+'px;object-fit:contain;display:block;margin:0 auto 2px"/>'
+        :'<div style="height:34px;border-bottom:1px solid #cbd5e1;margin-bottom:5px"></div>')+
+    (who?'<div style="font-size:10.5px;font-weight:600;color:#475569">'+who+'</div>':'')+
+    '<div style="font-size:9.5px;color:#94a3b8">'+esc(label)+'</div></div>';
+}
+
 /* Carriage sits outside the VAT base and on top of the TTC — the layout every
    supplier invoice uses. It is still part of what the client actually hands
    over, so the stamp duty is charged on the sum including it.

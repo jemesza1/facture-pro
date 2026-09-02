@@ -12,14 +12,14 @@
    cache only answers when the network does not.
 
    Bump CACHE whenever the shell changes — keep it in step with V in app.js. */
-var CACHE = 'facturepro-20260902m';
+var CACHE = 'facturepro-20260902n';
 
 /* Cached without their ?v= query, and read back with ignoreSearch, so bumping
    an asset version does not orphan every entry. */
 var SHELL = [
   '/', '/index.html', '/accueil.html', '/styles.css',
   '/i18n.js', '/app.js', '/lib-calc.js', '/a.js', '/dash-fix.js',
-  '/b1.js', '/b2a.js', '/b2b.js', '/c1.js', '/c2.js',
+  '/b1.js', '/b2a.js', '/b2b.js', '/c1.js', '/c2.js', '/templates-pro.js',
   '/extra.js', '/pro-polish.js', '/commerce.js', '/lib-xlsx.js', '/lib-docx.js', '/excel.js', '/backup.js', '/drive.js', '/avoir.js', '/bl.js', '/depenses.js', '/releve.js', '/recurrent.js', '/keys.js', '/core.bundle.js',
   '/fonts.css',
   '/fonts/inter-400-latin.woff2', '/fonts/inter-400-latin-ext.woff2',

@@ -56,7 +56,9 @@ CE QU'ELLE FAIT
 • Relevé de compte par client
 • Factures récurrentes
 • Gestion des produits et du stock
-• 29 modèles de facture
+• 34 modèles de facture
+• Signature électronique apposée sur chaque facture
+• Régime sans TVA (IFU, auto-entrepreneur) : mention légale automatique
 
 OUTILS GRATUITS INCLUS
 Calcul de la TVA, du droit de timbre, de la marge et du prix de vente, des
@@ -97,7 +99,9 @@ FacturePro يُصدر فواتير مطابقة للتشريع الجزائري�
 • كشف حساب لكل عميل
 • فواتير متكررة
 • تسيير المنتجات والمخزون
-• 29 نموذج فاتورة
+• 34 نموذج فاتورة
+• توقيع إلكتروني يُطبع على كل فاتورة
+• نظام بدون رسم (الضريبة الجزافية، مشروع ذاتي): العبارة القانونية تلقائياً
 
 أدوات مجانية مدمجة
 حساب الرسم على القيمة المضافة، حق الطابع، الربح وسعر البيع، النسب والتخفيضات،

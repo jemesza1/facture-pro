@@ -44,6 +44,8 @@ function openNewInvoice(editId){
         <input type="text" inputmode="decimal" min="0" step="0.01" id="inv-port" class="form-input ltr-code"
                placeholder="0" value="${inv&&inv.fraisPort||''}"/>
         <p class="text-xs text-slate-500 mt-1">${t('inv.portHint')}</p></div>
+      <div><label class="form-label" for="inv-objet">${t('inv.objet')}</label>
+        <input id="inv-objet" class="form-input" maxlength="120" placeholder="${esc(t('inv.objetPh'))}" value="${esc(inv&&inv.objet||'')}"/></div>
       <div><label class="form-label" for="inv-notes">${t('inv.notes')}</label>
         <textarea id="inv-notes" class="form-input" rows="2">${esc(inv&&inv.notes||payNote((inv&&inv.paymentMode)||'virement'))}</textarea></div>
     </div>
@@ -110,7 +112,7 @@ function saveInvoice(editId){
   });
   if(muettes)return toast(t('toast.lineNoDesc'),'err');
   if(!items.length)return toast(t('toast.addLine'),'err');
-  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',fraisPort:parseNum((document.getElementById('inv-port')||{}).value)||0,items,notes:document.getElementById('inv-notes').value.trim()};
+  const data={clientId,template:document.getElementById('inv-template').value,date:document.getElementById('inv-date').value,dueDate:document.getElementById('inv-due').value,status:document.getElementById('inv-status').value,paymentMode:(document.getElementById('inv-paymode')||{}).value||'virement',fraisPort:parseNum((document.getElementById('inv-port')||{}).value)||0,items,objet:((document.getElementById('inv-objet')||{value:''}).value||'').trim(),notes:document.getElementById('inv-notes').value.trim()};
   if(editId){const idx=state.invoices.findIndex(i=>i.id===editId);
     if(idx<0)return toast(t('toast.invoiceNotFound'),'err');
     state.invoices[idx]={...state.invoices[idx],...data};toast(t('toast.updated'));}

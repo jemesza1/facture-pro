@@ -18,6 +18,15 @@ function renderInvoiceHTML(inv){
   if(isBl(inv))return renderBonLivraison(inv,tpl);
   if(tpl.layout==='dz')return renderInvoiceDZ(inv,tpl);
   if(tpl.layout==='studio')return renderInvoiceStudio(inv,tpl);
+  /* Les cinq mises en page reprises sur des factures reelles vivent dans
+     templates-pro.js, charge apres celui-ci. Les appels ont lieu au rendu,
+     pas au chargement, mais le garde-fou reste : un fichier qui n'aurait pas
+     ete servi ne doit pas laisser un ecran blanc a la place d'une facture. */
+  if(tpl.layout==='frbox'&&typeof renderInvoiceFrBox==='function')return renderInvoiceFrBox(inv,tpl);
+  if(tpl.layout==='bleuq'&&typeof renderInvoiceBleuQty==='function')return renderInvoiceBleuQty(inv,tpl);
+  if(tpl.layout==='bleus'&&typeof renderInvoiceBleuFlat==='function')return renderInvoiceBleuFlat(inv,tpl);
+  if(tpl.layout==='sobre'&&typeof renderInvoiceSobre==='function')return renderInvoiceSobre(inv,tpl);
+  if(tpl.layout==='epure'&&typeof renderInvoiceEpure==='function')return renderInvoiceEpure(inv,tpl);
   return renderInvoiceDZ(inv,tpl);
 }
 
@@ -254,16 +263,14 @@ function renderInvoiceDZ(inv,tpl){
       <div style="margin-top:18px;padding:11px 14px;background:#f0fdf4;border-left:3px solid ${g2};border-radius:4px;font-size:11px;font-style:italic">
         ${wordsLead(inv)} : <strong>${words}</strong>
       </div>
+      ${exemptNote(inv)}
       ${inv.notes?`<div style="white-space:pre-line;margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:26px;padding-top:16px;border-top:1px solid #eef2f7">
         <div style="font-size:10px;color:#94a3b8;line-height:1.7">
           ${company.rib?`<div>RIB : ${company.rib} — ${company.banque||''}</div>`:''}
           ${company.email||company.phone?`<div>${company.email||''}${company.email&&company.phone?' · ':''}${company.phone||''}</div>`:''}
         </div>
-        <div style="text-align:center;min-width:150px">
-          <div style="height:34px;border-bottom:1px solid #cbd5e1;margin-bottom:5px"></div>
-          <div style="font-size:9.5px;color:#94a3b8">Cachet et signature</div>
-        </div>
+        ${signatureBlock({width:150})}
       </div>
     </div>
   </div>`;

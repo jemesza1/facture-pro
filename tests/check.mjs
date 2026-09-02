@@ -4090,6 +4090,151 @@ console.log('\nChercher un nom tel qu\'on le tape');
  * Le compteur reste, parce que lui seul empeche de redonner le numero d'une
  * facture supprimee — deja entre les mains d'un client. On verifie les deux
  * en meme temps, horloge figee de part et d'autre du 31 decembre. */
+/* Cinq papiers, une signature et le regime sans TVA.
+ *
+ * Les cinq mises en page qui existaient sortaient de la meme idee. Celles-ci
+ * sont reprises sur des factures reelles — l'encadre du comptable, le modele
+ * bleu de tableur, la facture sobre avec son recapitulatif par taux, la
+ * facture epuree — et deux regles les traversent : la colonne TVA disparait
+ * quand l'entreprise n'est pas assujettie ET que le document ne porte
+ * effectivement aucune taxe, et la signature deposee dans les reglages est
+ * imprimee la ou le papier la demande. */
+console.log('\nCinq papiers, une signature, et le régime sans TVA');
+{
+  const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ'
+            + 'AAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const IDS = ['classiquefr', 'bleu', 'bleusimple', 'sobre', 'epure'];
+
+  const papers = await page.evaluate(([png, ids]) => {
+    state.company = {name:'Atelier Karim', address:'Alger', nif:'099916001234567',
+      nin:'109912340056781234', nis:'099988877766655', rc:'16/00-1234567B21', ai:'16050',
+      email:'k@atlas.dz', phone:'021 00 00 00', rib:'007 001 2345', banque:'BNA',
+      logo:'', signature:'', signataire:'Karim B. — Gérant', tvaExempt:false, tvaExemptNote:''};
+    state.clients = [{id:'c1', name:'EURL Sahara', address:'Oran', nif:'088877766655544',
+                      nin:'210087650043219876', nis:'088866655544433', rc:'31/00-7654321B19'}];
+    const inv = {id:'i1', number:'FAC-2026-018', clientId:'c1', date:'2026-09-01',
+      status:'envoyee', paymentMode:'especes', fraisPort:1500, objet:'Travaux de peinture',
+      items:[{description:'Ciment', qty:120, unite:'sac', unitPrice:850, tva:19},
+             {description:'Sable', qty:8, unite:'m³', unitPrice:2600, tva:9}]};
+    const out = {};
+    ids.forEach(id => {
+      const h = renderInvoiceHTML(Object.assign({}, inv, {template:id}));
+      out[id] = {len:h.length, sign:/Cachet et signature|Le gérant/.test(h),
+                 line:/border-bottom:1px solid #cbd5e1/.test(h),
+                 who:h.indexOf('Karim B. — Gérant') > -1,
+                 objet:h.indexOf('Travaux de peinture') > -1,
+                 /* Le net imprime doit etre celui que calcule l'application,
+                    pas un nombre recopie dans le test. */
+                 net:h.replace(/[\u202f\u00a0]/g, ' ')
+                      .indexOf(formatMoney(calcInvoiceTotals(Object.assign({}, inv, {template:id})).net)
+                                 .replace(/[\u202f\u00a0]/g, ' ')) > -1,
+                 words:h.indexOf('somme de') > -1};
+    });
+    /* La signature deposee remplace le trait a signer. */
+    state.company.signature = png;
+    const withSig = {};
+    ids.forEach(id => {
+      const h = renderInvoiceHTML(Object.assign({}, inv, {template:id}));
+      withSig[id] = h.indexOf(png.slice(0, 48)) > -1;
+    });
+    state.company.signature = '';
+    return {out, withSig};
+  }, [PNG, IDS]);
+
+  for (const id of IDS) {
+    const p = papers.out[id];
+    check(`${id} draws a whole invoice`, p.len > 2500 && p.net && p.words, JSON.stringify(p));
+    check(`and ${id} leaves a line to sign when no signature is on file`,
+          p.sign && p.line, JSON.stringify(p));
+    check(`and ${id} carries the signatory's name`, p.who, JSON.stringify(p));
+    check(`and ${id} prints the object of the invoice`, p.objet, JSON.stringify(p));
+    check(`and ${id} prints the deposited signature instead of the line`,
+          papers.withSig[id], String(papers.withSig[id]));
+  }
+  const sizes = IDS.map(id => papers.out[id].len);
+  check('the five are five different papers, not one in five colours',
+        new Set(sizes).size === 5, sizes.join(' '));
+
+  /* Le regime sans TVA. */
+  const exempt = await page.evaluate((ids) => {
+    state.company.tvaExempt = true;
+    const zero = {id:'z', number:'FAC-2026-020', clientId:'c1', date:'2026-09-01',
+      status:'envoyee', paymentMode:'virement',
+      items:[{description:'Peinture', qty:2, unitPrice:15000, tva:0}]};
+    const taxed = Object.assign({}, zero,
+      {items:[{description:'Peinture', qty:2, unitPrice:15000, tva:19}]});
+    const r = {off:{}, on:{}};
+    ids.forEach(id => {
+      const a = renderInvoiceHTML(Object.assign({}, zero, {template:id}));
+      const b = renderInvoiceHTML(Object.assign({}, taxed, {template:id}));
+      r.on[id] = {col:/>\s*TVA\s*</i.test(a) || />\s*Tva\s*</.test(a),
+                  note:a.indexOf('TVA non applicable') > -1};
+      r.off[id] = {col:/>\s*TVA\s*</i.test(b) || />\s*Tva\s*</.test(b),
+                   note:b.indexOf('TVA non applicable') > -1};
+    });
+    state.company.tvaExempt = false;
+    r.custom = (function(){
+      state.company.tvaExempt = true;
+      state.company.tvaExemptNote = 'TVA non applicable — art. 8 du CTCA';
+      const h = renderInvoiceHTML(Object.assign({}, zero, {template:'epure'}));
+      state.company.tvaExempt = false; state.company.tvaExemptNote = '';
+      return h.indexOf('art. 8 du CTCA') > -1;
+    })();
+    return r;
+  }, IDS);
+  for (const id of IDS) {
+    check(`${id} drops the VAT column for a business outside the tax`,
+          !exempt.on[id].col && exempt.on[id].note, JSON.stringify(exempt.on[id]));
+    /* Le reglage peut mentir ; le papier, non. Une ligne a 19 % garde sa
+       colonne et perd la mention, sinon la somme des lignes ne fait plus le
+       total imprime dessous. */
+    check(`and ${id} keeps it when a line is actually taxed`,
+          exempt.off[id].col && !exempt.off[id].note, JSON.stringify(exempt.off[id]));
+  }
+  check('and the printed wording can be changed', exempt.custom, String(exempt.custom));
+
+  /* Signer au doigt : on trace reellement sur la toile. */
+  const drawn = await page.evaluate(() => {
+    navigate('settings');
+    return typeof openSignaturePad === 'function';
+  });
+  check('the settings screen offers a signature pad', drawn);
+  await page.evaluate(() => openSignaturePad());
+  await page.waitForTimeout(300);
+  const pad = await page.$('#sig-pad');
+  check('and the pad is on screen', !!pad);
+  if (pad) {
+    const box = await pad.boundingBox();
+    await page.mouse.move(box.x + 30, box.y + 90);
+    await page.mouse.down();
+    for (let i = 1; i <= 12; i++) {
+      await page.mouse.move(box.x + 30 + i * 14, box.y + 90 + (i % 2 ? -26 : 26));
+    }
+    await page.mouse.up();
+    await page.evaluate(() => saveSignaturePad());
+    await page.waitForTimeout(200);
+    const kept = await page.evaluate(() => ({
+      sig: (state.company.signature || '').slice(0, 21),
+      stored: ((JSON.parse(localStorage.getItem('facturepro_dz_v24') || '{}').company) || {}).signature ? 1 : 0
+    }));
+    check('a signature drawn with a finger is kept',
+          kept.sig === 'data:image/png;base64', kept.sig);
+    check('and it survives the reload, because it is stored', kept.stored === 1, String(kept.stored));
+    /* Rognee a son encre : gardee telle quelle, une toile pleine donne une
+       bande transparente large comme la boite, minuscule sur le papier. */
+    const dims = await page.evaluate(() => new Promise(res => {
+      const i = new Image();
+      i.onload = () => res({w:i.width, h:i.height});
+      i.onerror = () => res(null);
+      i.src = state.company.signature;
+    }));
+    check('and trimmed to its ink rather than to the box',
+          dims && dims.w > 20 && dims.w < 380 && dims.h > 10 && dims.h < 200,
+          JSON.stringify(dims));
+    await page.evaluate(() => { state.company.signature = ''; saveData(); });
+  }
+}
+
 console.log('\nUne série par année');
 {
   const serial = async (whenUTC, seed) => {
@@ -5111,10 +5256,10 @@ console.log('\nLes modeles, ranges plutot que jetes');
   const top = eval(aSrc.slice(aSrc.indexOf('const TEMPLATES_TOP=') + 20,
                               aSrc.indexOf('\n', aSrc.indexOf('const TEMPLATES_TOP='))).replace(/;$/, ''));
 
-  check('every model still exists, none was thrown away', all.length === 29, String(all.length));
+  check('every model still exists, none was thrown away', all.length === 34, String(all.length));
   const ghosts = top.filter(id => !all.some(t => t.id === id));
   check('and every one put forward is a real model', ghosts.length === 0, ghosts.join(' '));
-  check('eight are put forward', top.length === 8, String(top.length));
+  check('ten are put forward', top.length === 10, String(top.length));
   const layouts = [...new Set(all.map(t => t.layout))].sort();
   const covered = [...new Set(all.filter(t => top.includes(t.id)).map(t => t.layout))].sort();
   check('and between them they show every layout the app can draw',
@@ -5132,9 +5277,9 @@ console.log('\nLes modeles, ranges plutot que jetes');
     return {before, label, after: document.querySelectorAll('#main-content .card').length,
             gone: !document.querySelector('#main-content button[onclick="showAllTemplates()"]')};
   });
-  check('the gallery opens on eight, not on twenty-nine', g.before === 8, String(g.before));
-  check('and says how many more there are', /21/.test(g.label), g.label);
-  check('asking for them shows all twenty-nine', g.after === 29, String(g.after));
+  check('the gallery opens on ten, not on thirty-four', g.before === 10, String(g.before));
+  check('and says how many more there are', /24/.test(g.label), g.label);
+  check('asking for them shows all thirty-four', g.after === 34, String(g.after));
   check('and the invitation goes once it is accepted', g.gone === true);
 
   /* Le choix, dans le formulaire de facture : deux groupes, aucun modele
@@ -5154,9 +5299,12 @@ console.log('\nLes modeles, ranges plutot que jetes');
   });
   check('the invoice form offers the models in two groups', sel.groups && sel.groups.length === 2,
         String(sel.groups));
-  check('with every one of the twenty-nine still choosable', sel.options === 29, String(sel.options));
-  check('the eight coming first', sel.firstEight === 8, String(sel.firstEight));
-  check('and the Algerian model at the head of them', sel.first === 'algerie', String(sel.first));
+  check('with every one of the thirty-four still choosable', sel.options === 34, String(sel.options));
+  check('the ten coming first', sel.firstEight === 10, String(sel.firstEight));
+  /* Les cinq mises en page reprises sur des factures reelles passent devant :
+     ce sont celles qu'un commercant reconnait. Le modele algerien reste dans
+     la liste courte, il n'est plus le premier. */
+  check('and the five real-world layouts at the head of them', sel.first === 'classiquefr', String(sel.first));
   check('neither group heading is a raw key', !/^tpl\./.test(sel.groups[0]) && !/^tpl\./.test(sel.groups[1]),
         String(sel.groups));
 
@@ -5911,7 +6059,7 @@ console.log('\nUn papier qui s\'additionne');
   check('every template card speaks Arabic on an Arabic screen',
         tplAr.dir === 'rtl' && tplAr.cards > 0 && tplAr.mute === 0, JSON.stringify(tplAr));
   check('and so does every option in the invoice form',
-        tplAr.opts === 29 && tplAr.optsMute === 0, JSON.stringify(tplAr));
+        tplAr.opts === 34 && tplAr.optsMute === 0, JSON.stringify(tplAr));
 
   const tplFr = await pg.evaluate(async () => {
     navigate('templates');
