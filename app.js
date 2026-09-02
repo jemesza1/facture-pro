@@ -1,6 +1,6 @@
 (function(){
 function load(src){return new Promise(function(res,rej){var s=document.createElement("script");s.src=src;s.onload=res;s.onerror=function(){rej(src)};document.head.appendChild(s);});}
-var V="20260902o";
+var V="20260902p";
 var core=["lib-calc.js","a.js","dash-fix.js","b1.js","b2a.js","b2b.js","c1.js","c2.js","templates-pro.js","extra.js","pro-polish.js","commerce.js","lib-xlsx.js","lib-docx.js","excel.js","backup.js","drive.js","avoir.js","acompte.js","bl.js","depenses.js","releve.js","recurrent.js","keys.js"];
 try{localStorage.removeItem("fp_xai_key");}catch(e){}
 core.reduce(function(p,f){return p.then(function(){return load(f+"?v="+V);});},Promise.resolve())

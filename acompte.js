@@ -92,7 +92,9 @@
               unitPrice:round2(map[r]*pct/100),
               tva:r};
     }).filter(function(it){ return it.unitPrice!==0; });
-    if(!items.length) return toast(t('acompte.badPct'),'err');
+    /* Une commande entierement a zero : l'acompte serait nul. Le refus doit
+       nommer la vraie raison, pas accuser le pourcentage. */
+    if(!items.length) return toast(t('acompte.zeroOrder'),'err');
 
     state.invoices.push({
       id:uid(),
@@ -109,6 +111,10 @@
          et l'envoie. Un statut « payée » posé d'office ferait entrer au
          chiffre d'affaires de l'argent que personne n'a versé. */
       status:'brouillon',
+      /* L'objet de la commande vaut pour les deux factures qui en sortent :
+         le client lit « acompte sur travaux de peinture », pas seulement un
+         numero de commande. */
+      objet:src.objet||'',
       paymentMode:src.paymentMode,
       /* Le port se facture à la livraison, donc sur le solde. Le mettre ici
          le ferait payer avant que rien n'ait bougé — et deux fois, puisque le
@@ -162,6 +168,7 @@
       date:todayISO(),
       dueDate:src.dueDate||'',
       status:'brouillon',
+      objet:src.objet||'',
       paymentMode:src.paymentMode,
       fraisPort:Number(src.fraisPort)||0,
       items:items,

@@ -304,8 +304,9 @@ function renderInvoiceStudio(inv,tpl){
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;color:${c2}">FACTURE</div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;color:${c2}">${docTitle(inv)}</div>
         <div style="font-size:13px;color:#64748b">${esc(inv.number)}</div>
+        ${refLine(inv)}
         <div style="font-size:11px;margin-top:8px">Date : <strong>${formatDate(inv.date)}</strong></div>
         ${inv.dueDate?`<div style="font-size:11px">Échéance : <strong>${formatDate(inv.dueDate)}</strong></div>`:''}
       </div>
@@ -339,8 +340,12 @@ function renderInvoiceStudio(inv,tpl){
     </div>
 <div style="margin-top:10px;font-size:10.5px;color:#64748b">Mode de règlement : ${payLabel(inv)}</div>
     <div style="margin-top:16px;font-size:11px;font-style:italic">${wordsLead(inv)} : <strong>${words}</strong></div>
+    ${exemptNote(inv)}
     ${inv.notes?`<div style="white-space:pre-line;margin-top:12px;font-size:11px;color:#64748b">${esc(inv.notes)}</div>`:''}
-    ${company.rib?`<div style="margin-top:8px;font-size:10px;color:#94a3b8">RIB: ${company.rib} — ${company.banque||''}</div>`:''}
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-top:22px">
+      <div style="font-size:10px;color:#94a3b8">${company.rib?`RIB: ${company.rib} — ${company.banque||''}`:''}</div>
+      ${signatureBlock({})}
+    </div>
   </div>`;
 }
 function previewInvoice(id){

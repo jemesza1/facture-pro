@@ -4151,6 +4151,35 @@ console.log('\nCinq papiers, une signature, et le régime sans TVA');
     check(`and ${id} prints the deposited signature instead of the line`,
           papers.withSig[id], String(papers.withSig[id]));
   }
+  /* Un modele avait le mot « FACTURE » ecrit en dur dans son en-tete. Un
+     avoir emis avec lui sortait donc intitule « FACTURE » — un document qui
+     rend de l'argent, presente comme un document qui en reclame. Le titre
+     n'est pas une decoration : c'est ce qui dit au client, au comptable et a
+     l'administration ce qu'ils tiennent. On l'exige de tous les modeles, pour
+     tous les types de document. */
+  const titles = await page.evaluate(() => {
+    const ALL = TEMPLATES.map(t => t.id);
+    const docs = [
+      [{}, 'FACTURE'],
+      [{type:'avoir'}, "FACTURE D'AVOIR"],
+      [{type:'bl'}, 'BON DE LIVRAISON'],
+      [{type:'acompte', acomptePct:30}, "FACTURE D'ACOMPTE"],
+      [{type:'solde'}, 'FACTURE DE SOLDE']
+    ];
+    const bad = [];
+    ALL.forEach(id => docs.forEach(([extra, want]) => {
+      const inv = Object.assign({id:'t', number:'FAC-1', refNumber:'FAC-0', clientId:'c1',
+        date:'2026-09-01', status:'envoyee', paymentMode:'virement', template:id,
+        items:[{description:'x', qty:1, unitPrice:1000, tva:19}]}, extra);
+      let h = '';
+      try { h = renderInvoiceHTML(inv); } catch (e) { bad.push(id + '/' + want + ': ' + e.message); return; }
+      if (h.indexOf(want) === -1) bad.push(id + ' prints no "' + want + '"');
+    }));
+    return bad;
+  });
+  check('every model names the document it is printing, whatever the type',
+        titles.length === 0, titles.slice(0, 4).join(' | '));
+
   const sizes = IDS.map(id => papers.out[id].len);
   check('the five are five different papers, not one in five colours',
         new Set(sizes).size === 5, sizes.join(' '));
