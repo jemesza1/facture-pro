@@ -103,7 +103,14 @@
          futur point d'affichage. */
       if(d.company){
         var comp=Object.assign({},state.company,d.company);
-        if(typeof safeLogo==='function') comp.logo=safeLogo(comp.logo);
+        if(typeof safeLogo==='function'){
+          comp.logo=safeLogo(comp.logo);
+          /* La signature est une image de plus, et elle atterrit dans le meme
+             src="…". safeLogo la neutralise a l'affichage, mais la regle de la
+             maison est de ne pas garder la chaine : ce qui n'est jamais ecrit
+             ne peut pas etre oublie par un futur point d'affichage. */
+          comp.signature=safeLogo(comp.signature);
+        }
         state.company=comp;
       }
       if(Array.isArray(d.clients)) state.clients=d.clients.map(function(c){

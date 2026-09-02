@@ -2874,6 +2874,22 @@ console.log('\nWhat the audit found');
         imported.cid);
   check('and what pointed at them still points somewhere', imported.resolved === true);
   check('the crafted logo is not even stored', imported.logo === '');
+  /* La signature est une image de plus, et elle atterrit dans le meme
+     src="…". La regle de la maison est de ne pas garder la chaine. */
+  const sigImport = await page.evaluate(() => {
+    const before = JSON.parse(localStorage.getItem('facturepro_dz_v24') || '{}');
+    const ok = applyBackup({
+      version: 'facturepro-dz-v25',
+      company: {name: 'X', signature: 'y" onerror="alert(2)" b="'},
+      clients: [], invoices: [], payments: [], products: [], devis: [], expenses: [],
+      nextInvoiceNumber: 2
+    });
+    const out = {ok, sig: state.company.signature};
+    localStorage.setItem('facturepro_dz_v24', JSON.stringify(before));
+    return out;
+  });
+  check('and a crafted signature is not stored either',
+        sigImport.ok === true && sigImport.sig === '', String(sigImport.sig));
 }
 
 /* Arabic that a search engine can actually read.
@@ -4227,6 +4243,31 @@ console.log('\nCinq papiers, une signature, et le régime sans TVA');
     navigate('settings');
     return typeof openSignaturePad === 'function';
   });
+  /* Les trois reglages nouveaux doivent survivre a la fermeture de
+     l'application : ils vivent dans state.company, que saveData enregistre. */
+  const kept = await page.evaluate(() => {
+    navigate('settings');
+    return new Promise(r => setTimeout(() => {
+      const box = document.getElementById('set-exempt');
+      const note = document.getElementById('set-exempt-note');
+      const who = document.getElementById('set-signataire');
+      if (!box || !note || !who) return r(null);
+      box.checked = true;
+      note.value = 'TVA non applicable — art. 8 du CTCA';
+      who.value = 'Karim B. — Gérant';
+      saveSettings();
+      const stored = (JSON.parse(localStorage.getItem('facturepro_dz_v24') || '{}').company) || {};
+      r({exempt: stored.tvaExempt, note: stored.tvaExemptNote, who: stored.signataire});
+    }, 400));
+  });
+  check('the VAT regime, its wording and the signatory are written to storage',
+        kept && kept.exempt === true && /CTCA/.test(kept.note) && /Karim/.test(kept.who),
+        JSON.stringify(kept));
+  await page.evaluate(() => {
+    state.company.tvaExempt = false; state.company.tvaExemptNote = '';
+    state.company.signataire = ''; saveData();
+  });
+
   check('the settings screen offers a signature pad', drawn);
   await page.evaluate(() => openSignaturePad());
   await page.waitForTimeout(300);
