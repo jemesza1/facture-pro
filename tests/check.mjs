@@ -4141,6 +4141,87 @@ console.log('\nLe tableau de bord ne compte pas les brouillons');
  * que personne ne retape en cherchant. Cote arabe, le meme nom s'ecrit avec
  * ou sans hamza et se termine par ة ou ه selon la main : « احمد » ne trouvait
  * pas « أحمد ». Le commercant conclut que la facture a disparu. */
+/* La page d'atterrissage debordait de l'ecran.
+ *
+ * Quatre commandes dans l'en-tete — langue, theme, « Ouvrir l'app »,
+ * « Commencer » — ne tiennent pas sur un telephone. A 412 pixels de large, la
+ * page debordait de cent six, et le bouton vert, qui est la porte d'entree de
+ * tout le site, sortait de l'ecran. Quatre-vingt-cinq pour cent des visiteurs
+ * sont sur telephone. */
+/* Plus une seule adresse arabe qui ne peut pas etre indexee.
+ *
+ * C'est le defaut que la Search Console avait signale sous « autre page avec
+ * balise canonique correcte » : le site declarait vingt-quatre versions
+ * arabes a l'adresse page.html?lang=ar, qui sert les memes octets, donc le
+ * meme canonique — pointant la version francaise. Aucune ne pouvait paraitre
+ * dans les resultats. Le controle ne verifie pas que la reparation a eu lieu,
+ * il verifie qu'elle ne peut pas se defaire. */
+console.log('\nAucune version arabe ne s’annonce à une adresse qui se renie');
+{
+  const lying = [], orphan = [];
+  for (const dir of ['.', 'ar']) {
+    for (const f of await readdir(join(ROOT, 'public', dir))) {
+      if (!f.endsWith('.html')) continue;
+      const raw = await readFile(join(ROOT, 'public', dir, f), 'utf8');
+      const alt = (raw.match(/hreflang="ar" href="([^"]*)"/) || [])[1];
+      if (!alt) continue;
+      if (/[?&]lang=/.test(alt)) { lying.push((dir === '.' ? '' : 'ar/') + f + ' → ' + alt); continue; }
+      /* L'adresse annoncee doit exister et se declarer canonique d'elle-meme,
+         sinon on a seulement deplace le mensonge. */
+      const rel = alt.replace('https://www.facturedz.com/', '');
+      const target = await readFile(join(ROOT, 'public', rel), 'utf8').catch(() => null);
+      if (target === null || !target.includes(`rel="canonical" href="${alt}"`))
+        orphan.push((dir === '.' ? '' : 'ar/') + f + ' → ' + alt);
+    }
+  }
+  check('no page advertises an Arabic version at a URL that canonicalises away',
+        lying.length === 0, lying.slice(0, 3).join(' | '));
+  check('and every Arabic address advertised exists and claims itself',
+        orphan.length === 0, orphan.slice(0, 3).join(' | '));
+}
+
+console.log('\nLa page d’atterrissage tient dans l’écran');
+{
+  /* Mesure sur un serveur enracine dans public/, pas a la racine du depot :
+     sinon /fonts.css sert des polices que le navigateur ne trouve pas, les
+     mesures se font en police de secours — plus large — et le controle
+     signale un debordement qu'aucun visiteur ne verra. */
+  const shipped = createServer(async (req, res) => {
+    const f = join(ROOT, 'public',
+                   normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+    try {
+      const body = await readFile(f);
+      res.writeHead(200, {'Content-Type': TYPES[extname(f)] || 'application/octet-stream'});
+      res.end(body);
+    } catch { res.writeHead(404); res.end('not found'); }
+  });
+  await new Promise(r => shipped.listen(0, '127.0.0.1', r));
+  const SITE = `http://127.0.0.1:${shipped.address().port}`;
+  const ctx = await browser.newContext();
+  for (const w of [320, 360, 390, 412, 768]) {
+    for (const u of ['accueil.html', 'ar/accueil.html']) {
+      const pg = await ctx.newPage();
+      await pg.setViewportSize({width: w, height: 800});
+      await pg.goto(`${SITE}/${u}`);
+      await pg.waitForTimeout(250);
+      const r = await pg.evaluate(() => ({
+        over: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        cta: (() => {
+          const el = document.querySelector('.nav-cta .btn-green');
+          if (!el) return 'absent';
+          const b = el.getBoundingClientRect();
+          return b.right <= document.documentElement.clientWidth + 1 ? 'ok' : 'hors écran';
+        })()
+      }));
+      check(`${u} does not overflow at ${w}px`, r.over === 0, String(r.over));
+      check(`and its green button is on screen at ${w}px`, r.cta === 'ok', r.cta);
+      await pg.close();
+    }
+  }
+  await ctx.close();
+  shipped.close();
+}
+
 console.log('\nChercher un nom tel qu\'on le tape');
 {
   const found = await page.evaluate(() => {
@@ -4930,8 +5011,18 @@ console.log('\nhreflang, and one script instead of eighteen');
         /hreflang="fr"/.test(home) && /hreflang="ar"/.test(home) && /hreflang="x-default"/.test(home));
   check('the landing page declares hreflang',
         /hreflang="fr"/.test(land) && /hreflang="ar"/.test(land) && /hreflang="x-default"/.test(land));
-  check('and the Arabic alternate is a real query the landing honours',
-        /lang=ar/.test(land) && /lang=\(ar\|fr\)/.test(land));
+  /* L'alternative arabe etait une requete — page?lang=ar — que la page
+     honorait bien a l'ecran, mais qui servait les memes octets, donc le meme
+     canonique pointant le francais : Google ne l'indexait jamais. C'est
+     desormais une adresse a elle, et c'est cela qu'on exige des deux cotes. */
+  const AR_HOME = 'https://www.facturedz.com/ar/accueil.html';
+  check('and the Arabic alternate is an address of its own, not a query',
+        home.includes(`hreflang="ar" href="${AR_HOME}"`) &&
+        land.includes(`hreflang="ar" href="${AR_HOME}"`));
+  const arLand = await readFile(join(ROOT, 'public', 'ar', 'accueil.html'), 'utf8').catch(() => null);
+  check('which exists, is served as Arabic, and claims itself',
+        arLand !== null && /<html lang="ar" dir="rtl">/.test(arLand) &&
+        arLand.includes(`rel="canonical" href="${AR_HOME}"`));
 }
 
 {

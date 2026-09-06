@@ -28,7 +28,7 @@
        it rather than to a second URL competing with it. -->
   <link rel="canonical" href="https://www.facturedz.com/" />
   <link rel="alternate" hreflang="fr" href="https://www.facturedz.com/" />
-  <link rel="alternate" hreflang="ar" href="https://www.facturedz.com/?lang=ar" />
+  <link rel="alternate" hreflang="ar" href="https://www.facturedz.com/ar/accueil.html" />
   <link rel="alternate" hreflang="x-default" href="https://www.facturedz.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="FacturePro" />
@@ -241,6 +241,28 @@
               display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 13px; }
     @media (max-width: 900px) { .f-in { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 560px) { .f-in { grid-template-columns: 1fr; } }
+    /* Quatre commandes dans l'en-tete ne tiennent pas sur un telephone : la
+       page debordait de cent six pixels a 412 de large, et le bouton vert —
+       la porte d'entree de tout le site — sortait de l'ecran. « Ouvrir
+       l'app » et « Commencer » menent au meme endroit ; le fantome s'efface
+       et le vert reste. */
+    @media (max-width: 620px) {
+      .nav-cta .btn-ghost { display: none; }
+    }
+    /* Et sur les ecrans de 360, les plus repandus ici, il restait
+       trente-sept pixels de trop : le bouton vert se resserre plutot que de
+       disparaitre. */
+    @media (max-width: 400px) {
+      .nav-in { gap: 8px; }
+      .nav-cta { gap: 6px; }
+      .nav-cta .btn { padding-inline: 12px; font-size: 13px; }
+      /* Le theme suit deja le reglage du telephone, et l'application porte
+         son propre bouton : c'est la commande dont on peut se passer pour
+         que la porte d'entree tienne dans l'ecran. */
+      #themeBtn { display: none; }
+      .brand { font-size: 15px; }
+      .nav-cta .btn { padding-inline: 10px; }
+    }
     @media (max-width: 900px) {
       .hero-grid, .grid4, .mods-list { grid-template-columns: 1fr; }
       .nav-links { display: none; }

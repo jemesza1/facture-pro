@@ -99,8 +99,8 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 /* ---------------------------------------------------------------- *
  * La tete : ce qui doit changer dans les deux documents.
  * ---------------------------------------------------------------- */
-function headFr(html, file) {
-  const url = `${HOST}/${file}`;
+function headFr(html, file, canonicalFr) {
+  const url = canonicalFr || `${HOST}/${file}`;
   const arUrl = `${HOST}/ar/${file}`;
   /* Le lien de langue de la page francaise mene a la jumelle arabe, et le
      harnais du site verifie que hreflang et ce lien se repondent. */
@@ -119,8 +119,8 @@ function headFr(html, file) {
   return out;
 }
 
-function headAr(html, file, titleAr, descAr) {
-  const url = `${HOST}/${file}`;
+function headAr(html, file, titleAr, descAr, canonicalFr) {
+  const url = canonicalFr || `${HOST}/${file}`;
   const arUrl = `${HOST}/ar/${file}`;
   let out = html;
 
@@ -165,12 +165,13 @@ function headAr(html, file, titleAr, descAr) {
 
 /* Le bouton devient un lien : les deux langues sont deux adresses, et un
    moteur doit pouvoir suivre celui-ci. */
-function langLink(html, href, hreflang, label) {
-  const m = html.match(/<button[^>]*id="lang"[^>]*>[\s\S]*?<\/button>/i);
-  if (!m) throw new Error('bouton de langue introuvable');
+function langLink(html, href, hreflang, label, id) {
+  id = id || 'lang';
+  const m = html.match(new RegExp(`<button[^>]*id="${id}"[^>]*>[\\s\\S]*?</button>`, 'i'));
+  if (!m) throw new Error(`bouton de langue introuvable : #${id}`);
   const cls = (m[0].match(/class="([^"]*)"/) || [])[1] || '';
   return html.replace(m[0],
-    `<a id="lang" href="${href}" hreflang="${hreflang}" class="${cls}">${label}</a>`);
+    `<a id="${id}" href="${href}" hreflang="${hreflang}" class="${cls}">${label}</a>`);
 }
 
 const REMEMBER = (loc) =>
@@ -222,7 +223,25 @@ const PAGES = [
   { file: 'calcul-salaire.html', kind: 'tool',
     titleAr: 'حساب الأجر الصافي والضريبة IRG — الجزائر',
     descAr: 'احسب الأجر الصافي من الأجر الخام في الجزائر: اقتطاع الضمان الاجتماعي والضريبة على الدخل حسب السلّم. حاسبة مجانية، بلا تسجيل.' },
+
+  /* Les deux pages a attributs. accueil.html est la page d'atterrissage
+     francaise : son canonique est la racine, parce que « / » sert la meme
+     chose avec l'application par-dessus. Sa jumelle arabe, elle, est une vraie
+     adresse a elle — c'est la premiere page en arabe que le site ait jamais
+     pu faire indexer. */
+  { file: 'conditions.html', kind: 'attributes', langId: 'lang',
+    locale: { from: "var saved = 'fr';", to: (l) => `var saved = '${l}';` },
+    titleAr: 'شروط الاستعمال وحماية البيانات — FacturePro الجزائر',
+    descAr: 'شروط استعمال FacturePro وحماية بياناتك: لا حساب، ولا خادم، وفواتيرك تبقى في جهازك ولا تغادره. مجاني وبلا تسجيل.' },
+
+  { file: 'accueil.html', kind: 'attributes', langId: 'langBtn',
+    canonicalFr: 'https://www.facturedz.com/',
+    locale: { from: "try { return localStorage.getItem(KEY) || 'fr'; } catch (e) { return 'fr'; }",
+              to: (l) => `return '${l}';` },
+    titleAr: 'برنامج فوترة مجاني للجزائر — TVA 19% وحق الطابع وNIF',
+    descAr: 'أنشئ فواتير مطابقة للتنظيم الجزائري: الرسم 19% و9%، NIF وNIS وRC، حق الطابع، والمبلغ بالحروف. مجاني بلا تسجيل، وبياناتك تبقى في جهازك.' },
 ];
+
 
 
 /* ---------------------------------------------------------------- *
@@ -300,6 +319,45 @@ function splitTool(src, page) {
   return { fr, ar };
 }
 
+
+/* Les pages a attributs : chaque element porte son texte dans les deux
+   langues, data-fr et data-ar, et un script repeint au chargement. On fige le
+   texte dans la langue de l'adresse et on retire les deux attributs — le
+   script ne trouve plus rien a repeindre, ce qui est exactement ce qu'on veut,
+   et il continue de poser lang, dir et le libelle du lien.
+   La locale, elle, cesse d'etre une preference : elle est celle de l'URL. */
+function bake(html, lang) {
+  return html.replace(
+    /<(\w+)((?=[^>]*\sdata-fr=)(?=[^>]*\sdata-ar=)[^>]*)>([^<]*)<\/\1>/g,
+    (m, tag, attrs, _txt) => {
+      const fr = (attrs.match(/\sdata-fr="([^"]*)"/) || [])[1];
+      const ar = (attrs.match(/\sdata-ar="([^"]*)"/) || [])[1];
+      if (fr === undefined || ar === undefined) return m;
+      const rest = attrs.replace(/\sdata-(fr|ar)="[^"]*"/g, '');
+      return `<${tag}${rest}>${lang === 'ar' ? ar : fr}</${tag}>`;
+    });
+}
+
+function splitAttributes(src, page) {
+  const { file, titleAr, descAr, locale, canonicalFr } = page;
+  const mk = (lang) => {
+    let out = bake(src, lang);
+    out = replaceOnce(out, locale.from, locale.to(lang), 'locale figée');
+    return out;
+  };
+
+  let fr = mk('fr');
+  fr = langLink(fr, `/ar/${file}`, 'ar', 'العربية', page.langId);
+  fr = headFr(fr, file, canonicalFr);
+
+  let ar = mk('ar');
+  ar = langLink(ar, canonicalFr ? canonicalFr.replace(HOST, '') || '/' : `/${file}`,
+                'fr', 'Français', page.langId);
+  ar = headAr(ar, file, titleAr, descAr, canonicalFr);
+  ar = ar.replace('</head>', REMEMBER('ar') + '\n</head>');
+  return { fr, ar };
+}
+
 let n = 0;
 mkdirSync(AR, { recursive: true });
 for (const page of PAGES) {
@@ -314,6 +372,7 @@ for (const page of PAGES) {
   try {
     if (page.kind === 'blocks') out = splitBlocks(src, page);
     else if (page.kind === 'tool') out = splitTool(src, page);
+    else if (page.kind === 'attributes') out = splitAttributes(src, page);
     else throw new Error(`mecanisme inconnu : ${page.kind}`);
   } catch (e) {
     console.error(`ar: ${page.file} — ${e.message}`);
