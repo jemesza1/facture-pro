@@ -8,7 +8,9 @@ Disallow: /*?app=
 Disallow: /*&app=
 Disallow: /*?new=
 
-# ?lang=ar reste explorable : c'est l'adresse que les balises hreflang
-# declarent comme la version arabe. L'interdire ici contredirait la balise.
+# ?lang=ar reste explorable, mais plus aucune balise ne l'annonce : la version
+# arabe a desormais son adresse, sous /ar/. Ces anciennes adresses se declarent
+# canoniques de la page francaise ; les interdire ici empecherait Google de
+# lire cette declaration, et elles resteraient au catalogue plus longtemps.
 
 Sitemap: https://www.facturedz.com/sitemap.xml
