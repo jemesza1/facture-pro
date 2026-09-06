@@ -518,7 +518,10 @@ const shell = (page, lang) => {
   const other = isAr ? `${HOST}/${page.file}` : `${HOST}/ar/${page.file}`;
   const title = isAr ? page.titleAr : page.title;
   const desc = isAr ? page.descAr : page.desc;
-  const root = isAr ? '/ar/' : '/';
+  /* Le logo ramene a l'application, qui est la meme dans les deux langues et
+     s'ouvre dans celle que la page vient d'enregistrer. Il n'y a pas d'index
+     sous /ar/ : y envoyer le lecteur serait une page introuvable. */
+  const root = '/';
   return `<!DOCTYPE html>
 <html lang="${isAr ? 'ar' : 'fr'}"${isAr ? ' dir="rtl"' : ''}>
 <head>

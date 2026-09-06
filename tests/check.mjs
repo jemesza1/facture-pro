@@ -5262,6 +5262,39 @@ console.log('\nLes outils, depuis l\'application');
   /* Sans ce compte, un GROUPS renomme rendrait la tranche vide, la liste
      publiee vide, et la verification de derive passerait pour toujours en
      ne comparant rien. */
+  /* Tout lien interne doit mener quelque part.
+   *
+   * Le logo des pages arabes pointait sur /ar/, qui n'existe pas : il n'y a
+   * pas d'index sous ce dossier. Onze pages menaient donc a une page
+   * introuvable des le premier clic, et rien ne le disait. On suit maintenant
+   * chaque adresse interne de chaque page construite jusqu'au fichier. */
+  {
+    const dead = [];
+    const seen = new Set();
+    const walk = async (dir, prefix) => {
+      for (const f of await readdir(join(ROOT, 'public', dir))) {
+        if (!f.endsWith('.html')) continue;
+        const raw = await readFile(join(ROOT, 'public', dir, f), 'utf8');
+        for (const m of raw.matchAll(/(?:href|src)="(\/[^"#?]*)"/g)) {
+          const target = m[1];
+          /* Vercel sert son script de mesure a l'execution : il n'est pas
+             dans public/ et n'a pas a y etre. */
+          if (target.indexOf('/_vercel/') === 0) continue;
+          if (seen.has(target)) continue;
+          seen.add(target);
+          const rel = target === '/' ? 'index.html'
+                    : target.endsWith('/') ? target.slice(1) + 'index.html'
+                    : target.slice(1);
+          if (!existsSync(join(ROOT, 'public', rel))) dead.push(prefix + f + ' → ' + target);
+        }
+      }
+    };
+    await walk('.', '');
+    await walk('ar', 'ar/');
+    check('every internal link the site prints leads to a file that exists',
+          dead.length === 0, dead.slice(0, 5).join(' | '));
+  }
+
   /* Le generateur lisait la version du shell pour ses scripts mais avait la
      feuille de style ecrite en dur, restee six mois en arriere. Le meme
      fichier etait alors demande sous deux adresses et garde deux fois dans le
