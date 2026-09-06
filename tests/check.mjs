@@ -4156,6 +4156,78 @@ console.log('\nLe tableau de bord ne compte pas les brouillons');
  * meme canonique — pointant la version francaise. Aucune ne pouvait paraitre
  * dans les resultats. Le controle ne verifie pas que la reparation a eu lieu,
  * il verifie qu'elle ne peut pas se defaire. */
+/* Les jumelles arabes, jugees comme un moteur les voit.
+ *
+ * Le harnais parcourait le plan du site du depot, qui ne contient que les
+ * adresses francaises : les titres et descriptions arabes partaient donc sans
+ * qu'une seule verification les regarde. Et surtout, ce que voit un robot
+ * n'est pas ce que voit un habitue : il arrive sans preference enregistree.
+ * Une page qui decide de sa langue en lisant le stockage se rend alors dans
+ * la mauvaise — c'est ce qui arrivait a /ar/conditions.html, ou `var
+ * saved='ar'` etait ecrase deux lignes plus bas par la lecture du stockage. */
+console.log('\nLes jumelles arabes, vues comme un robot les voit');
+{
+  const shipped = createServer(async (req, res) => {
+    const f = join(ROOT, 'public',
+                   normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+    try {
+      const body = await readFile(f);
+      res.writeHead(200, {'Content-Type': TYPES[extname(f)] || 'application/octet-stream'});
+      res.end(body);
+    } catch { res.writeHead(404); res.end('not found'); }
+  });
+  await new Promise(r => shipped.listen(0, '127.0.0.1', r));
+  const SITE = `http://127.0.0.1:${shipped.address().port}`;
+
+  const arabic = t => (String(t).match(/[\u0600-\u06FF]/g) || []).length;
+  const files = (await readdir(join(ROOT, 'public', 'ar'))).filter(f => f.endsWith('.html')).sort();
+  check('there are Arabic twins to judge', files.length >= 20, String(files.length));
+
+  const noTitle = [], noDesc = [], stillFrench = [];
+  for (const f of files) {
+    const raw = await readFile(join(ROOT, 'public', 'ar', f), 'utf8');
+    const title = (raw.match(/<title>([\s\S]*?)<\/title>/) || ['', ''])[1];
+    const desc = (raw.match(/name="description" content="([\s\S]*?)"/) || ['', ''])[1];
+    if (!arabic(title)) noTitle.push(f);
+    if (!arabic(desc) || desc.length < 80) noDesc.push(f);
+    /* Un titre qui a garde sa moitie francaise n'a pas ete traduit, il a ete
+       recopie. */
+    if (/[a-zàâçéèêëîïôùûü]{7,}/i.test(title.replace(/Word|Excel|PDF|FacturePro|SCF|proforma/gi, '')))
+      stillFrench.push(f + ' — ' + title.slice(0, 40));
+  }
+  check('every Arabic twin names itself in Arabic', noTitle.length === 0, noTitle.join(', '));
+  check('and describes itself in Arabic, at length', noDesc.length === 0, noDesc.join(', '));
+  check('and none kept a French title by accident', stillFrench.length === 0,
+        stillFrench.slice(0, 3).join(' | '));
+
+  /* Deux visiteurs qu'aucune preference n'aide : le robot, et le navigateur
+     qui refuse les donnees de site. */
+  for (const [name, init] of [
+    ['with no stored preference', () => {}],
+    ['with site data blocked', () => {
+      Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });
+    }]
+  ]) {
+    const ctx = await browser.newContext();
+    await ctx.addInitScript(init);
+    const wrong = [];
+    for (const f of files) {
+      const pg = await ctx.newPage();
+      await pg.goto(`${SITE}/ar/${f}`);
+      await pg.waitForTimeout(220);
+      const r = await pg.evaluate(() => ({
+        lang: document.documentElement.lang, dir: document.documentElement.dir
+      }));
+      if (r.lang !== 'ar' || r.dir !== 'rtl') wrong.push(`${f} → ${r.lang}/${r.dir}`);
+      await pg.close();
+    }
+    check(`every Arabic twin still renders as Arabic ${name}`,
+          wrong.length === 0, wrong.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+  shipped.close();
+}
+
 console.log('\nAucune version arabe ne s’annonce à une adresse qui se renie');
 {
   const lying = [], orphan = [];

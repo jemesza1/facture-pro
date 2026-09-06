@@ -139,8 +139,18 @@ function headAr(html, file, titleAr, descAr, canonicalFr) {
     `<meta property="og:title" content="${esc(titleAr)}" />`);
   out = out.replace(/<meta property="og:description" content="[\s\S]*?" \/>/i,
     `<meta property="og:description" content="${esc(descAr)}" />`);
+  /* Les remplacements ci-dessus sont des String.replace : ils echouent en
+     silence quand la balise n'existe pas, et plusieurs de ces pages n'ont ni
+     og:url ni og:locale. Une adresse arabe partagee se presentait alors en
+     francais. On pose ce qui manque plutot que de le supposer present. */
+  const ensure = (html, tag, re) => re.test(html) ? html
+    : html.replace(/<\/head>/i, tag + '\n</head>');
   out = out.replace(/<meta property="og:locale" content="[^"]*" \/>/i,
     `<meta property="og:locale" content="ar_DZ" />`);
+  out = ensure(out, `<meta property="og:locale" content="ar_DZ" />`, /property="og:locale"/);
+  out = ensure(out, `<meta property="og:url" content="${arUrl}" />`, /property="og:url"/);
+  out = ensure(out, `<meta property="og:title" content="${esc(titleAr)}" />`, /property="og:title"/);
+  out = ensure(out, `<meta property="og:description" content="${esc(descAr)}" />`, /property="og:description"/);
   out = out.replace(/<meta name="twitter:title" content="[\s\S]*?" \/>/i,
     `<meta name="twitter:title" content="${esc(titleAr)}" />`);
   out = out.replace(/<meta name="twitter:description" content="[\s\S]*?" \/>/i,
@@ -230,7 +240,13 @@ const PAGES = [
      adresse a elle — c'est la premiere page en arabe que le site ait jamais
      pu faire indexer. */
   { file: 'conditions.html', kind: 'attributes', langId: 'lang',
-    locale: { from: "var saved = 'fr';", to: (l) => `var saved = '${l}';` },
+    /* On epingle la lecture, pas l'initialisation : `var saved='fr'` est
+       ecrase deux lignes plus bas par `saved = localStorage.getItem(...)`.
+       Fige au mauvais endroit, la page arabe se rendait en lang="fr" et
+       dir="ltr" des que le stockage etait vide ou bloque — c'est-a-dire pour
+       un robot. */
+    locale: { from: "saved = localStorage.getItem('fp_locale') || 'fr';",
+              to: (l) => `saved = '${l}';` },
     titleAr: 'شروط الاستعمال وحماية البيانات — FacturePro الجزائر',
     descAr: 'شروط استعمال FacturePro وحماية بياناتك: لا حساب، ولا خادم، وفواتيرك تبقى في جهازك ولا تغادره. مجاني وبلا تسجيل.' },
 
@@ -349,6 +365,10 @@ function splitAttributes(src, page) {
   let fr = mk('fr');
   fr = langLink(fr, `/ar/${file}`, 'ar', 'العربية', page.langId);
   fr = headFr(fr, file, canonicalFr);
+  /* Comme les deux autres familles : la langue de la page est celle qu'on
+     retient, sans quoi un visiteur venu de l'arabe recevait du francais mis
+     en page de droite a gauche. */
+  fr = fr.replace('</head>', REMEMBER('fr') + '\n</head>');
 
   let ar = mk('ar');
   ar = langLink(ar, canonicalFr ? canonicalFr.replace(HOST, '') || '/' : `/${file}`,
