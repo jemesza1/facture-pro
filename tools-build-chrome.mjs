@@ -270,6 +270,20 @@ function dark(html) {
   return head === -1 ? html : html.slice(0, head) + DARK + '\n' + html.slice(head);
 }
 
+/* Les pages arabes vivent sous /ar/. La barre et le pied sont les memes —
+   leurs libelles se peignent deja d'apres <html lang> — mais leurs liens
+   doivent rester en arabe : un lecteur qui suit « وصل التسليم » depuis une
+   page arabe ne doit pas atterrir sur la version francaise. */
+function arLinks(html, twins) {
+  /* Un lien qui declare une langue est un lien vers l'autre langue : le
+     traduire le ferait pointer sur lui-meme, et le bouton « Français » de la
+     page arabe ramenait a la page arabe. */
+  return html.replace(/<a\b[^>]*>/g, tag =>
+    tag.indexOf('hreflang=') !== -1 ? tag
+      : tag.replace(/href="\/([a-z0-9-]+\.html)"/,
+          (m, f) => twins.has(f) ? `href="/ar/${f}"` : m));
+}
+
 function inject(html, file) {
   /* Le pied, pas la barre : accueil.html ne prend pas de barre, et un garde
      qui la cherchait lui ajoutait un second pied a chaque execution. */
@@ -306,6 +320,17 @@ for (const f of readdirSync(OUT)) {
   const p = join(OUT, f);
   const before = readFileSync(p, 'utf8');
   const after = inject(before, f);
+  if (after !== before) { writeFileSync(p, after); n++; }
+}
+
+/* Le meme habillage pour les pages arabes, avec leurs liens. */
+const AR_DIR = join(OUT, 'ar');
+let twins = new Set();
+try { twins = new Set(readdirSync(AR_DIR).filter(f => f.endsWith('.html'))); } catch (e) {}
+for (const f of twins) {
+  const p = join(AR_DIR, f);
+  const before = readFileSync(p, 'utf8');
+  const after = arLinks(inject(before, f), twins);
   if (after !== before) { writeFileSync(p, after); n++; }
 }
 console.log(`chrome: ${n} pages wired`);

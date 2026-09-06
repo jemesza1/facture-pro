@@ -2682,10 +2682,21 @@ check('robots points at the sitemap on that host',
 
   const one = await readFile(join(ROOT, 'public', 'droit-de-timbre.html'), 'utf8');
   const foot = one.slice(one.indexOf('class="fp-foot"'));
+  /* Les adresses arabes ne sont pas nommees dans le pied francais : chacune
+     est atteinte depuis sa jumelle par le lien de langue et par hreflang, et
+     le pied de la page arabe, lui, les nomme toutes. Les melanger ferait un
+     pied ou la moitie des liens change de langue sans prevenir. */
   const unlinked = paths.filter(f => f !== 'index.html' && f !== 'accueil.html'
+                                  && f.indexOf('ar/') !== 0
                                   && !foot.includes('href="/' + f + '"'));
-  check('the footer names every page the sitemap offers', unlinked.length === 0,
+  check('the footer names every French page the sitemap offers', unlinked.length === 0,
         unlinked.join(', ') || paths.length + ' pages');
+  const arPaths = paths.filter(f => f.indexOf('ar/') === 0);
+  const arFoot = await readFile(join(ROOT, 'public', 'ar', 'devis.html'), 'utf8');
+  const arUnlinked = arPaths.filter(f => f !== 'ar/devis.html'
+                                      && !arFoot.includes('href="/' + f + '"'));
+  check('and the Arabic footer names every Arabic page', arUnlinked.length === 0,
+        arUnlinked.join(', ') || arPaths.length + ' pages');
   check('and offers the application from the bar',
         /class="fp-cta" href="\/index\.html\?app=1/.test(one));
 
@@ -3545,7 +3556,48 @@ for (const f of CONTENT_PAGES) {
   check(`${f} has a title of its own`, title.length > 25 && !titles.has(title), title.slice(0, 40));
   titles.add(title);
   check(`${f} claims its own address`, canon.endsWith('/' + f), canon);
-  check(`${f} is written in both languages`, /id="ar"/.test(html) && /id="fr"/.test(html));
+  /* L'arabe vivait dans un bloc cache de la page francaise, et l'adresse
+     annoncee a Google pour lui — « page.html?lang=ar » — servait les memes
+     octets, donc le meme canonique, qui pointe la version francaise. Google la
+     rangeait sous « autre page avec balise canonique correcte » et ne
+     l'indexait jamais. Le site declarait une version arabe qui, par
+     construction, ne pouvait pas paraitre dans les resultats.
+
+     Desormais deux adresses, une langue chacune, chacune canonique d'elle-meme
+     et nommant l'autre. C'est ce contrat qui est verifie ici, des deux
+     cotes. */
+  const ARDIR = join(PUBDIR, 'ar');
+  const arHtml = await readFile(join(ARDIR, f), 'utf8').catch(() => null);
+  check(`${f} has an Arabic twin of its own`, arHtml !== null);
+  if (!arHtml) continue;
+
+  const arTitle = (arHtml.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '';
+  const arCanon = (arHtml.match(/rel="canonical" href="([^"]*)"/) || [])[1] || '';
+  check(`ar/${f} is served as Arabic, right to left`,
+        /<html lang="ar" dir="rtl">/.test(arHtml));
+  check(`ar/${f} carries an Arabic title of its own`,
+        /[\u0600-\u06ff]/.test(arTitle) && !/[A-Za-z]{6,}/.test(arTitle.replace(/Word|Excel|PDF|FacturePro|SCF|G50|TVA|NIF|NIS|proforma/g, '')),
+        arTitle);
+  check(`ar/${f} claims its own address, not the French one`,
+        arCanon.endsWith('/ar/' + f), arCanon);
+  /* Le canonique n'est utile que si les deux se nomment l'un l'autre. */
+  for (const [side, doc, want] of [['fr', html, '/ar/' + f], ['ar', arHtml, '/' + f]]) {
+    check(`the ${side} page points at its twin in hreflang`,
+          doc.includes('hreflang="ar" href="https://www.facturedz.com/ar/' + f + '"') &&
+          doc.includes('hreflang="fr" href="https://www.facturedz.com/' + f + '"'),
+          side);
+    check(`and offers it as a link a crawler can follow`,
+          new RegExp('id="lang" href="' + want.replace(/[.]/g, '\\.') + '"').test(doc), side);
+  }
+  /* Une page, une langue : le francais ne doit plus trainer dans la page
+     arabe, sinon les deux adresses servent le meme document. */
+  const arBody = arHtml.slice(arHtml.indexOf('<main'), arHtml.indexOf('</main>'));
+  check(`ar/${f} carries no French body text`,
+        !/id="fr"/.test(arHtml) && !new RegExp('>\\s*' + 'Ouvrir l').test(arBody));
+  /* Sous /ar/, un chemin relatif designe /ar/quelque-chose. */
+  check(`ar/${f} asks for its scripts by absolute path`,
+        !/(src|href)="(?!https?:|\/|#|data:)[^"]+"/.test(arHtml),
+        (arHtml.match(/(src|href)="(?!https?:|\/|#|data:)[^"]+"/) || [''])[0]);
 }
 
 /* The three downloads, opened as a visitor opens them. */

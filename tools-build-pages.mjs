@@ -8,7 +8,7 @@
  * "facture proforma", "mentions obligatoires facture Algérie" — and answers it
  * with the thing they came for: a real workbook, or a straight answer.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = new URL('.', import.meta.url).pathname;
@@ -53,6 +53,8 @@ const dlfile = (href, fr, ar, note_fr, note_ar) =>
 const PAGES = [
   {
     file: 'bon-de-livraison.html', kind: 'livraison',
+    titleAr: "وصل التسليم — نموذج Word وExcel مجاني، الجزائر",
+    descAr: "نموذج وصل تسليم جزائري للتحميل بصيغة Word أو Excel: البيان، والكمّية المطلوبة والمسلَّمة، والملاحظات، والتوقيعان. بلا أسعار، كما يجب. مجاني وبلا تسجيل.",
     title: 'Bon de livraison — modèle Word et Excel, sans prix | وصل التسليم',
     desc: "Modèle de bon de livraison à télécharger en Word (.docx) ou Excel (.xlsx) : désignation, quantité commandée et livrée, réserves et signatures. Sans prix, comme il se doit. Gratuit, sans inscription. نموذج وصل التسليم بصيغة Excel: البيان والكمّية المطلوبة والمسلَّمة والملاحظات والتوقيعان. بلا أسعار، كما يجب. مجاني وبلا تسجيل.",
     og: 'Bon de livraison — modèle Excel gratuit',
@@ -83,6 +85,8 @@ const PAGES = [
   },
   {
     file: 'facture-avoir.html', kind: 'avoir',
+    titleAr: "فاتورة الإشعار الدائن — نموذج Word وExcel مجاني، الجزائر",
+    descAr: "متى تُصدر إشعاراً دائناً وكيف يُحرَّر: مرجع الفاتورة الأصلية، والرسم المُعاد، وحقّ الطابع. مع نموذج Word وExcel مجاني، بلا تسجيل.",
     title: "Facture d'avoir — modèle Word et Excel gratuit | فاتورة إشعار دائن",
     desc: "Qu'est-ce qu'une facture d'avoir, quand l'émettre, comment la numéroter et ce qu'elle change pour la TVA du mois. Avec un modèle gratuit à télécharger en Word (.docx) ou Excel (.xlsx). ما هي فاتورة الإشعار الدائن، ومتى تُصدَر، وكيف تُرقَّم، وماذا تغيّر في تصريح G50. مع نموذج Excel مجاني.",
     og: "Facture d'avoir — modèle et mode d'emploi",
@@ -116,6 +120,8 @@ const PAGES = [
   },
   {
     file: 'devis.html', kind: 'devis',
+    titleAr: "عرض السعر — نموذج Word وExcel مجاني، الجزائر",
+    descAr: "نموذج عرض سعر جزائري مجاني بصيغة Word أو Excel، ومدّة صلاحيته، وكيف يتحوّل إلى فاتورة بضغطة. بلا حساب وبلا اشتراك.",
     title: 'Devis — modèle Word et Excel gratuit, Algérie | نموذج عرض السعر',
     desc: "Modèle de devis à télécharger en Word (.docx) ou Excel (.xlsx) : identifiants, lignes, totaux calculés, durée de validité et bon pour accord. Et comment le transformer en facture. Gratuit, sans inscription. نموذج عرض سعر بصيغة Excel: المعرّفات والسطور والمجاميع ومدّة الصلاحية وسطر الموافقة. وكيف يتحوّل إلى فاتورة. مجاني وبلا تسجيل.",
     og: 'Devis — modèle Excel gratuit',
@@ -145,6 +151,8 @@ const PAGES = [
   },
   {
     file: 'telecharger.html',
+    titleAr: "تحميل FacturePro — برنامج فوترة جزائري مجاني",
+    descAr: "ثبّت FacturePro على حاسوبك أو هاتفك ليشتغل بدون إنترنت: فواتير مطابقة للتنظيم الجزائري، وTVA بنسبة 19% و9%، وحقّ الطابع. مجاني وبلا تسجيل، وبياناتك تبقى في جهازك.",
     title: 'Télécharger FacturePro — logiciel de facturation | تحميل برنامج الفوترة',
     desc: "Installez FacturePro sur votre ordinateur ou votre téléphone : icône sur le bureau, fenêtre à part, fonctionne sans connexion. Gratuit, sans inscription et sans fichier à télécharger. ثبّت برنامج الفوترة في حاسوبك أو هاتفك: أيقونة على سطح المكتب، ويعمل بلا أنترنت. مجاني وبلا تسجيل.",
     og: 'Télécharger et installer FacturePro',
@@ -231,6 +239,8 @@ const PAGES = [
   },
   {
     file: 'plan-comptable-scf.html',
+    titleAr: "دليل الحسابات الجزائري SCF + ملفّ Excel مجاني",
+    descAr: "دليل الحسابات الجزائري SCF بأصنافه السبعة وحساباته الرئيسية، وأيّ حساب لأيّ عملية، مع ملفّ Excel جاهز للتحميل. مجاني وبلا تسجيل.",
     title: 'Plan comptable SCF Algérie + classeur Excel gratuit | دليل الحسابات',
     desc: "Le plan comptable algérien (Système Comptable Financier) expliqué : les sept classes, les comptes qu'un commerçant utilise vraiment, et un classeur Excel gratuit — journal, grand livre, balance, compte de résultat et bilan, calculés par formules. دليل الحسابات الجزائري SCF مشروحاً، مع ملفّ Excel مجاني: اليومية ودفتر الأستاذ وميزان المراجعة وحساب النتائج والميزانية.",
     og: 'Plan comptable SCF — les comptes, et un classeur Excel gratuit',
@@ -277,6 +287,8 @@ const PAGES = [
   },
   {
     file: 'modele-facture-excel.html', kind: 'facture',
+    titleAr: "نموذج فاتورة Excel وWord مجاني — الجزائر",
+    descAr: "نموذج فاتورة جزائري بصيغة Excel أو Word، مطابق للمرسوم 05-468: NIF وNIS وRC وAI، والرسم 19% و9%، وحقّ الطابع، والمبلغ بالحروف. مجاني وبلا تسجيل.",
     title: 'Modèle de facture Excel et Word Algérie — gratuit | نموذج فاتورة Word',
     desc: "Téléchargez un modèle de facture algérienne au format Excel (.xlsx) ou Word (.docx), avec NIF, NIS, RC, AI, TVA 19 % et 9 %, droit de timbre. Les totaux Excel sont des formules. Gratuit, sans inscription. حمّل نموذج فاتورة جزائرية بصيغة Excel أو Word، فيه NIF وNIS وRC وAI والرسم 19٪ و9٪ وحقّ الطابع. مجاني وبلا تسجيل.",
     og: 'Modèle de facture Excel et Word pour l’Algérie — gratuit',
@@ -307,6 +319,8 @@ const PAGES = [
   },
   {
     file: 'facture-acompte.html', kind: 'acompte',
+    titleAr: "فاتورة التسبيق — نموذج Word وExcel، الجزائر",
+    descAr: "كيف تُصدر فاتورة تسبيق في الجزائر: تقسيم الرسم حسب النسبة، وفاتورة التصفية التي تخصم التسبيق. مع نموذج Word وExcel مجاني، بلا تسجيل.",
     title: "Facture d'acompte — modèle Word et Excel, Algérie | فاتورة التسبيق",
     desc: "Comment établir une facture d’acompte en Algérie : le découpage de la TVA par taux, la facture de solde qui déduit l’acompte, et un modèle gratuit à télécharger en Word (.docx) ou Excel (.xlsx). Sans inscription. كيف تُصدر فاتورة تسبيق في الجزائر: تقسيم الرسم حسب النسبة، وفاتورة التصفية التي تخصم التسبيق، مع نموذج Word وExcel مجاني.",
     og: "Facture d'acompte — modèle gratuit Algérie",
@@ -345,6 +359,8 @@ const PAGES = [
   },
   {
     file: 'facture-proforma.html', kind: 'proforma',
+    titleAr: "الفاتورة الأولية proforma — نموذج مجاني، الجزائر",
+    descAr: "ما هي الفاتورة الأولية وفيمَ تُستعمل (البنك، الجمارك، عرض سعر ثابت)، وما يميّزها عن الفاتورة. مع نموذج Word وExcel مجاني.",
     title: 'Facture proforma — modèle Word et Excel gratuit | الفاتورة الأولية',
     desc: "Qu’est-ce qu’une facture proforma, à quoi elle sert (banque, douane, devis ferme), ce qui la distingue d’une facture, et un modèle gratuit à télécharger en Word (.docx) ou Excel (.xlsx). ما هي الفاتورة الأولية، وفيمَ تُستعمل (البنك، الجمارك، عرض سعر ثابت)، وما يميّزها عن الفاتورة. مع نموذج Excel مجاني.",
     og: 'Facture proforma — modèle gratuit et définition',
@@ -369,6 +385,8 @@ const PAGES = [
   },
   {
     file: 'bon-de-commande.html', kind: 'commande',
+    titleAr: "وصل الطلبية — نموذج Word وExcel مجاني، الجزائر",
+    descAr: "نموذج وصل طلبية جزائري للتحميل بصيغة Word أو Excel، ومن يكتبه، وما يلزمه ليُلزِم الطرفين. مجاني وبلا تسجيل.",
     title: 'Bon de commande — modèle Word et Excel gratuit | وصل الطلبية',
     desc: "Modèle de bon de commande en Word (.docx) ou Excel (.xlsx), avec les identifiants, les lignes, les totaux calculés et le délai de livraison. Gratuit, sans inscription. نموذج وصل الطلبية بصيغة Excel، بالمعرّفات والسطور والمجاميع المحسوبة وأجل التسليم. مجاني وبلا تسجيل.",
     og: 'Bon de commande — modèle Excel gratuit',
@@ -392,6 +410,8 @@ const PAGES = [
   },
   {
     file: 'mentions-obligatoires-facture-algerie.html',
+    titleAr: "البيانات الإجبارية في الفاتورة الجزائرية — المرسوم 05-468",
+    descAr: "ما يجب أن تحمله الفاتورة في الجزائر حسب المرسوم التنفيذي 05-468: NIF وNIS وRC وAI، والرسم على القيمة المضافة، وحقّ الطابع، والمبلغ بالحروف. وما يحدث إن نقص بيان.",
     title: 'Mentions obligatoires d’une facture en Algérie | البيانات الإجبارية',
     desc: "La liste des mentions qu’une facture doit porter en Algérie : identité et identifiants du vendeur et du client (NIF, NIS, RC, AI), désignation, prix, TVA, montant en lettres et droit de timbre. قائمة البيانات التي يجب أن تحملها الفاتورة في الجزائر: هويّة ومعرّفات البائع والزبون (NIF وNIS وRC وAI)، والبيان والسعر والرسم والمبلغ بالحروف وحقّ الطابع.",
     og: 'Mentions obligatoires d’une facture en Algérie',
@@ -426,6 +446,8 @@ const PAGES = [
   },
   {
     file: 'remplir-g50.html',
+    titleAr: "ملء تصريح G50 — من أين تأتي أرقامه",
+    descAr: "كيف يُملأ تصريح G50 في الجزائر ومن أين يأتي كلّ رقم: الرسم المحصَّل، والرسم القابل للخصم، وحقّ الطابع. شرح مبسّط، مجاني وبلا تسجيل.",
     title: 'Remplir le G50 — d’où viennent les chiffres | ملء تصريح G50',
     desc: "Le G50 est la déclaration mensuelle. Voici quels chiffres il demande, d’où ils sortent dans vos factures, et comment obtenir le récapitulatif TVA du mois en un clic. تصريح G50 هو التصريح الشهري. إليك ما يطلبه من أرقام، ومن أين تخرج من فواتيرك، وكيف تحصل على ملخّص الرسم للشهر بنقرة.",
     og: 'Remplir le G50 — d’où viennent les chiffres',
@@ -463,27 +485,58 @@ function section(s) {
   return [fr, ar];
 }
 
-const shell = (page) => {
+/* Une page, deux adresses.
+ *
+ * L'arabe vivait dans un bloc cache de la page francaise, revele par un
+ * bouton, et l'adresse annoncee a Google pour la version arabe etait
+ * « page.html?lang=ar ». Cette adresse sert les memes octets, donc le meme
+ * canonique — qui pointe la version francaise. Google la rangeait alors sous
+ * « autre page avec balise canonique correcte » et ne l'indexait pas. Autrement
+ * dit : le site declarait une version arabe qui, par construction, ne pouvait
+ * jamais paraitre dans les resultats. Pour un public dont une grande part
+ * cherche en arabe, c'est la version qui compte qui etait invisible.
+ *
+ * Chaque page est donc ecrite deux fois : la francaise a /page.html, l'arabe a
+ * /ar/page.html. Chacune ne porte que sa langue, se declare canonique
+ * d'elle-meme, et nomme l'autre en hreflang. Le bouton de langue n'est plus un
+ * commutateur d'affichage : c'est un lien vers l'autre adresse. */
+const shell = (page, lang) => {
+  const isAr = lang === 'ar';
   const parts = page.body.map(section);
-  const fr = parts.map(x => x[0]).join('');
-  const ar = parts.map(x => x[1]).join('');
-  const sibs = (lang) => SIBLINGS.filter(s => s[0] !== page.file)
-    .map(s => `<a class="underline mx-1" href="/${s[0]}">${lang === 'ar' ? s[2] : s[1]}</a>`).join(' · ');
+  const body = parts.map(x => isAr ? x[1] : x[0]).join('');
+  /* Les liens entre pages restent dans la langue de la page : un lecteur
+     arabe qui suit un lien reste en arabe. */
+  /* Toutes les pages voisines n'ont pas de jumelle arabe : deux d'entre elles
+     sont ecrites a la main a la racine. Les envoyer sous /ar/ ferait deux
+     liens morts sur onze pages. */
+  const sibs = () => SIBLINGS.filter(s => s[0] !== page.file)
+    .map(s => {
+      const twin = isAr && PAGES.some(x => x.file === s[0]);
+      return `<a class="underline mx-1" href="${twin ? '/ar/' : '/'}${s[0]}">${isAr ? s[2] : s[1]}</a>`;
+    }).join(' · ');
+  const self = isAr ? `${HOST}/ar/${page.file}` : `${HOST}/${page.file}`;
+  const other = isAr ? `${HOST}/${page.file}` : `${HOST}/ar/${page.file}`;
+  const title = isAr ? page.titleAr : page.title;
+  const desc = isAr ? page.descAr : page.desc;
+  const root = isAr ? '/ar/' : '/';
   return `<!DOCTYPE html>
-<html lang="fr">
+<html lang="${isAr ? 'ar' : 'fr'}"${isAr ? ' dir="rtl"' : ''}>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#006233" />
-<title>${page.title}</title>
-<meta name="description" content="${page.desc}" />
+<title>${title}</title>
+<meta name="description" content="${desc}" />
 <meta name="author" content="CheMs SoUu" />
 <meta name="robots" content="index, follow" />
-<link rel="canonical" href="${HOST}/${page.file}" />
-<meta property="og:title" content="${page.og}" />
-<meta property="og:description" content="${page.desc}" />
+<link rel="canonical" href="${self}" />
+<link rel="alternate" hreflang="fr" href="${HOST}/${page.file}" />
+<link rel="alternate" hreflang="ar" href="${HOST}/ar/${page.file}" />
+<link rel="alternate" hreflang="x-default" href="${HOST}/${page.file}" />
+<meta property="og:title" content="${isAr ? title : page.og}" />
+<meta property="og:description" content="${desc}" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="${HOST}/${page.file}" />
+<meta property="og:url" content="${self}" />
 <meta property="og:image" content="${HOST}/og.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -494,7 +547,7 @@ const shell = (page) => {
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="stylesheet" href="vendor/tailwind.css?v=${V}" />
+<link rel="stylesheet" href="/vendor/tailwind.css?v=${V}" />
 <style>
   :root{--brand:#006233;--brand2:#059669}
   body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
@@ -517,39 +570,32 @@ const shell = (page) => {
 </style>
 <link rel="stylesheet" href="/fonts.css" />
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen${isAr ? ' ar' : ''}">
 
 <header class="max-w-2xl mx-auto px-4 pt-8 pb-4 flex items-center justify-between gap-3">
-  <a href="/" class="flex items-center gap-2 min-w-0">
+  <a href="${root}" class="flex items-center gap-2 min-w-0">
     <img src="/icon.svg" alt="" width="36" height="36" class="w-9 h-9 rounded-xl shrink-0" />
     <span class="font-bold truncate">FacturePro</span>
   </a>
-  <button id="lang" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">العربية</button>
+  <!-- Un lien, pas un bouton : les deux langues sont deux adresses, et un
+       moteur doit pouvoir suivre celui-ci. -->
+  <a id="lang" href="${other.replace(HOST, '')}" hreflang="${isAr ? 'fr' : 'ar'}" class="text-sm px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700">${isAr ? 'Français' : 'العربية'}</a>
 </header>
 
 <main class="max-w-2xl mx-auto px-4 pb-16">
-  <div id="fr">
-    <h1 class="text-2xl sm:text-3xl font-bold mb-2">${page.h1fr}</h1>
-    <p class="opacity-80 mb-5">${page.leadfr}</p>
-    ${page.top || ''}
-    <div class="card p-5 sm:p-6">${fr}${page.extra || ''}</div>
-    <p class="text-center text-sm mt-8 opacity-70">${sibs('fr')}</p>
-    <p class="text-center text-sm mt-3"><a href="/" class="underline">Ouvrir l’application de facturation</a></p>
-  </div>
-  <div id="ar" dir="rtl" hidden>
-    <!-- h2, pas h1 : la page est servie en francais et n'a qu'un titre de
-         document. Le bloc arabe en est la traduction, donc une section. -->
-    <h2 class="text-2xl sm:text-3xl font-bold mb-2">${page.h1ar}</h2>
-    <p class="opacity-80 mb-5">${page.leadar}</p>
-    ${page.top || ''}
-    <div class="card p-5 sm:p-6">${ar}${page.extra || ''}</div>
-    <p class="text-center text-sm mt-8 opacity-70">${sibs('ar')}</p>
-    <p class="text-center text-sm mt-3"><a href="/" class="underline">افتح تطبيق الفوترة</a></p>
-  </div>
+  <h1 class="text-2xl sm:text-3xl font-bold mb-2">${isAr ? page.h1ar : page.h1fr}</h1>
+  <p class="opacity-80 mb-5">${isAr ? page.leadar : page.leadfr}</p>
+  ${page.top || ''}
+  <div class="card p-5 sm:p-6">${body}${page.extra || ''}</div>
+  <p class="text-center text-sm mt-8 opacity-70">${sibs()}</p>
+  <p class="text-center text-sm mt-3"><a href="/" class="underline">${isAr ? 'افتح تطبيق الفوترة' : 'Ouvrir l’application de facturation'}</a></p>
 </main>
-${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
-<script src="template-xlsx.js?v=${V}"></script>
-<script src="lib-docx.js?v=${V}"></script>
+${page.kind ? `<!-- Chemins absolus : la page arabe vit sous /ar/, ou « lib-xlsx.js »
+     designerait /ar/lib-xlsx.js. Les trois scripts se taisaient et le bouton
+     de telechargement ne faisait rien. -->
+<script src="/lib-xlsx.js?v=${V}"></script>
+<script src="/template-xlsx.js?v=${V}"></script>
+<script src="/lib-docx.js?v=${V}"></script>
 <script>
   function grab(kind){
     if (!window.downloadTemplate || !downloadTemplate(kind)) {
@@ -566,24 +612,10 @@ ${page.kind ? `<script src="lib-xlsx.js?v=${V}"></script>
     }
   }
 </script>` : ''}
-<script>
-  (function(){
-    var btn=document.getElementById('lang'), fr=document.getElementById('fr'), ar=document.getElementById('ar');
-    function apply(isAr){
-      document.documentElement.lang = isAr ? 'ar' : 'fr';
-      document.documentElement.dir  = isAr ? 'rtl' : 'ltr';
-      document.body.classList.toggle('ar', isAr);
-      fr.hidden = isAr; ar.hidden = !isAr;
-      btn.textContent = isAr ? 'Français' : 'العربية';
-      try{ localStorage.setItem('fp_locale', isAr ? 'ar' : 'fr'); }catch(e){}
-    }
-    var saved='fr'; try{ saved=localStorage.getItem('fp_locale')||'fr'; }catch(e){}
-    apply(saved==='ar');
-    btn.addEventListener('click', function(){ apply(!document.body.classList.contains('ar')); });
-  })();
-</script>
-<!-- Apres le script de langue, jamais avant : une page qui se peint selon
-     body.ar doit trouver la classe deja posee. -->
+<!-- Plus de commutateur : la langue de la page est celle de son adresse, et
+     elle est ecrite dans le HTML servi. Reste a la retenir, pour que
+     l'application s'ouvre dans la langue ou le visiteur lisait. -->
+<script>try{localStorage.setItem('fp_locale','${isAr ? 'ar' : 'fr'}');}catch(e){}</script>
 ${page.script || ''}
 <!-- Vercel Web Analytics — counts page views only. Never touches invoice
      or client data, which stay in the visitor's own browser. -->
@@ -598,6 +630,18 @@ ${page.script || ''}
 };
 
 let n = 0;
-for (const page of PAGES) { writeFileSync(join(OUT, page.file), shell(page)); n++; }
+/* Les libelles bilingues de dl() portent le francais en clair et l'arabe en
+   attribut, parce qu'un commutateur les echangeait a l'execution. Sur la page
+   arabe il n'y a plus de commutateur : le texte arabe prend sa place au
+   moment de la construction. */
+const arText = (html) => html.replace(
+  /<(span|p)([^>]*\sdata-ar="([^"]*)"[^>]*)>[^<]*<\/\1>/g,
+  (_, tag, attrs, ar) => `<${tag}${attrs}>${ar}</${tag}>`);
+
+mkdirSync(join(OUT, 'ar'), {recursive: true});
+for (const page of PAGES) {
+  writeFileSync(join(OUT, page.file), shell(page, 'fr')); n++;
+  writeFileSync(join(OUT, 'ar', page.file), arText(shell(page, 'ar'))); n++;
+}
 console.log(`pages: ${n} written`);
 export { PAGES };
