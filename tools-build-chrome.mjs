@@ -222,6 +222,10 @@ function icons(html) {
 function hreflang(html, file) {
   if (html.indexOf('hreflang') !== -1) return html;
   if (file === 'international.html') return html;
+  /* Une page que l'on demande a Google de ne pas indexer n'a pas de version
+     alternative a declarer : hreflang decrit un groupe de pages indexables, et
+     la page d'erreur y annonçait une traduction d'elle-meme. */
+  if (/<meta name="robots" content="[^"]*noindex/.test(html)) return html;
   const path = file === 'accueil.html' ? '/' : '/' + file;
   const url = 'https://www.facturedz.com' + path;
   const ar = url + (path.indexOf('?') === -1 ? '?lang=ar' : '&lang=ar');

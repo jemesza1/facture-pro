@@ -39,7 +39,7 @@
 </style>
 <!-- Last in the head: the Play CDN appended its <style> here, after the
      block above, and these pages were drawn against that cascade. -->
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260902t" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902u" />
 <link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="min-h-screen">
@@ -228,7 +228,7 @@
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js?v=20260902t"></script>
+<script src="lib-calc.js?v=20260902u"></script>
 <script>
 (function(){
   var T={
@@ -256,7 +256,7 @@
     document.documentElement.dir=loc==='ar'?'rtl':'ltr';
     document.body.classList.toggle('ar',loc==='ar');
     ['h1','sub','lbl','reslbl','reslblAr','whyT','whyP','ctaT','ctaB',
-     'moreT','m1','m2','m3','m4'].forEach(function(k){$(k).textContent=d[k];});
+     'moreT','m1','m2','m3','m4'].forEach(function(k){ var el=$(k); if(el) el.textContent=d[k]; });
     $('copy').textContent=d.copy; $('copyAr').textContent=d.copyAr;
     $('copyFull').textContent=d.copyFull; $('lang').textContent=d.other;
     render();
