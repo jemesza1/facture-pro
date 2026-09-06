@@ -39,7 +39,7 @@
 </style>
 <!-- Last in the head: the Play CDN appended its <style> here, after the
      block above, and these pages were drawn against that cascade. -->
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260902u" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902v" />
 <link rel="stylesheet" href="/fonts.css" />
 </head>
 <body class="min-h-screen">
@@ -144,9 +144,12 @@
        Les deux colonnes sortent de amountInWords et amountInWordsAr, et un
        controle du harnais les recalcule : elles ne peuvent pas diverger de
        l'outil sans faire echouer la suite. -->
-  <section class="card p-5 sm:p-6 mt-5" dir="ltr" lang="fr">
-    <h2 class="font-semibold mb-1">Les montants les plus demandés, écrits en toutes lettres</h2>
-    <p class="text-sm text-slate-500 mb-3">En français pour la facture, en arabe pour le chèque. Pour toute autre somme, le convertisseur ci-dessus.</p>
+  <!-- Ni dir ni lang de langue unique : ce tableau porte les deux, une colonne
+       chacune, et il doit rester sur les deux adresses. Son titre et son
+       chapeau sont peints comme le reste de l'interface. -->
+  <section class="card p-5 sm:p-6 mt-5" dir="ltr">
+    <h2 id="tblT" class="font-semibold mb-1">Les montants les plus demandés, écrits en toutes lettres</h2>
+    <p id="tblP" class="text-sm text-slate-500 mb-3">En français pour la facture, en arabe pour le chèque. Pour toute autre somme, le convertisseur ci-dessus.</p>
     <div style="overflow-x:auto">
       <table class="text-sm w-full" style="border-collapse:collapse">
         <thead>
@@ -228,7 +231,7 @@
   <p class="text-center text-xs text-slate-400 mt-8">Created by CheMs SoUu</p>
 </main>
 
-<script src="lib-calc.js?v=20260902u"></script>
+<script src="lib-calc.js?v=20260902v"></script>
 <script>
 (function(){
   var T={
@@ -237,14 +240,14 @@
         whyT:'Pourquoi cette mention ?',
         whyP:"Une facture algérienne doit porter le montant total arrêté en toutes lettres. La formule d’usage est « Arrêté la présente facture à la somme de… ». Le montant en lettres doit correspondre exactement au montant en chiffres — y compris le droit de timbre lorsque le règlement est en espèces.",
         ctaT:'Cette mention est ajoutée automatiquement à vos factures.',ctaB:'Créer une facture gratuitement',
-        moreT:'Autres outils',m1:'Calcul du salaire net',m2:'Calcul de la TVA',m3:'Droit de timbre',m4:"Guide d'utilisation",
+        tblT:'Les montants les plus demandés, écrits en toutes lettres',tblP:'En français pour la facture, en arabe pour le chèque. Pour toute autre somme, le convertisseur ci-dessus.',moreT:'Autres outils',m1:'Calcul du salaire net',m2:'Calcul de la TVA',m3:'Droit de timbre',m4:"Guide d'utilisation",
         other:'العربية',copied:'Copié',title:'Montant en lettres — convertisseur gratuit'},
     ar:{h1:'المبلغ بالحروف',sub:'اكتب المبلغ بالدينار، واحصل على الصيغة الحرفية لفاتورتك.',
         lbl:'المبلغ بالدينار',reslbl:'بالحروف بالفرنسية',reslblAr:'بالحروف بالعربية',copy:'نسخ',copyAr:'نسخ العربية',copyFull:'نسخ العبارة كاملة',
         whyT:'لماذا هذه العبارة؟',
         whyP:'يجب أن تحمل الفاتورة الجزائرية المبلغ الإجمالي محرَّرًا بالحروف، والصيغة المعتمدة هي « Arrêté la présente facture à la somme de… ». ويجب أن يطابق المبلغ بالحروف المبلغ بالأرقام تمامًا — بما في ذلك رسم الطابع عند الدفع نقدًا.',
         ctaT:'هذه العبارة تُضاف تلقائيًا إلى فواتيرك.',ctaB:'أنشئ فاتورة مجانًا',
-        moreT:'أدوات أخرى',m1:'حساب الراتب الصافي',m2:'حساب الرسم على القيمة المضافة',m3:'رسم الطابع',m4:'دليل الاستخدام',
+        tblT:'المبالغ الأكثر بحثاً، مكتوبة بالحروف',tblP:'بالفرنسية للفاتورة، وبالعربية للصكّ. ولأي مبلغ آخر، المحوّل أعلاه.',moreT:'أدوات أخرى',m1:'حساب الراتب الصافي',m2:'حساب الرسم على القيمة المضافة',m3:'رسم الطابع',m4:'دليل الاستخدام',
         other:'Français',copied:'تم النسخ',title:'المبلغ بالحروف — محوّل مجاني'}
   };
   var loc=(localStorage.getItem('fp_locale')==='ar')?'ar':'fr';
@@ -256,7 +259,7 @@
     document.documentElement.dir=loc==='ar'?'rtl':'ltr';
     document.body.classList.toggle('ar',loc==='ar');
     ['h1','sub','lbl','reslbl','reslblAr','whyT','whyP','ctaT','ctaB',
-     'moreT','m1','m2','m3','m4'].forEach(function(k){ var el=$(k); if(el) el.textContent=d[k]; });
+     'tblT','tblP','moreT','m1','m2','m3','m4'].forEach(function(k){ var el=$(k); if(el) el.textContent=d[k]; });
     $('copy').textContent=d.copy; $('copyAr').textContent=d.copyAr;
     $('copyFull').textContent=d.copyFull; $('lang').textContent=d.other;
     render();

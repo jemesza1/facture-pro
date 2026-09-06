@@ -280,7 +280,7 @@ const PAGES = [
        p: [['Le plan livré dans le classeur est le sous-ensemble courant, pas la nomenclature entière : complétez-le selon votre activité. Et les taux — TVA, TAP, IBS — sont fixés par la loi de finances et changent : le fichier n\u2019en écrit aucun d\u2019avance, pour ne pas figer un chiffre périmé dans vos comptes.',
             'الدليل المرفق بالملف هو الجزء الشائع، لا التسمية كاملة: أكمله حسب نشاطك. أمّا النسب — الرسم على القيمة المضافة، والرسم على النشاط المهني، والضريبة على الأرباح — فيحدّدها قانون المالية وتتغيّر: والملف لا يكتب أياً منها مسبقاً، حتى لا يجمّد رقماً قديماً في حساباتك.']]},
     ],
-    extra: dlfile('comptabilite-scf-algerie.xlsx',
+    extra: dlfile('/comptabilite-scf-algerie.xlsx',
       'Télécharger le classeur comptable (.xlsx)', 'حمّل الملفّ المحاسبي (.xlsx)',
       'Huit feuilles, plus de trois mille formules, aucune macro. Gratuit et sans inscription.',
       'ثماني أوراق، وأكثر من ثلاثة آلاف صيغة، وبلا ماكرو. مجاني وبلا تسجيل.'),

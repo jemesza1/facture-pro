@@ -2933,13 +2933,35 @@ console.log('\nArabic a crawler can read');
     .replace(/<style[\s\S]*?<\/style>/g, ' ')
     .replace(/<[^>]+>/g, ' ');
 
+  /* L'arabe etait pose dans un bloc de la page francaise, faute de mieux : un
+     robot qui lisait la page servie n'y trouvait que du francais, et l'adresse
+     annoncee pour la version arabe — page.html?lang=ar — servait les memes
+     octets, donc le meme canonique, et n'etait jamais indexee.
+     Il a desormais son adresse. Ce qui est verifie a change de place, pas de
+     nature : l'arabe doit etre servi, lisible sans script, et a une adresse
+     qui se declare elle-meme. */
   for (const f of ['droit-de-timbre.html', 'calcul-tva.html',
-                   'calcul-salaire.html', 'montant-en-lettres.html']) {
+                   'calcul-salaire.html', 'montant-en-lettres.html',
+                   'guide.html', 'facture-non-assujetti-tva.html',
+                   'auto-entrepreneur-algerie.html']) {
     const html = await readFile(join(ROOT, 'public', f), 'utf8');
-    const n = arabic(text(html));
-    check(`${f} carries Arabic a crawler can read`, n >= 200, n + ' Arabic characters');
-    check(`and it is served, not painted on a click`,
-          /<section[^>]*lang="ar"/.test(html));
+    const arHtml = await readFile(join(ROOT, 'public', 'ar', f), 'utf8').catch(() => null);
+    check(`ar/${f} exists and carries Arabic a crawler can read`,
+          arHtml !== null && arabic(text(arHtml)) >= 200,
+          arHtml === null ? 'absent' : arabic(text(arHtml)) + ' Arabic characters');
+    if (!arHtml) continue;
+    check(`and ar/${f} is served as Arabic, not painted on a click`,
+          /<html lang="ar" dir="rtl">/.test(arHtml));
+    /* La prose arabe, pas le moindre caractere arabe : le tableau des montants
+       de montant-en-lettres.html porte une colonne arabe et une colonne
+       francaise, c'est sa raison d'etre, et il reste sur les deux adresses. */
+    check(`and ${f} no longer carries the Arabic prose that now has its own address`,
+          !/<section[^>]*lang="ar"/.test(html) && !/<div id="ar"/.test(html),
+          (html.match(/<(section|div)[^>]*(lang="ar"|id="ar")[^>]*>/) || [''])[0]);
+    check(`and the two name each other`,
+          html.includes(`hreflang="ar" href="https://www.facturedz.com/ar/${f}"`) &&
+          arHtml.includes(`rel="canonical" href="https://www.facturedz.com/ar/${f}"`) &&
+          arHtml.includes(`hreflang="fr" href="https://www.facturedz.com/${f}"`));
   }
 
   /* A searcher who reads Arabic and meets a French snippet does not click,
@@ -3077,8 +3099,11 @@ for (const f of ['plan-comptable-scf.html', 'modele-facture-excel.html', 'rempli
    A download link is only as good as the file behind it. */
 {
   const page = await readFile(join(ROOT, 'public', 'plan-comptable-scf.html'), 'utf8');
+  /* Adresse absolue : la jumelle arabe vit sous /ar/, ou un chemin relatif
+     designait /ar/comptabilite-scf-algerie.xlsx — un lien de telechargement
+     qui ne menait a rien. */
   check('the SCF page offers the workbook',
-        /href="comptabilite-scf-algerie\.xlsx" download/.test(page));
+        /href="\/comptabilite-scf-algerie\.xlsx" download/.test(page));
   const wb = await readFile(join(ROOT, 'public', 'comptabilite-scf-algerie.xlsx')).catch(() => null);
   check('and the build ships it', wb !== null && wb.length > 0);
   check('and it is a real workbook, not a renamed table',
@@ -5275,8 +5300,14 @@ console.log('\nLes outils, depuis l\'application');
       for (const f of await readdir(join(ROOT, 'public', dir))) {
         if (!f.endsWith('.html')) continue;
         const raw = await readFile(join(ROOT, 'public', dir, f), 'utf8');
-        for (const m of raw.matchAll(/(?:href|src)="(\/[^"#?]*)"/g)) {
-          const target = m[1];
+        /* Les adresses relatives aussi : sous /ar/, « fichier.xlsx » designe
+           /ar/fichier.xlsx. Un classeur a telecharger s'y perdait, et la
+           premiere version de ce controle ne regardait que les chemins
+           absolus — donc ne le voyait pas. */
+        for (const m of raw.matchAll(/(?:href|src)="([^"#][^"?]*?)(?:\?[^"]*)?"/g)) {
+          const href = m[1];
+          if (/^(https?:|\/\/|mailto:|tel:|data:|#)/.test(href)) continue;
+          const target = href.startsWith('/') ? href : '/' + (dir === '.' ? '' : dir + '/') + href;
           /* Vercel sert son script de mesure a l'execution : il n'est pas
              dans public/ et n'a pas a y etre. */
           if (target.indexOf('/_vercel/') === 0) continue;
@@ -6275,7 +6306,10 @@ console.log('\nLa virgule decimale');
     const c = await browser.newContext({locale: 'ar-DZ'});
     const pg = await c.newPage();
     await pg.addInitScript(() => { try { localStorage.setItem('fp_locale', 'ar'); } catch (e) {} });
-    await pg.goto(`${BASE}/public/${page}`);
+    /* La page arabe est une adresse, plus un bouton : c'est /ar/ qu'on ouvre.
+       Les tableaux de bareme y restent — leurs libelles sont peints dans les
+       deux langues — et c'est justement eux qu'on vient verifier. */
+    await pg.goto(`${BASE}/public/ar/${page}`);
     await pg.waitForTimeout(600);
     const r = await pg.evaluate(() => {
       const bad = [];
@@ -6289,7 +6323,7 @@ console.log('\nLa virgule decimale');
       });
       return {dir: document.documentElement.dir, n: bad.length, bad: bad.slice(0, 2)};
     });
-    check(`${page} reads its French left to right, even in Arabic`,
+    check(`ar/${page} reads any French left to right`,
           r.dir === 'rtl' && r.n === 0, JSON.stringify(r));
     await c.close();
   }
