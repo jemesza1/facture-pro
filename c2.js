@@ -412,9 +412,17 @@ async function downloadPDF(){
       left-=PH;
       while(left>0){pos-=PH;pdf.addPage();pdf.addImage(img,'JPEG',0,pos,PW,imgH);left-=PH;}
     }
-    const name=(window._previewInvId&&state.invoices.find(i=>i.id===window._previewInvId)||{}).number||'facture';
+    const inv=(window._previewInvId&&state.invoices.find(i=>i.id===window._previewInvId))||{};
+    const name=inv.number||'facture';
     pdf.save(name+'.pdf');
     toast('PDF téléchargé');
+    // Sans serveur, rien ne disait si quelqu'un se servait vraiment de
+    // l'application : les pages vues comptent les curieux, pas les factures.
+    // Cet evenement compte un PDF reussi et le type de document, et rien
+    // d'autre — ni montant, ni client, ni numero, ni identifiant. Il part par
+    // le script Vercel deja charge, donc aucune requete vers un domaine de
+    // plus. En echec, on ne compte rien : le catch est plus bas.
+    try{ if(window.va) va('event',{name:'facture_pdf',data:{type:inv.type||'facture'}}); }catch(e){}
   }catch(e){
     console.error('PDF',e);
     toast('Erreur PDF : '+(e&&e.message?e.message:'inconnue'),'err');

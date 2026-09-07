@@ -19,7 +19,7 @@
 <meta name="twitter:image" content="https://www.facturedz.com/og.png" />
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260902x" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260902y" />
 <style>
   :root{--brand:#006233;--brand2:#059669}
   body{font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
@@ -101,8 +101,8 @@
   <section class="card p-5 sm:p-6 mb-5">
     <h2 data-fr="5. Mesure d'audience et services tiers" data-ar="5. قياس الزيارات والخدمات الخارجية">5. Mesure d'audience et services tiers</h2>
     <ul>
-      <li data-fr="Vercel Web Analytics compte les pages vues de façon agrégée, sans cookie et sans profil publicitaire. Aucune donnée de facturation n'y figure."
-          data-ar="Vercel Web Analytics يعدّ مشاهدات الصفحات بشكل إجمالي، بلا كوكيز وبلا ملف إعلاني. ولا تدخل فيه أي بيانات فوترة.">Vercel Web Analytics compte les pages vues de façon agrégée, sans cookie et sans profil publicitaire. Aucune donnée de facturation n'y figure.</li>
+      <li data-fr="Vercel Web Analytics compte les pages vues de façon agrégée, sans cookie et sans profil publicitaire. Il compte aussi, de la même façon, le nombre de PDF générés et leur type de document (facture, devis, bon de livraison…) — un simple total, sans montant, sans nom de client, sans numéro et sans identifiant. Aucune donnée de facturation n'y figure."
+          data-ar="Vercel Web Analytics يعدّ مشاهدات الصفحات بشكل إجمالي، بلا كوكيز وبلا ملف إعلاني. ويعدّ بالطريقة نفسها عدد ملفات PDF المُصدَرة ونوع الوثيقة (فاتورة، عرض سعر، وصل تسليم…) — مجرّد مجموع، بلا مبلغ ولا اسم عميل ولا رقم ولا أي معرّف. ولا تدخل فيه أي بيانات فوترة.">Vercel Web Analytics compte les pages vues de façon agrégée, sans cookie et sans profil publicitaire. Il compte aussi, de la même façon, le nombre de PDF générés et leur type de document (facture, devis, bon de livraison…) — un simple total, sans montant, sans nom de client, sans numéro et sans identifiant. Aucune donnée de facturation n'y figure.</li>
       <li data-fr="Les polices de caractères sont chargées depuis Google Fonts, ce qui expose votre adresse IP à Google, comme sur la plupart des sites. C'est la seule ressource que nous ne servons pas depuis ce domaine."
           data-ar="الخطوط تُحمَّل من Google Fonts، وهذا يكشف عنوان IP الخاص بك لـGoogle، كما في أغلب المواقع. وهي المورد الوحيد الذي لا نقدّمه من نطاقنا.">Les polices de caractères sont chargées depuis Google Fonts, ce qui expose votre adresse IP à Google, comme sur la plupart des sites. C'est la seule ressource que nous ne servons pas depuis ce domaine.</li>
       <li data-fr="Le site est hébergé par Vercel, qui journalise les requêtes techniques comme le fait tout hébergeur."
@@ -153,7 +153,8 @@
     btn.addEventListener('click', function(){ apply(!document.body.classList.contains('ar')); });
   })();
 </script>
-<!-- Vercel Web Analytics — counts page views only. Never touches invoice
+<!-- Vercel Web Analytics — counts page views, plus one event per PDF saved.
+     Never touches invoice
      or client data, which stay in the visitor's own browser. -->
 <script>
   window.va = window.va || function () {

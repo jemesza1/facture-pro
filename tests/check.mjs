@@ -6599,6 +6599,86 @@ console.log('\nUn papier qui s\'additionne');
   await pg.close();
 }
 
+/* ---------------------------------------------------------------- *
+ * Compter les factures reellement produites, sans rien emporter d'elles.
+ *
+ * Les pages vues comptent les curieux, pas les factures : rien ne disait si
+ * quelqu'un se servait vraiment de l'application. Un evenement au moment ou
+ * le PDF est ecrit repond a la question — mais la page conditions promet
+ * qu'il ne porte ni montant, ni client, ni numero, et cette promesse se
+ * verifie ici plutot qu'a la relecture.
+ *
+ * Ce bloc sert public/ : html2canvas et jsPDF vivent dans public/vendor/, et
+ * depuis la racine du depot l'export echoue avant meme d'ecrire quoi que ce
+ * soit — on testerait alors le chemin d'erreur en croyant tester l'autre.
+ * ---------------------------------------------------------------- */
+console.log('\nUn PDF ecrit se compte, et rien de plus');
+{
+  const pg = await context.newPage();
+  await pg.goto(`${BASE}/public/index.html`);
+  await pg.waitForFunction(() => typeof window.downloadPDF === 'function', {timeout: 20000});
+
+  const ev = await pg.evaluate(async () => {
+    state.clients = [{id: 'k1', name: 'Client Temoin', nif: '000916007654321'}];
+    state.invoices = [
+      {id: 'f1', number: 'FAC-2026-001', clientId: 'k1', template: 'algerie', date: '2026-09-01',
+       status: 'envoyee', paymentMode: 'virement', stockTaken: false,
+       items: [{description: 'Sucre 1 kg', qty: 7, unitPrice: 99.99, tva: 19}]},
+      {id: 'd1', number: 'DEV-2026-001', type: 'devis', clientId: 'k1', template: 'algerie',
+       date: '2026-09-01', status: 'brouillon', paymentMode: 'virement', stockTaken: false,
+       items: [{description: 'Etude', qty: 1, unitPrice: 5000, tva: 19}]}
+    ];
+    state.nextInvoiceNumber = 2; saveData();
+
+    const seen = [], said = [];
+    window.va = function () { seen.push([].slice.call(arguments)); };
+    const realToast = window.toast; window.toast = function (m) { said.push(String(m)); };
+
+    const save = async (id) => {
+      if (id) { previewInvoice(id); await new Promise(r => setTimeout(r, 1200)); }
+      const paper = !!document.getElementById('invoice-paper');
+      await downloadPDF();
+      await new Promise(r => setTimeout(r, 600));
+      try { closeModal(); } catch (e) {}
+      navigate('invoices');
+      await new Promise(r => setTimeout(r, 250));
+      return paper;
+    };
+
+    const failedPaper = await save(null);       /* aucun apercu : rien a ecrire */
+    const afterFail = seen.length;
+    const okPaper = await save('f1');
+    const afterInvoice = seen.length;
+    await save('d1');
+
+    window.toast = realToast; delete window.va;
+    return {failedPaper, afterFail, okPaper, afterInvoice, said,
+            seen: JSON.parse(JSON.stringify(seen))};
+  });
+
+  check('an export with nothing to write counts nothing',
+        ev.failedPaper === false && ev.afterFail === 0, JSON.stringify(ev));
+  check('a PDF written to disk counts exactly one event',
+        ev.okPaper && ev.afterInvoice === 1 && ev.seen[0][0] === 'event' &&
+        ev.seen[0][1] && ev.seen[0][1].name === 'facture_pdf', JSON.stringify(ev));
+  check('and the event names the document type',
+        ev.seen.length === 2 && ev.seen[0][1].data.type === 'facture' &&
+        ev.seen[1][1].data.type === 'devis', JSON.stringify(ev.seen));
+  {
+    /* La promesse tient ou tombe sur cette ligne : ce qui part ne doit rien
+       contenir du document, pas meme son numero. */
+    const payload = JSON.stringify(ev.seen);
+    const shape = ev.seen.map(a => Object.keys(a[1]).sort().join(',') + '|' +
+                                   Object.keys(a[1].data).sort().join(',')).join(' ');
+    check('and carries nothing else of the invoice',
+          shape === 'data,name|type data,name|type' &&
+          !/FAC-2026|DEV-2026|Temoin|Sucre|Etude|99\.99|5000|000916/.test(payload),
+          payload);
+  }
+
+  await pg.close();
+}
+
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
 
 /* ---------------------------------------------------------------- */
