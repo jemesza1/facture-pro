@@ -4270,9 +4270,17 @@ console.log('\nLa page d’atterrissage tient dans l’écran');
   await new Promise(r => shipped.listen(0, '127.0.0.1', r));
   const SITE = `http://127.0.0.1:${shipped.address().port}`;
   const ctx = await browser.newContext();
+  /* Les marges de l'en-tete avaient ete reglees au pixel pres, et le controle
+     les mesurait avec nos polices : sur une machine qui ne les a pas — le
+     serveur d'integration, un visiteur dont le reseau les perd — le texte de
+     secours est plus large et le bouton vert repartait hors de l'ecran. On
+     mesure donc les deux mondes, et le second est le plus severe. */
   for (const w of [320, 360, 390, 412, 768]) {
     for (const u of ['accueil.html', 'ar/accueil.html']) {
+     for (const bare of [false, true]) {
+      const label = bare ? `${w}px without our fonts` : `${w}px`;
       const pg = await ctx.newPage();
+      if (bare) await pg.route('**/*.woff2', r => r.abort());
       await pg.setViewportSize({width: w, height: 800});
       await pg.goto(`${SITE}/${u}`);
       await pg.waitForTimeout(250);
@@ -4285,9 +4293,10 @@ console.log('\nLa page d’atterrissage tient dans l’écran');
           return b.right <= document.documentElement.clientWidth + 1 ? 'ok' : 'hors écran';
         })()
       }));
-      check(`${u} does not overflow at ${w}px`, r.over === 0, String(r.over));
-      check(`and its green button is on screen at ${w}px`, r.cta === 'ok', r.cta);
+      check(`${u} does not overflow at ${label}`, r.over === 0, String(r.over));
+      check(`and its green button is on screen at ${label}`, r.cta === 'ok', r.cta);
       await pg.close();
+     }
     }
   }
   await ctx.close();
