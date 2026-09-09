@@ -620,8 +620,9 @@ ${page.kind ? `<!-- Chemins absolus : la page arabe vit sous /ar/, ou « lib-xls
      l'application s'ouvre dans la langue ou le visiteur lisait. -->
 <script>try{localStorage.setItem('fp_locale','${isAr ? 'ar' : 'fr'}');}catch(e){}</script>
 ${page.script || ''}
-<!-- Vercel Web Analytics — counts page views only. Never touches invoice
-     or client data, which stay in the visitor's own browser. -->
+<!-- Vercel Web Analytics — counts page views, plus one event per PDF
+     saved. Never touches invoice or client data, which stay in the
+     visitor's own browser. -->
 <script>
   window.va = window.va || function () {
     (window.vaq = window.vaq || []).push(arguments);
