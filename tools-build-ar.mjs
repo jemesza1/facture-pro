@@ -263,6 +263,25 @@ const PAGES = [
 /* ---------------------------------------------------------------- *
  * La coupe.
  * ---------------------------------------------------------------- */
+/* Les deux blocs vivaient sur la meme page, et deux h1 sur une page n'ont pas
+   de sens : l'arabe portait donc son titre en h2. Separes, la page arabe se
+   retrouvait sans aucun h1, et son titre au meme rang que ses sections — pour
+   un lecteur d'ecran comme pour un moteur, la page n'annoncait plus de quoi
+   elle parlait. Le titre reprend son rang une fois seul sur sa page.
+
+   La classe est celle du titre de page, pas des sections : on ne promeut que
+   celui-la, et on refuse en silence de deviner s'il n'y en a pas. */
+const PAGE_TITLE = 'class="text-2xl sm:text-3xl font-bold mb-2"';
+function promoteTitle(html, file) {
+  const i = html.indexOf('<h2 ' + PAGE_TITLE + '>');
+  if (i < 0) return html;
+  const j = html.indexOf('</h2>', i);
+  if (j < 0) throw new Error(`${file} : titre arabe ouvert et jamais ferme`);
+  return html.slice(0, i)
+       + '<h1 ' + PAGE_TITLE + '>' + html.slice(i + PAGE_TITLE.length + 5, j) + '</h1>'
+       + html.slice(j + 5);
+}
+
 function splitBlocks(src, page) {
   const { file, frBlock, arBlock, script, titleAr, descAr } = page;
 
@@ -278,6 +297,7 @@ function splitBlocks(src, page) {
   let ar = cutElement(src, frBlock, 'div');
   ar = cutScriptContaining(ar, script);
   ar = replaceOnce(ar, arBlock, arBlock.replace(' hidden', ''), 'attribut hidden');
+  ar = promoteTitle(ar, file);
   ar = langLink(ar, `/${file}`, 'fr', 'Français');
   ar = headAr(ar, file, titleAr, descAr);
   ar = ar.replace('</head>', REMEMBER('ar') + '\n</head>');

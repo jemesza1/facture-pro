@@ -56,6 +56,17 @@
      invoice is a document, not a screen, and the repository keeps them LTR. */
   .paper{background:#fff;width:794px;max-width:100%;direction:ltr;text-align:left;
          color:#0f172a;padding:40px;border-radius:6px;box-shadow:0 10px 30px rgba(2,6,23,.12)}
+  /* Le max-width ci-dessus ne servait a rien. Un enfant de grille vaut
+     min-width:auto : la colonne refusait de descendre sous les 794 px du
+     document, le formulaire s'etirait pour la rejoindre, et la page faisait
+     826 px de large sur un telephone de 390 — plus du double. Le pourcentage
+     se calculait sur une colonne que le document dimensionnait lui-meme.
+     Une fois la colonne libre de retrecir, il tient sa promesse. Sept pages
+     d'un coup : les six pays et celle-ci. */
+  #work > *{min-width:0}
+  /* Et quarante pixels de marge de chaque cote sur un ecran de 390 laissent
+     310 px au document lui-meme. */
+  @media (max-width:640px){ .paper{padding:20px} }
   .paper table{width:100%;border-collapse:collapse}
   .paper th,.paper td{padding:.45rem .3rem;font-size:.8125rem;text-align:left}
   .paper th{border-bottom:2px solid #cbd5e1;color:#475569;font-weight:600}
@@ -70,7 +81,7 @@
     header,footer,#landing{display:none !important}
   }
 </style>
-<link rel="stylesheet" href="vendor/tailwind.css?v=20260903a" />
+<link rel="stylesheet" href="vendor/tailwind.css?v=20260903b" />
 <!-- The two libraries the export needs, served from this domain like every
      other page here. A blocked cdnjs is what used to leave the PDF button
      throwing "html2canvas is not defined". -->

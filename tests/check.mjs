@@ -4303,6 +4303,72 @@ console.log('\nLa page d’atterrissage tient dans l’écran');
   shipped.close();
 }
 
+/* ---------------------------------------------------------------- *
+ * Le site entier sur un telephone, page par page.
+ *
+ * Deux defauts vivaient depuis longtemps sur des pages que rien ne mesurait,
+ * et qu'un controle sur la seule page d'accueil ne pouvait pas voir.
+ *
+ * Les sept pages du generateur international faisaient 842 px de large sur un
+ * ecran de 390 : le document est a 794 px avec un max-width:100%, mais un
+ * enfant de grille vaut min-width:auto, la colonne refusait de retrecir et le
+ * pourcentage se calculait sur une colonne dimensionnee par le document
+ * lui-meme. Plus du double de l'ecran, sur des pages faites pour le telephone.
+ *
+ * Et trois jumelles arabes n'avaient aucun h1 : les deux blocs vivaient sur
+ * une meme page, ou deux h1 n'auraient pas eu de sens, donc l'arabe portait un
+ * h2. Separee, la page arabe n'annoncait plus son sujet.
+ *
+ * On mesure donc toutes les pages indexables, dans les deux langues, a la
+ * largeur la plus repandue ici — et avec un pointeur grossier, sinon les
+ * regles ecrites pour le doigt ne s'appliquent pas et on mesure un site que
+ * personne ne voit.
+ * ---------------------------------------------------------------- */
+console.log('\nTout le site sur un telephone');
+{
+  const shipped = createServer(async (req, res) => {
+    const f = join(ROOT, 'public',
+                   normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+    try {
+      const body = await readFile(f);
+      res.writeHead(200, {'Content-Type': TYPES[extname(f)] || 'application/octet-stream'});
+      res.end(body);
+    } catch { res.writeHead(404); res.end('not found'); }
+  });
+  await new Promise(r => shipped.listen(0, '127.0.0.1', r));
+  const SITE = `http://127.0.0.1:${shipped.address().port}`;
+  const ctx = await browser.newContext({viewport: {width: 390, height: 844},
+                                        hasTouch: true, isMobile: true});
+
+  const { readdirSync } = await import('fs');
+  const pub = join(ROOT, 'public');
+  const all = [...readdirSync(pub).filter(f => f.endsWith('.html')),
+               ...readdirSync(join(pub, 'ar')).filter(f => f.endsWith('.html'))
+                 .map(f => 'ar/' + f)];
+
+  const wide = [], noTitle = [];
+  for (const f of all) {
+    if (f === 'index.html') continue;                    /* l'application */
+    const src = await readFile(join(pub, f), 'utf8');
+    if (/name="robots"\s+content="noindex/.test(src)) continue;   /* pages internes */
+    const pg = await ctx.newPage();
+    await pg.goto(`${SITE}/${f}`, {waitUntil: 'networkidle'});
+    await pg.waitForTimeout(200);
+    const r = await pg.evaluate(() => ({
+      over: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      h1: document.querySelectorAll('h1').length,
+    }));
+    if (r.over > 0) wide.push(`${f}:+${r.over}px`);
+    if (r.h1 !== 1) noTitle.push(`${f}:${r.h1}`);
+    await pg.close();
+  }
+  check('no indexed page is wider than a 390px phone', wide.length === 0, wide.join(' '));
+  check('and every one of them announces its subject once, in an h1',
+        noTitle.length === 0, noTitle.join(' '));
+  await ctx.close();
+  shipped.close();
+}
+
 console.log('\nChercher un nom tel qu\'on le tape');
 {
   const found = await page.evaluate(() => {
