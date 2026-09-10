@@ -35,3 +35,8 @@ next-env.d.ts
 
 # test runner
 tests/node_modules
+
+# Les sondes jetables des sessions de mise au point : elles repliquent un
+# bout de check.mjs pour verifier une hypothese, et ne servent plus une fois
+# la reponse trouvee. Cinq avaient ete versionnees par megarde.
+tests/_*.mjs
