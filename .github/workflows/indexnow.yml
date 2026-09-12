@@ -1,0 +1,48 @@
+# Prevenir Bing, Yandex et Seznam qu'une page a change, a chaque fois qu'une
+# page change — c'est-a-dire a chaque poussee sur main, puisque Vercel deploie
+# main. Le faire a la main, c'est ne pas le faire : personne ne se souvient de
+# soumettre apres un correctif de trois lignes, et une soumission oubliee vaut
+# une soumission absente.
+#
+# Le travail attend que le deploiement soit en ligne avant de soumettre : la
+# cle doit etre servie a la racine au moment de l'appel, sinon le moteur
+# repond 403 et rejette le lot. Vercel met une minute ou deux.
+#
+# La liste des adresses vient du sitemap construit ici meme, donc elle ne peut
+# pas mentir sur ce que le site contient.
+name: IndexNow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # pour soumettre a la demande
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # Le sitemap est construit, pas versionne : il faut donc batir avant de
+      # lire la liste des adresses.
+      - name: Build the site
+        run: npm ci && npm run build
+
+      # Laisser Vercel deployer la poussee avant de soumettre : la cle doit
+      # repondre a la racine, et le moteur la verifie au moment de l'appel.
+      - name: Wait for the deployment to land
+        run: sleep 180
+
+      - name: Check the key is served before submitting
+        run: |
+          key=$(ls *.txt | grep -E '^[0-9a-f]{8,128}\.txt$' | head -1)
+          got=$(curl -fsS "https://www.facturedz.com/$key" || echo '')
+          [ "$got" = "${key%.txt}" ] || { echo "la cle n'est pas servie : \"$got\""; exit 1; }
+          echo "cle servie : ${key%.txt}"
+
+      - name: Submit
+        run: npm run indexnow
