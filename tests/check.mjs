@@ -2629,6 +2629,44 @@ check('robots points at the sitemap on that host',
       /Sitemap: https:\/\/www\.facturedz\.com\/sitemap\.xml/.test(
         await readFile(join(ROOT, 'robots.txt'), 'utf8')));
 
+/* IndexNow previent Bing, Yandex et Seznam qu'une page a change, au lieu
+   d'attendre qu'ils repassent. Tout repose sur une cle servie a la racine :
+   si le fichier manque, si son nom cesse de correspondre a son contenu, ou
+   si l'outil et le fichier divergent, le moteur repond 403 et la soumission
+   ne sert plus a rien — en silence, puisque personne ne regarde une
+   soumission qui reussissait hier. */
+{
+  const tool = await readFile(join(ROOT, 'tools-indexnow.mjs'), 'utf8');
+  const key = (tool.match(/const KEY = '([0-9a-f]{8,128})'/) || [])[1] || '';
+  const served = await readFile(join(ROOT, 'public', `${key}.txt`), 'utf8').catch(() => null);
+  check('the IndexNow key is served from the root of the built site',
+        key.length >= 8 && served !== null, key || '(aucune cle dans l\'outil)');
+  check('and the file says exactly the key that names it',
+        (served || '').trim() === key, JSON.stringify((served || '').slice(0, 40)));
+}
+
+/* Une feuille de style ou un script nomme relativement marche a la racine et
+   casse partout ailleurs : servi depuis /ar/, "vendor/tailwind.css" devient
+   "/ar/vendor/tailwind.css", introuvable, et la page s'affiche sans style. Les
+   jumelles arabes ne s'en tiraient que parce que la construction reecrivait
+   ces chemins pour elles. On ne depend plus de cette reecriture : les sources
+   nomment la racine, et rien de servi ne peut redevenir relatif. */
+{
+  const { readdirSync } = await import('fs');
+  const pub = join(ROOT, 'public');
+  const shipped = [...readdirSync(pub).filter(f => f.endsWith('.html')),
+                   ...readdirSync(join(pub, 'ar')).filter(f => f.endsWith('.html'))
+                     .map(f => 'ar/' + f)];
+  const loose = [];
+  for (const f of shipped) {
+    const html = await readFile(join(pub, f), 'utf8');
+    for (const m of html.matchAll(/(?:href|src)="(?!https?:|\/\/|\/|#|data:|mailto:|tel:)([^"]+\.(?:css|js))[^"]*"/g))
+      loose.push(`${f}:${m[1]}`);
+  }
+  check('no shipped page names a stylesheet or a script relatively',
+        loose.length === 0, [...new Set(loose)].slice(0, 6).join(' '));
+}
+
 /* A visitor arrives on one page, not on the site. They searched "calcul droit
    de timbre", they landed on the calculator, and until now the calculator was
    a room with no doors: a logo, a language button, and no sign that anything
@@ -6689,8 +6727,26 @@ console.log('\nUn papier qui s\'additionne');
  * ---------------------------------------------------------------- */
 console.log('\nUn PDF ecrit se compte, et rien de plus');
 {
+  /* Enracine dans public/, pas a la racine du depot. Les pages nomment leurs
+     scripts depuis la racine du site — /vendor/html2canvas.min.js — parce que
+     c'est la seule ecriture qui vaille aussi sous /ar/. Servie depuis le
+     depot, cette adresse ne mene nulle part, l'export echoue avant d'ecrire
+     quoi que ce soit, et l'on testerait le chemin d'erreur en croyant tester
+     l'autre. */
+  const shipped = createServer(async (req, res) => {
+    const f = join(ROOT, 'public',
+                   normalize(decodeURI(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, ''));
+    try {
+      const body = await readFile(f);
+      res.writeHead(200, {'Content-Type': TYPES[extname(f)] || 'application/octet-stream'});
+      res.end(body);
+    } catch { res.writeHead(404); res.end('not found'); }
+  });
+  await new Promise(r => shipped.listen(0, '127.0.0.1', r));
+  const SITE = `http://127.0.0.1:${shipped.address().port}`;
+
   const pg = await context.newPage();
-  await pg.goto(`${BASE}/public/index.html`);
+  await pg.goto(`${SITE}/index.html`);
   await pg.waitForFunction(() => typeof window.downloadPDF === 'function', {timeout: 20000});
 
   const ev = await pg.evaluate(async () => {
@@ -6752,6 +6808,7 @@ console.log('\nUn PDF ecrit se compte, et rien de plus');
   }
 
   await pg.close();
+  shipped.close();
 }
 
 check('no unexpected script error during the run', consoleErrors.length === 0, consoleErrors.join(' | '));
